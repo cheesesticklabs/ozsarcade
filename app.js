@@ -7,6 +7,7 @@ const rosters = {
 // Add the actual game URL and screenshot here as files arrive, keyed by period/name.
 // Example: '2/Anaya': { url: 'games/period-2/anaya/index.html', screenshot: 'assets/anaya.webp' }
 const games = {
+  '6/Angel': { title: 'Dead Drop — Extraction', url: 'games/period-6/angel/index.html', screenshot: 'assets/angel-preview.webp' },
   '2/Ivannah': { title: 'Candy Coast Sprint', url: 'games/period-2/ivannah/index.html', screenshot: 'assets/ivannah-preview.webp' },
   '2/Judith': { title: 'Kawaii Chomp', url: 'games/period-2/judith/index.html', screenshot: 'assets/judith-preview.webp' },
   '2/Anaya': { title: 'Haunted School Showdown', url: 'games/period-2/anaya/index.html', screenshot: 'assets/anaya-preview.webp' },
