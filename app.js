@@ -1,12 +1,25 @@
 const rosters = {
-  2: ['Anaya','Kofi A','Derely','Cristian','Ivannah','Chelsea','Chris','Elijah','Alexandra','Jadee','Jayden','Gabriel','Ata','Kofi N','Amy','Evelyn','Kenneth','Amanda','Judith','Milo','Emilie','Fauziya'],
+  2: ['Anaya','Kofi A','Derely','Cristian','Ivannah','Chelsea','Chris','Elijah','Alexandra','Jadee','Jayden','Gabriel','Ata','Kofi N','Amy','Evelyn','Kenneth','Amanda','Judith','Milo','Emilie','Fauziya','Valerie'],
   5: ['Abdul','Prince','Seydou','Abrahim','Summer','Issa','India','Ilannah','Colin','Yeronni','Rover','Cameron','Jayden','Lebron','Keith','Mamady','Daniel','Nathan','Sergio','Bryan','Alie','Joshua'],
   6: ['Angel','Johan','Jacob','Francis','Lynn','Melanie','Adrian','Joseph','Melina','Kemil','Jahseal'],
-  7: ['Pedro','Kienan','Danny','Sean','Jhoriel','Rosselyn','Siah','Chad','Valerie','Suso']
+  7: ['Pedro','Kienan','Danny','Sean','Jhoriel','Rosselyn','Siah','Chad','Suso']
 };
 // Add the actual game URL and screenshot here as files arrive, keyed by period/name.
 // Example: '2/Anaya': { url: 'games/period-2/anaya/index.html', screenshot: 'assets/anaya.webp' }
 const games = {
+  '2/Ivannah': { title: 'Candy Coast Sprint', url: 'games/period-2/ivannah/index.html', screenshot: 'assets/ivannah-preview.webp' },
+  '2/Judith': { title: 'Kawaii Chomp', url: 'games/period-2/judith/index.html', screenshot: 'assets/judith-preview.webp' },
+  '2/Anaya': { title: 'Haunted School Showdown', url: 'games/period-2/anaya/index.html', screenshot: 'assets/anaya-preview.webp' },
+  '2/Kofi A': { title: 'Marceline: Rise of the Vampire Queen', url: 'games/period-2/kofi-a/index.html', screenshot: 'assets/kofi-a-preview.webp' },
+  '2/Derely': { title: 'Dress Up Dash: Don’t Turn Zombie', url: 'games/period-2/derely/index.html', screenshot: 'assets/derely-preview.webp' },
+  '2/Chris': { title: 'Free Kick Pro', url: 'games/period-2/chris/index.html', screenshot: 'assets/chris-preview.webp' },
+  '2/Amanda': { title: 'Operation Deaddrop', url: 'games/period-2/amanda/index.html', screenshot: 'assets/amanda-preview.webp' },
+  '2/Evelyn': { title: 'Sky Obby', url: 'games/period-2/evelyn/index.html', screenshot: 'assets/evelyn-preview.webp' },
+  '2/Elijah': { title: 'Speedster City', url: 'games/period-2/elijah/index.html', screenshot: 'assets/elijah-preview.webp' },
+  '2/Gabriel': { title: 'Ink Duel', url: 'games/period-2/gabriel/index.html', screenshot: 'assets/gabriel-preview.webp' },
+  '2/Amy': { title: 'St. Morrow Hospital: Dead Wing', url: 'games/period-2/amy/index.html', screenshot: 'assets/amy-preview.webp' },
+  '2/Fauziya': { title: 'Zombie Panic: Fast Forest', url: 'games/period-2/fauziya/index.html', screenshot: 'assets/fauziya-preview.webp' },
+  '2/Valerie': { title: 'Errand Town 3D', url: 'games/period-2/valerie/index.html', screenshot: 'assets/valerie-preview.webp' },
   '5/Alie': { title: 'Escape Mr Pino', url: 'games/period-5/alie/index.html', screenshot: 'assets/alie-preview.webp' },
   '2/Cristian': { title: 'Blight Rain', url: 'games/period-2/cristian/index.html', screenshot: 'assets/cristian-preview.webp' }
 };
