@@ -6,7 +6,10 @@ const rosters = {
 };
 // Add the actual game URL and screenshot here as files arrive, keyed by period/name.
 // Example: '2/Anaya': { url: 'games/period-2/anaya/index.html', screenshot: 'assets/anaya.webp' }
-const games = {};
+const games = {
+  '5/Alie': { title: 'Escape Mr Pino', url: 'games/period-5/alie/index.html', screenshot: 'assets/alie-preview.webp' },
+  '2/Cristian': { title: 'Blight Rain', url: 'games/period-2/cristian/index.html', screenshot: 'assets/cristian-preview.webp' }
+};
 const colors=['#ff7b9c','#78d9d4','#b69ae9','#ffca73'];
 const grid=document.querySelector('#game-grid');
 const player=document.querySelector('#player');
