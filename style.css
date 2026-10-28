@@ -64,3 +64,8 @@ footer{align-items:center;gap:24px}
 #period-title:focus{outline:none}
 @media(max-width:500px){.section-heading{gap:12px;align-items:flex-start}.gallery-tools{max-width:145px;text-align:right}#game-stage{padding:0}.player-toolbar h2{font-size:18px;overflow-wrap:anywhere}.player-toolbar button{flex-shrink:0}}
 @media(prefers-reduced-motion:reduce){.game-card,.periods a{transition:none}}
+
+/* Students awaiting their first game get a quiet TV-static card. */
+.thumbnail.coming-soon{background:#222}
+.thumbnail.coming-soon img{filter:contrast(1.5);image-rendering:auto}
+.coming-soon-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font:700 clamp(18px,2.5vw,28px) Consolas,'Courier New',monospace;letter-spacing:2px;text-shadow:2px 2px 0 #000,-2px -2px 0 #000,0 0 10px #000;background:linear-gradient(transparent,#0003,transparent)}
