@@ -308,5 +308,5 @@ function loop(t){
 requestAnimationFrame(t=>{last=t;loop(t)});
 })();
 </script>
-<script>document.addEventListener("keydown",function(e){if(e.key==="Escape"){e.preventDefault();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>
+<script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>
 </html>

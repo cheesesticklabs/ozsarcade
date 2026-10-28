@@ -165,4 +165,4 @@ function loop(t){const dt=Math.min(.033,(t-last)/1000||0);last=t;time+=dt;
  requestAnimationFrame(loop)}
 $('go').onclick=()=>{reset();msg.style.display='none';$('go').blur()};
 reset();requestAnimationFrame(loop);
-</script><script>document.addEventListener("keydown",function(e){if(e.key==="Escape"){e.preventDefault();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>
+</script><script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>

@@ -49,3 +49,18 @@ footer{align-items:center;gap:24px}
 @media(max-width:360px){.mascot-label{font-size:12px;padding:8px 11px}}
 .mascot-label,.mascot-label:after{background:#fff}
 .intro-copy{max-width:500px}.intro>div:first-child{min-width:0;flex:1}.mascot{flex-shrink:0}@media(max-width:760px){.intro-copy{max-width:350px}}@media(max-width:500px){.intro-copy{max-width:210px}}@media(max-width:360px){.intro-copy{max-width:170px}}
+/* Student collections and rotating cabinet previews. */
+[hidden]{display:none!important}
+.back-link{display:inline-block;margin-top:28px;color:var(--cyan);font:13px Consolas,monospace;text-decoration:none;padding:10px 0}
+.back-link:hover{text-decoration:underline}
+.back-link:not([hidden])+.section-heading{margin-top:14px}
+.gallery-tools{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#preview-toggle{background:#272039;color:var(--cream);border:1px solid #645473;border-radius:4px;padding:7px 10px;font:11px Consolas,monospace;cursor:pointer}
+.slide-count{position:absolute;bottom:11px;right:11px;padding:5px 8px;background:#111021e8;border:1px solid #ffffff35;border-radius:3px;font:11px Consolas,monospace;color:var(--cream)}
+.card-name{gap:12px;line-height:1.4;min-height:57px;overflow-wrap:anywhere}
+.thumbnail img{image-rendering:auto}
+.card-meta{gap:10px;line-height:1.5}
+.card-meta b{flex-shrink:0}
+#period-title:focus{outline:none}
+@media(max-width:500px){.section-heading{gap:12px;align-items:flex-start}.gallery-tools{max-width:145px;text-align:right}#game-stage{padding:0}.player-toolbar h2{font-size:18px;overflow-wrap:anywhere}.player-toolbar button{flex-shrink:0}}
+@media(prefers-reduced-motion:reduce){.game-card,.periods a{transition:none}}
