@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kitchen Twist</title>
+<style>
+:root{--bg:#fff7ec;--card:#fff;--ink:#3a2a1c;--mut:#8a7560;--acc:#e0622b;--line:#ecd9c0;--sel:#ffe2c9;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1d1611;--card:#2a2019;--ink:#f6e9d8;--mut:#b9a58e;--acc:#ff8a4d;--line:#43342a;--sel:#5a3520}}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:radial-gradient(ellipse at top,#3b4146 0,#15191d 48%,#0b0d10 100%);color:#f5eee4;font-family:Georgia,'Times New Roman',serif;line-height:1.4}
+main{max-width:900px;margin:0 auto;padding:18px}
+h1{margin:4px 0;font-size:1.8rem}h2{font-size:1.1rem;margin:20px 0 8px}
+p.s{color:#b9b5ad;margin:0 0 8px}
+h1{color:#f0c777;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 2px 14px #d17b2940}h2{color:#f0c777;border-bottom:1px solid #66543b;padding-bottom:7px} .screen{background:linear-gradient(145deg,#24292e,#171a1e);border:1px solid #4a4c4b;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 14px 35px #0005}.spot,.meal,.store-item,.vb,.chef,.ins{background:linear-gradient(145deg,#34383b,#24272a);color:#f5eee4;border-color:#6e604b;box-shadow:0 8px 22px #0003}.chip{background:#2b3034;color:#f5eee4;border-color:#5b5d5c}.chip.on{background:#6e4a25;border-color:#f0c777}.go{background:linear-gradient(90deg,#a83222,#df6b31);box-shadow:0 5px 16px #0005}.save{color:#f0c777;border-color:#c69a53}.nav{background:#111417}.nav button{background:#9f3325;border-color:#d7a65a}.nav button.b{background:transparent;color:#f0c777}.sec,.ttl{color:#f0c777}.board{background:linear-gradient(135deg,#8b633c,#d2b07b);box-shadow:inset 0 0 0 3px #654526,0 7px 18px #0005}.bar,.gauge{background:#141719;border-color:#6b6255}.room{border-color:#b68c50;box-shadow:0 10px 30px #0005}.rev{background:#332b23;border:1px solid #a07a43;color:#f8eee0}.arena-photo{width:100%;height:210px;object-fit:cover;border-radius:16px;border:1px solid #a9854c;box-shadow:0 10px 28px #0007;margin:8px 0}.food-photo{height:280px;border-color:#ba9556;box-shadow:0 8px 25px #0006}.chef{border-color:#c69a53}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+button{font:inherit;color:inherit;cursor:pointer}
+.spot{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 6px;text-align:center}
+.spot:hover{border-color:var(--acc)}.spot b{display:block;font-size:2rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{background:var(--card);border:2px solid var(--line);border-radius:999px;padding:6px 12px}
+.chip.on{background:var(--sel);border-color:var(--acc)}
+.msg{min-height:1.6em;color:var(--acc);font-weight:bold;margin:10px 0}
+input[type=text]{width:100%;font:inherit;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink)}
+.go{background:var(--acc);color:#fff;border:0;border-radius:12px;padding:12px 20px;font-size:1.1rem;margin-top:12px;width:100%}
+.go:disabled{opacity:.5}
+.meal{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:16px;margin-top:14px}
+.plate{font-size:2.6rem;text-align:center;background:radial-gradient(circle,var(--sel) 55%,transparent 56%);padding:22px;border-radius:50%;width:190px;height:190px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;line-height:1.1}
+.meal h3{text-align:center;margin:6px 0}
+.meal ol{padding-left:20px}
+.save{background:none;border:2px solid var(--acc);color:var(--acc);border-radius:10px;padding:8px 14px}
+.book .meal{margin-top:8px;padding:10px;display:flex;gap:10px;align-items:center}
+.book .e{font-size:1.6rem}
+textarea{width:100%;font:inherit;padding:10px;border-radius:10px;border:2px solid var(--line);background:var(--card);color:var(--ink);margin-top:10px;resize:vertical}
+.vb{margin-top:10px;border:2px dashed var(--acc);border-radius:14px;padding:12px;text-align:center;background:var(--card)}
+.vb .vs{font-size:1.4rem}.vb .vi{font-size:2rem;word-break:break-all}
+.plate{min-width:190px;min-height:190px;width:auto;height:auto;max-width:100%}
+.chef{background:var(--card);border:2px solid var(--acc);border-radius:12px;padding:10px;margin-bottom:10px}
+.board{background:#d9b88a;border-radius:14px;padding:16px;text-align:center;min-height:110px;border:4px solid #a37a4a}.board span{font-size:2.2rem;display:inline-block;margin:2px}
+.bar{position:relative;height:36px;background:var(--card);border:2px solid var(--line);border-radius:18px;margin:12px 0;overflow:hidden}
+.zone{position:absolute;left:42%;width:16%;top:0;bottom:0;background:#5cb85c99}.mk{position:absolute;top:2px;transform:translateX(-50%);font-size:1.4rem}
+.gauge{position:relative;height:30px;border:2px solid var(--line);border-radius:15px;background:var(--card);margin:12px 0;overflow:hidden}
+.gf{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#f5b041,#e74c3c)}.gz{position:absolute;top:0;bottom:0;background:#2ecc7199;z-index:2;border:0 solid #1e8449;border-width:0 2px}
+.pan{font-size:3rem;text-align:center}
+.shelf{flex-wrap:wrap;gap:4px}.sec{font-weight:bold;color:#2b1d10;margin:8px 0 2px}.sec2{font-weight:bold;color:var(--mut);margin:10px 0 4px}
+.it small{display:block;font-size:.62rem;max-width:92px;opacity:.85;line-height:1.1}.rev{display:flex;gap:12px;align-items:flex-start;background:var(--sel);border-radius:14px;padding:12px;margin:10px 0}.jd{font-size:2.6rem}.stars{font-size:1.5rem}
+.room{overflow-x:auto;border-radius:16px;border:3px solid var(--line)}.room svg{min-width:560px;width:100%;display:block}
+.hot{cursor:pointer;transition:filter .2s}.hot:hover{filter:brightness(1.15)}
+.hot text.l{font:bold 13px Georgia,serif;fill:#fff;paint-order:stroke;stroke:#000a;stroke-width:3px}
+.ins{border-radius:16px;padding:12px;margin-top:10px;border:3px solid var(--line)}.ttl{font-weight:bold;color:#2b1d10;margin-bottom:6px}
+.shelf{display:flex;justify-content:space-around;border-bottom:8px solid rgba(0,0,0,.25);padding:8px 0 4px;margin-bottom:10px;background:rgba(255,255,255,.18)}
+.it{background:none;border:2px solid transparent;border-radius:12px;padding:4px 8px;color:#2b1d10;font-size:.85rem;transition:transform .15s}
+.it b{display:block;font-size:2.6rem;font-weight:normal}.it:hover{transform:translateY(-4px) scale(1.1)}.it.got{opacity:.45}.it.got::after{content:" ✓"}
+.nav{display:flex;gap:10px;align-items:center;margin-top:18px;position:sticky;bottom:0;padding:10px 0;background:var(--bg)}
+.nav button{flex:1;padding:12px;border-radius:12px;border:2px solid var(--acc);background:var(--acc);color:#fff;font-size:1rem}
+.nav button.b{background:none;color:var(--acc)}.nav button:disabled{opacity:.4}.nav span{color:var(--mut);font-size:.85rem;white-space:nowrap}
+
+.store-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.store-item{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px;text-align:center}
+.store-item .em{font-size:2rem}.store-item button{border:0;background:var(--acc);color:white;border-radius:9px;padding:7px 10px;margin-top:8px}
+.store-item button:disabled{opacity:.45}
+.food-photo{display:block;width:100%;max-width:420px;height:220px;object-fit:cover;border-radius:16px;margin:8px auto;border:3px solid var(--line)}
+.panel-head{font-weight:bold;color:#f0c777;letter-spacing:.08em;margin:16px 0 10px}.judge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:10px 0 16px}.judge-card{background:linear-gradient(150deg,#3b3b39,#222528);border:1px solid #8a6b3b;border-radius:14px;padding:13px;box-shadow:0 8px 18px #0004}.judge-avatar{font-size:2.2rem;float:right;margin-left:8px}.judge-card small{display:block;color:#d2b47a;margin-top:3px}.judge-card p{font-size:.92rem;color:#e3ddd3}.judge-card .stars{font-size:1.1rem;color:#f0c777}.spot{min-height:104px}.spot b{color:#f0c777}.store-item .em{filter:drop-shadow(0 3px 3px #0005)}
+.screen{animation:in .4s ease}.screen[hidden]{display:none}@keyframes in{from{opacity:0;transform:perspective(600px) translateZ(-60px)}}
+
+/* Competition remaster */
+:root{--bg:#090d12;--card:#171e27;--ink:#f4f0e8;--mut:#a8b2bf;--acc:#e8b85e;--line:#394656;--sel:#3d3422}
+body{background:radial-gradient(ellipse at 50% -10%,#344353 0,#111821 38%,#070a0e 80%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#f4f0e8}
+main{max-width:1120px;padding:clamp(12px,2.4vw,28px)}
+h1{font-size:clamp(2rem,4.2vw,3.35rem);letter-spacing:.09em;line-height:1.05;background:linear-gradient(100deg,#fff4d3,#e8b85e 52%,#ff835c);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;margin:16px 0 8px}
+h2{font-size:1.12rem;letter-spacing:.035em;color:#f2cb7e;border-bottom-color:#475260}
+.arena-photo{height:clamp(190px,28vw,330px);object-position:center 48%;border-radius:20px;filter:saturate(.82) contrast(1.08);box-shadow:0 18px 45px #0009}
+.screen{background:linear-gradient(145deg,#1a222c,#10161d);border:1px solid #34404d;border-radius:22px;padding:clamp(14px,2.2vw,24px);box-shadow:0 20px 48px #0005}
+.spot,.meal,.store-item,.vb,.chef,.ins,.judge-card{background:linear-gradient(145deg,#222d38,#151c24);color:#f4f0e8;border-color:#465362}
+.spot{border-radius:16px;min-height:112px;transition:transform .18s,border-color .18s,box-shadow .18s}.spot:hover{transform:translateY(-3px);border-color:#e8b85e;box-shadow:0 10px 24px #0006}
+.spot b{color:#f2cb7e;font-size:2.3rem}
+.chip{background:#18212b;color:#f4f0e8;border-color:#3d4b5a}.chip.on{background:#4b3b20;border-color:#e8b85e;color:#fff4d3}
+.go{background:linear-gradient(100deg,#b72e2d,#e05a3d 55%,#eea34b);box-shadow:0 8px 22px #0006;border-radius:14px;font-weight:800;letter-spacing:.035em;text-transform:uppercase}
+.save{color:#f2cb7e;border-color:#b48a42;border-radius:12px}.nav{background:#090d12eF;backdrop-filter:blur(12px);border-top:1px solid #293541;padding:10px 0}.nav button{background:linear-gradient(100deg,#b72e2d,#df653c);border-color:#d9a657}.nav button.b{background:transparent;color:#f2cb7e}
+.food-photo{max-width:600px;height:clamp(230px,35vw,380px);object-fit:cover;border:1px solid #7c694b;border-radius:20px;box-shadow:0 16px 36px #0007}
+.meal{border:1px solid #4d5966;border-radius:20px;padding:clamp(12px,2vw,22px)}
+.plate{background:radial-gradient(circle,#f8f5ee 0 48%,#d8d2c7 49% 52%,#fff 53% 61%,#a7a8a6 62% 64%,transparent 65%);filter:drop-shadow(0 14px 12px #0008)}
+.board{background:linear-gradient(135deg,#8c6747,#d8bd91);border:5px solid #6e5036;box-shadow:inset 0 0 0 2px #e8d2a8,0 14px 28px #0006;border-radius:18px}.bar{height:42px;border-color:#53616d}.zone{background:linear-gradient(90deg,#42b883aa,#4dd7a0cc)}
+.gauge{height:34px;border-color:#53616d}.judge-card{border-radius:16px;border-color:#77613d}.judge-avatar{filter:drop-shadow(0 3px 3px #0005)}
+.competition-setup,.competition-hud{background:linear-gradient(130deg,#202b37,#11171e);border:1px solid #6c5838;border-radius:20px;padding:clamp(14px,2vw,22px);margin:16px 0;box-shadow:0 16px 36px #0005}
+.setup-kicker{font-size:.72rem;letter-spacing:.22em;font-weight:900;color:#f2cb7e}.player-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}.player-fields label{display:grid;gap:6px;font-size:.82rem;font-weight:800;color:#e7d5b1}.player-fields input{background:#0d131a;color:#f7f1e5;border:1px solid #465362;border-radius:11px;padding:11px;font:inherit}
+.hud-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.round-pill{background:#3a3020;color:#ffdf99;border:1px solid #98763c;border-radius:999px;padding:6px 11px;font-size:.8rem;font-weight:900;letter-spacing:.06em}.scoreboard{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.score-player{border:1px solid #3d4b59;background:#101720;border-radius:14px;padding:12px}.score-player.active{border-color:#e8b85e;box-shadow:inset 0 0 0 1px #e8b85e55}.score-player b{display:block;color:#f5d58f}.score-big{font-size:1.55rem;font-weight:900}.score-rounds{font-size:.8rem;color:#b7c0ca;overflow-wrap:anywhere}.turn-card{background:linear-gradient(135deg,#2b342e,#18221f);border:1px solid #6f936f;border-radius:16px;padding:15px;margin:14px 0}.turn-card h3{margin:0 0 5px;color:#f5d58f}.round-score{font-size:clamp(2rem,6vw,3.4rem);font-weight:950;color:#f2cb7e;line-height:1.05}.final-winner{background:linear-gradient(135deg,#3c2f1b,#1d2429);border:1px solid #d4a44f;border-radius:18px;padding:18px;text-align:center;margin-top:16px}.final-winner .trophy{font-size:3rem}.seasoning-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.seasoning-card{background:#18212b;border:1px solid #465362;border-radius:14px;padding:12px;text-align:center}.seasoning-card b{display:block;font-size:1.15rem}.seasoning-card button{background:#4b3b20;border:1px solid #c69a53;border-radius:9px;padding:8px 10px;margin-top:8px;color:#fff4d3}.seasoning-card.done{border-color:#69b68b;opacity:.72}.seasoning-card.done button{background:#1e513c}
+@media(max-width:520px){.scoreboard{grid-template-columns:1fr}.arena-photo{height:180px}.screen{border-radius:16px}.nav span{font-size:.75rem}}
+
+/* Grand Dining Room visual remaster — inspired by classic 3D restaurant games */
+:root{--bg:#120e12;--card:#241a1c;--ink:#fff2dc;--mut:#c3ad96;--acc:#d8aa58;--line:#684b35;--sel:#4a3022}
+body{background:radial-gradient(ellipse at 50% 0,#5b342b 0,#251b20 34%,#0b0c11 82%);color:#fff2dc;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1240px;padding:clamp(12px,2vw,26px)}
+.game-masthead{display:grid;grid-template-columns:66px 1fr auto;gap:16px;align-items:center;padding:12px 4px 20px;border-bottom:1px solid #745333}
+.brand-mark{width:62px;height:62px;border:2px solid #e2bd70;border-radius:9px;display:grid;place-items:center;font-family:Georgia,serif;font-size:1.7rem;font-weight:900;color:#f6d78e;background:linear-gradient(145deg,#492d25,#16161b);box-shadow:inset 0 0 0 4px #2a1d1c,0 7px 18px #0008}
+.game-masthead h1{font-family:Georgia,serif;font-size:clamp(1.8rem,4vw,3.2rem);letter-spacing:.04em;text-transform:uppercase;margin:3px 0;background:linear-gradient(90deg,#fff0c4,#d8aa58 55%,#fff0c4);-webkit-background-clip:text;background-clip:text;color:transparent}
+.game-masthead .s{margin:0;color:#d1bda5}.eyebrow,.setup-kicker{font-size:.72rem;font-weight:800;letter-spacing:.19em;color:#dcb86f}.service-stamp{border:1px solid #936a3d;border-radius:8px;padding:10px 12px;color:#f4d48b;background:#1c171a;font-size:.72rem;letter-spacing:.1em;text-align:center;white-space:nowrap}.service-stamp b{display:block;margin-top:4px;color:#d8aa58;letter-spacing:.18em}.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff5b49;box-shadow:0 0 12px #ff5b49;margin-right:6px}
+.restaurant-world{position:relative;margin:18px 0 24px;border:2px solid #d0a254;border-radius:12px;overflow:hidden;background:#171116;box-shadow:0 20px 42px #0009,inset 0 0 0 5px #211619}.restaurant-world svg{display:block;width:100%;height:auto;min-height:260px}.world-caption{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;background:linear-gradient(90deg,#1a1417,#39221e,#171318);border-top:1px solid #8c6339}.world-caption b,.world-caption small{display:block}.world-caption b{font-family:Georgia,serif;letter-spacing:.1em;color:#f1d28e}.world-caption small{color:#c2ad96;font-size:.8rem;margin-top:2px}.gold-caption{font-size:.72rem;letter-spacing:.15em;color:#d8aa58;white-space:nowrap}
+h2{color:#f0cf83;border-bottom:1px solid #6d4b30;padding-bottom:9px;letter-spacing:.03em}.screen,.competition-setup,.competition-hud{background:linear-gradient(145deg,#2c2021,#17151a);border:1px solid #795635;border-radius:12px;box-shadow:0 14px 28px #0006}.screen{padding:clamp(14px,2vw,22px)}.competition-setup{padding:clamp(16px,2.5vw,28px);position:relative;overflow:hidden}.competition-setup:after{content:"✦";position:absolute;right:20px;top:4px;font-size:5rem;color:#d8aa58;opacity:.09}.spot,.meal,.store-item,.vb,.chef,.ins,.judge-card{background:linear-gradient(145deg,#342526,#1c191e);color:#fff2dc;border-color:#76543a}.spot{border-radius:10px;box-shadow:0 6px 16px #0005}.spot b{color:#f1cd7d}.chip{background:#211a1e;color:#fff2dc;border-color:#65462f}.chip.on{background:#624124;border-color:#f0ca77}.go{background:linear-gradient(100deg,#9d2d28,#d14e30);border:1px solid #f0ca77;box-shadow:0 5px 16px #0006;letter-spacing:.03em}.go:hover{filter:brightness(1.1)}.nav{background:linear-gradient(90deg,#130f12ee,#2a1d1bee);border-top:1px solid #785633;padding:10px}.nav button{background:linear-gradient(100deg,#9d2d28,#d14e30);border-color:#d5a857}.nav button.b{color:#f1cf82}.board{background:linear-gradient(135deg,#7c4b2e,#c39a5e);border-color:#e0bd7c}.room{border-color:#d5a857}.room svg{background:#20161a}.plate{filter:drop-shadow(0 10px 10px #0007)}.food-photo{border-color:#d0a254;box-shadow:0 12px 28px #0008}.judge-card{border-color:#986d3e}.rev{background:#342524;border-color:#a97c44;color:#fff0d9}.msg{color:#f1c777}.s{color:#c2b4a4}.panel-head,.ttl{color:#f1cf82}.sec{color:#f0cf83}.store-item button{background:#a9322b}.score-player{background:linear-gradient(145deg,#342526,#1c191e);border-color:#785637}.score-player.active{border-color:#f0ca77;box-shadow:0 0 0 1px #f0ca77,0 8px 24px #0007}
+@media(max-width:650px){.game-masthead{grid-template-columns:48px 1fr;gap:10px}.brand-mark{width:46px;height:46px;font-size:1.3rem}.service-stamp{grid-column:1/-1;justify-self:start;margin-left:58px}.restaurant-world svg{min-height:200px}.world-caption{align-items:flex-start;flex-direction:column}.gold-caption{white-space:normal}.game-masthead .s{font-size:.86rem}}
+
+
+/* Kitchen-first game layout: remove the oversized dining-room hero and redundant station buttons. */
+.restaurant-world{display:none!important}
+.game-masthead{grid-template-columns:48px 1fr;gap:12px;padding:8px 2px 12px;margin-bottom:10px}
+.brand-mark{width:46px;height:46px;font-size:1.25rem}
+.game-masthead h1{font-size:clamp(1.45rem,3.5vw,2.25rem);margin:0}
+.game-masthead .s{font-size:.88rem}
+.service-stamp{display:none!important}
+#spots{display:none!important}
+#room{margin-top:12px}
+.room{border:2px solid #b58b4f;border-radius:12px;overflow:hidden;background:#15191c;box-shadow:0 18px 38px #0008}
+.room svg{min-width:0!important;width:100%;display:block;background:#16191d}
+.hot{cursor:pointer;transition:filter .16s,opacity .16s;outline:none}
+.hot:hover{filter:brightness(1.22)}
+.hot:focus{filter:brightness(1.25)}
+.hot .hot-outline{fill:#f4c96e;fill-opacity:.04;stroke:#f4c96e;stroke-width:2;stroke-dasharray:5 5;opacity:.65}
+.hot:hover .hot-outline{fill-opacity:.18;stroke-dasharray:none}
+.hot text.l{font:bold 13px Georgia,serif;fill:#fff3d6;paint-order:stroke;stroke:#171216;stroke-width:4px;stroke-linejoin:round}
+.kitchen-caption{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 14px;background:linear-gradient(90deg,#171216,#33221f,#171216);border-top:1px solid #9a703e;color:#e9ca84;font:700 .78rem Georgia,serif;letter-spacing:.12em}
+.kitchen-caption small{color:#c8b5a1;letter-spacing:.04em;font:normal .78rem system-ui}
+@media(max-width:600px){.room svg{min-height:0}.hot text.l{font-size:16px}.kitchen-caption{align-items:flex-start;flex-direction:column;gap:4px}}
+
+
+/* Retro arcade cooking-game remaster inspired by classic restaurant simulators */
+.game-masthead{grid-template-columns:42px 1fr!important;padding:5px 2px 8px!important;margin:0 0 8px!important;border-bottom:2px solid #d6ad58!important}
+.brand-mark{width:38px!important;height:38px!important;border-radius:2px!important;font-family:monospace!important;background:#991f24!important;box-shadow:inset 0 0 0 3px #541b1d!important;font-size:1rem!important}
+.game-masthead .eyebrow,.game-masthead .s,.service-stamp{display:none!important}
+.game-masthead h1{font-family:monospace!important;font-size:clamp(1.25rem,3vw,2rem)!important;letter-spacing:.09em!important;text-shadow:2px 2px #5c1c20!important}
+body{background:#17191d!important;font-family:ui-monospace,Consolas,monospace!important;image-rendering:pixelated}
+main{max-width:1080px!important;padding:10px!important}
+.screen,.competition-setup,.competition-hud{border-radius:3px!important;border:2px solid #b38b48!important;box-shadow:4px 4px 0 #090b0e!important;background:#22252a!important}
+h2{font-family:monospace!important;color:#f1cf7a!important;border-bottom:2px solid #9e272a!important;letter-spacing:.02em!important}
+.s{color:#d2d4d0!important}
+.go,.save,.nav button,.chip,.spot,.it,.seasoning-card button{border-radius:2px!important;font-family:monospace!important;box-shadow:2px 2px 0 #08090b!important}
+.go{background:linear-gradient(#c83b37,#8f1d26)!important;border:2px solid #f0ce7a!important;color:#fff5dc!important}
+.room{border:3px solid #d8b35f!important;border-radius:2px!important;background:#17191d!important;box-shadow:5px 5px 0 #08090b!important}
+.room svg{min-height:0!important;image-rendering:pixelated}
+.hot .hot-outline{fill:#ffdf75;fill-opacity:.015;stroke:#ffe083;stroke-width:3;stroke-dasharray:7 5;opacity:.45}
+.hot:hover .hot-outline,.hot:focus .hot-outline{fill-opacity:.25;stroke-dasharray:none;opacity:1}
+.hot text.l{font:bold 15px monospace!important;fill:#fff4ce!important;stroke:#351b1b!important;stroke-width:5px!important}
+.kitchen-caption{background:#17191d!important;border-top:2px solid #d7ad56!important;color:#f7d67e!important;font-family:monospace!important;letter-spacing:.1em}
+.kitchen-caption small{font-family:monospace!important;color:#d4d4cc!important}
+#inside .ins{border:3px solid #e4bd68!important;border-radius:2px!important;background:#272b30!important;color:#fff2d2!important}
+#inside .ttl{font-family:monospace!important;color:#f4d57f!important;text-transform:uppercase}
+#inside .it{background:linear-gradient(#ece7d8,#aaa99e)!important;color:#25272a!important;border:2px solid #5e6465!important;min-height:70px}
+#inside .it.got{background:linear-gradient(#b5d28a,#65834e)!important}
+#inside .it small{color:#3f4647!important}
+.arcade-stage{position:relative;overflow:hidden;padding:12px;background:#202329;border:3px solid #d9b35f;box-shadow:5px 5px 0 #090a0c}
+.arcade-stage-title{display:flex;justify-content:space-between;gap:8px;padding:7px 9px;background:#9f2027;border:2px solid #f2d17a;color:#fff1c8;font-size:.8rem;letter-spacing:.06em}
+.arcade-stage-title b{color:#fff7df}
+.arcade-backwall{height:235px;position:relative;margin-top:8px;overflow:hidden;border:2px solid #777f86;background:linear-gradient(#4d555f 0 10%,#1b2027 10% 100%)}
+.arcade-tiles{position:absolute;inset:0 0 68px;background-color:#173f76;background-image:linear-gradient(90deg,#5275a2 2px,transparent 2px),linear-gradient(#5275a2 2px,transparent 2px);background-size:24px 20px;opacity:.85}
+.arcade-tiles:after{content:"";position:absolute;right:0;top:0;width:44%;height:100%;background-color:#8c2228;background-image:linear-gradient(90deg,#c05b4b 2px,transparent 2px),linear-gradient(#c05b4b 2px,transparent 2px);background-size:24px 20px}
+.arcade-chef-portrait{position:absolute;z-index:2;left:calc(50% - 54px);top:9px;width:108px;height:110px;border:3px solid #d8d9d0;background:linear-gradient(#dddcd4,#929a9c);display:flex;align-items:center;justify-content:flex-end;flex-direction:column;box-shadow:0 0 0 3px #292d32}
+.arcade-chef-portrait:before{content:"";position:absolute;top:20px;width:37px;height:42px;border-radius:45% 45% 35% 35%;background:#c99775;border:3px solid #3d3433;box-shadow:0 -13px 0 -2px #f0eee4,0 -18px 0 -1px #d6d8d0}
+.arcade-chef-portrait:after{content:"";position:absolute;top:59px;width:69px;height:43px;background:#eee9dc;clip-path:polygon(25% 0,75% 0,100% 100%,0 100%)}
+.arcade-chef-portrait span{position:absolute;top:3px;right:5px;color:#f5ce72}.arcade-chef-portrait b{position:relative;z-index:3;background:#25282e;color:#f4d57e;font-size:8px;padding:2px 4px;width:100%;text-align:center}
+.arcade-range{position:absolute;z-index:3;left:0;right:0;bottom:0;height:105px;background:linear-gradient(#c5c8c6,#747b7d 15%,#3e4449 35%,#171b20);border-top:5px solid #d8d9d1;display:flex;justify-content:space-evenly;align-items:center;gap:3px;padding:5px}
+.range-pot{width:18%;height:84px;display:flex;align-items:center;justify-content:flex-start;flex-direction:column;background:linear-gradient(#31383e,#16191d);border:2px solid #aab0ad;box-shadow:inset 0 0 0 2px #444b50}
+.pot-lid{height:7px;width:70%;background:#e5e4dc;border:2px solid #858c8e;border-radius:7px;margin-top:3px}
+.pot-body{height:40px;width:70%;background:linear-gradient(#d8d8ce,#626a6d);border:2px solid #eef0e6;border-radius:5px 5px 12px 12px;display:grid;place-items:center;font-size:1.1rem;margin-top:3px}
+.range-pot small{font-size:8px;color:#ffe18a;margin-top:4px}
+.arcade-ingredient-rail{display:flex;gap:6px;overflow-x:auto;padding:10px 2px;background:#c28f58;border:2px solid #f3d28a;justify-content:center;flex-wrap:wrap}
+.mini-bowl{display:flex;flex-direction:column;align-items:center;min-width:64px;padding:5px;background:#e7e3d8;border:2px solid #888d8b;color:#303439;box-shadow:2px 2px 0 #68472c}
+.mini-bowl b{font-size:1.35rem}.mini-bowl small{font-size:9px;text-align:center;max-width:70px}
+.arcade-stage .chef{border-radius:0!important;border:2px solid #b88b49!important;background:#30353a!important;color:#fff2d2!important}
+.arcade-stage .board{border-radius:0!important;border:4px solid #e8c77c!important;background:repeating-linear-gradient(0deg,#bb8652,#bb8652 8px,#b17a47 8px,#b17a47 16px)!important;box-shadow:inset 0 0 0 4px #704529!important}
+.arcade-stage .bar,.arcade-stage .gauge{border-radius:0!important;border:3px solid #e2e2d9!important;background:#15191e!important}
+.arcade-stage .pan{border-radius:0!important;border:3px solid #d4d7d3!important;background:radial-gradient(ellipse,#545c62,#171a1e)!important;box-shadow:inset 0 0 0 4px #343a40!important}
+.arcade-stage .chip{border-radius:2px!important}
+#kg .seasoning-card{border-radius:0!important;border:2px solid #b88b49!important;background:#30343a!important}
+#kg #pv{border:3px solid #cba45d;background:#252a2e;padding:8px}
+#kg #pv svg{image-rendering:pixelated}
+#kg .gauge .gz{background:#65b74e!important}
+.nav{border-radius:0!important;position:static!important;margin-top:10px!important;background:#15181d!important}
+.nav span{font-family:monospace!important;color:#f0cf7d!important}
+@media(max-width:600px){.arcade-backwall{height:190px}.arcade-stage-title{font-size:.68rem}.arcade-ingredient-rail{justify-content:flex-start}.range-pot{height:72px}.pot-body{height:32px}}
+
+
+/* Modern fine-dining plating layered over the retro arcade kitchen */
+#kg #pv{margin:14px auto;padding:14px;border:2px solid #c5a15e!important;border-radius:12px!important;background:radial-gradient(ellipse at 50% 35%,#34404b 0,#161d25 68%)!important;box-shadow:inset 0 0 0 1px #ffffff12,0 14px 30px #0008}
+#kg #pv svg{image-rendering:auto!important;filter:drop-shadow(0 12px 10px #0007);max-width:560px}
+#kg #tray{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}
+#kg #tray .chip{background:linear-gradient(180deg,#343d47,#1b222b)!important;border:1px solid #64717c!important;border-radius:9px!important;padding:9px 12px!important;box-shadow:0 4px 0 #090d12!important}
+#kg #tray .chip.on{background:linear-gradient(180deg,#c8a55d,#7f572d)!important;border-color:#ffe3a0!important;color:#17191d!important}
+.plating-note{font-size:.78rem;color:#c6d0d8;text-align:center;letter-spacing:.08em;text-transform:uppercase;margin:4px 0 12px}
+/* High-pressure service: heat shimmer, flame flicker, alarms and live pass lights */
+.arcade-stage.under-pressure{background:linear-gradient(145deg,#2c1719,#111820);border-color:#ffb14a;box-shadow:0 0 0 2px #8e252b,0 0 24px #d63b2d55,5px 5px 0 #090a0c;animation:stagePulse 1.3s ease-in-out infinite alternate}
+.heat-alert{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;padding:7px 10px;background:#3b1118;border:1px solid #ff6a43;color:#ffe5b7;font-size:.75rem;font-weight:900;letter-spacing:.09em;text-transform:uppercase}
+.heat-alert .leds{display:flex;gap:5px}.heat-alert i{width:9px;height:9px;border-radius:50%;background:#ff493c;box-shadow:0 0 10px #ff493c;animation:ledBlink .55s steps(2,end) infinite}
+.heat-alert i:nth-child(2){animation-delay:.18s}.heat-alert i:nth-child(3){animation-delay:.36s}
+.flame-row{display:flex;justify-content:center;gap:7px;min-height:45px;align-items:center;font-size:1.8rem;filter:drop-shadow(0 0 7px #ff6b27);animation:flameFlicker .32s ease-in-out infinite alternate}
+.arcade-stage.under-pressure .pan{font-size:3.6rem;animation:panRattle .18s linear infinite alternate;text-shadow:0 0 18px #ff6a2c}
+.arcade-stage.under-pressure .arcade-backwall{border-color:#ff7949;box-shadow:inset 0 0 35px #d22c1e44}
+.arcade-stage.under-pressure .gf{background:linear-gradient(90deg,#ffd45d,#ff8b28,#ed2525)!important;box-shadow:0 0 14px #ff4b2b}
+.arcade-stage.under-pressure .go{animation:buttonPulse .7s ease-in-out infinite alternate}
+@keyframes stagePulse{from{filter:saturate(1)}to{filter:saturate(1.35) brightness(1.07)}}
+@keyframes ledBlink{to{opacity:.25;box-shadow:none}}
+@keyframes flameFlicker{from{transform:translateY(2px) scale(.96)}to{transform:translateY(-3px) scale(1.06)}}
+@keyframes panRattle{from{transform:rotate(-1deg)}to{transform:rotate(1deg)}}
+@keyframes buttonPulse{from{filter:brightness(1)}to{filter:brightness(1.3)}}
+@media(prefers-reduced-motion:reduce){.under-pressure,.heat-alert i,.flame-row,.arcade-stage.under-pressure .pan,.arcade-stage.under-pressure .go{animation:none!important}}
+
+</style></head><body><main>
+<header class="game-masthead"><div class="brand-mark">KT</div><div><div class="eyebrow">THE GRAND DINING ROOM · LIVE SERVICE</div><h1>Kitchen Twist</h1><p class="s">Build your menu. Impress the critics. Own the pass.</p></div><div class="service-stamp"><span class="live-dot"></span> SERVICE LIVE <b>★ ★ ★</b></div></header>
+<div class="restaurant-world" role="img" aria-label="Illustrated 3D-inspired restaurant dining room with chef portrait, golden chandeliers, dining tables and glowing kitchen pass">
+<svg viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg" aria-labelledby="worldTitle">
+<title id="worldTitle">Kitchen Twist Grand Dining Room</title><defs>
+ <linearGradient id="wall" x2="0" y2="1"><stop stop-color="#4b2c26"/><stop offset="1" stop-color="#211b20"/></linearGradient><linearGradient id="floor" x2="0" y2="1"><stop stop-color="#6b3f32"/><stop offset="1" stop-color="#211b1d"/></linearGradient><linearGradient id="gold" x2="1" y2="1"><stop stop-color="#fff0ad"/><stop offset=".45" stop-color="#d9a84f"/><stop offset="1" stop-color="#80512a"/></linearGradient><linearGradient id="counter" x2="0" y2="1"><stop stop-color="#d5b875"/><stop offset=".25" stop-color="#4a4140"/><stop offset="1" stop-color="#151a20"/></linearGradient><radialGradient id="lamp"><stop stop-color="#ffeeb3" stop-opacity=".5"/><stop offset="1" stop-color="#ffc64d" stop-opacity="0"/></radialGradient><filter id="glow"><feGaussianBlur stdDeviation="8"/></filter></defs>
+<rect width="1000" height="470" fill="#100e13"/><rect x="0" y="0" width="1000" height="270" fill="url(#wall)"/>
+<!-- rich wall panels --> <g stroke="#8d613b" stroke-width="5" fill="none" opacity=".9"><path d="M20 15V280M165 15V280M310 15V280M455 15V280M600 15V280M745 15V280M890 15V280M980 15V280"/><path d="M20 18H980M20 255H980"/></g><g stroke="#d0a254" stroke-width="2" opacity=".55" fill="none"><path d="M30 28H155V240H30ZM175 28H300V240H175ZM320 28H445V240H320ZM465 28H590V240H465ZM610 28H735V240H610ZM755 28H880V240H755ZM900 28H970V240H900Z"/></g>
+<!-- framed chef portrait --> <rect x="38" y="38" width="155" height="195" rx="5" fill="#090b0e" stroke="url(#gold)" stroke-width="7"/><rect x="48" y="48" width="135" height="175" fill="#28323b"/><circle cx="116" cy="91" r="25" fill="#c99b78"/><path d="M91 88Q91 58 117 62Q143 61 143 91L135 80L100 80Z" fill="#242126"/><path d="M76 177Q78 120 115 120Q155 120 158 177L150 205H83Z" fill="#e6e2d9"/><path d="M100 126L115 149L130 126L138 197H92Z" fill="#242b32"/><path d="M110 146L116 157L122 146L126 196H106Z" fill="#a6382d"/><text x="116" y="216" font-size="13" font-family="sans-serif" font-weight="bold" text-anchor="middle" fill="#f7d78b">HEAD CHEF</text>
+<!-- trophy shelves --> <g fill="url(#gold)" stroke="#754923" stroke-width="2"><path d="M267 60H307V80Q307 100 287 100Q267 100 267 80Z"/><path d="M267 65H254V76Q254 89 271 89M307 65H320V76Q320 89 303 89" fill="none"/><rect x="280" y="100" width="14" height="18"/><rect x="270" y="117" width="34" height="7"/><path d="M364 48H395V66Q395 84 379 84Q364 84 364 66Z"/><path d="M364 53H353V64Q353 75 368 75M395 53H406V64Q406 75 391 75" fill="none"/><rect x="373" y="84" width="12" height="14"/><rect x="365" y="97" width="28" height="6"/></g>
+<!-- central back door and warm sconces --> <rect x="434" y="73" width="150" height="170" rx="3" fill="#17171c" stroke="#b88a4c" stroke-width="5"/><rect x="447" y="86" width="124" height="144" fill="#39262a"/><path d="M509 86V230" stroke="#a87945" stroke-width="3"/><circle cx="499" cy="159" r="3" fill="#f7d37a"/><circle cx="519" cy="159" r="3" fill="#f7d37a"/>
+<g><circle cx="227" cy="102" r="52" fill="url(#lamp)"/><circle cx="692" cy="103" r="52" fill="url(#lamp)"/><path d="M227 18V72M692 18V72" stroke="#d9ad5b" stroke-width="3"/><path d="M194 72Q227 110 260 72Z" fill="url(#gold)" stroke="#8d612f" stroke-width="3"/><path d="M659 72Q692 110 725 72Z" fill="url(#gold)" stroke="#8d612f" stroke-width="3"/><g fill="#fff0b5"><circle cx="207" cy="77" r="5"/><circle cx="227" cy="87" r="5"/><circle cx="247" cy="77" r="5"/><circle cx="675" cy="77" r="5"/><circle cx="692" cy="87" r="5"/><circle cx="710" cy="77" r="5"/></g></g>
+<!-- right-side service pass --> <rect x="777" y="47" width="186" height="166" rx="4" fill="#11161b" stroke="#b88a4c" stroke-width="4"/><rect x="789" y="59" width="162" height="130" fill="#202a31"/><rect x="799" y="70" width="142" height="10" fill="#9d7a49"/><rect x="799" y="91" width="142" height="5" fill="#52616a"/><g fill="#f2b94e"><circle cx="815" cy="115" r="5"/><circle cx="835" cy="115" r="5"/><circle cx="855" cy="115" r="5"/><circle cx="875" cy="115" r="5"/></g><rect x="799" y="142" width="142" height="35" fill="#090e12"/><path d="M807 168Q825 141 844 168T883 168T933 168" fill="none" stroke="#ff9d47" stroke-width="4"/><text x="870" y="203" font-family="sans-serif" font-size="11" fill="#f5d58c" text-anchor="middle" letter-spacing="2">THE PASS</text>
+<!-- perspective parquet floor --> <path d="M0 260H1000V470H0Z" fill="url(#floor)"/><path d="M0 290L1000 290M0 330L1000 330M0 380L1000 380M0 440L1000 440" stroke="#9a6944" stroke-width="2" opacity=".55"/><path d="M80 260L0 470M220 260L120 470M360 260L300 470M500 260L500 470M640 260L700 470M780 260L880 470M920 260L1000 470" stroke="#a77a4e" stroke-width="2" opacity=".45"/>
+<!-- tables, shadows and chairs --> <g id="diningTables">
+<g transform="translate(270 325)"><ellipse cx="0" cy="53" rx="100" ry="19" fill="#0b0b0d" opacity=".6"/><g fill="#241c1b" stroke="#bb8b4d" stroke-width="2"><path d="M-65 22L-58 75H-45L-42 23ZM42 23L45 75H58L65 22Z"/><rect x="-91" y="-5" width="18" height="38" rx="5"/><rect x="73" y="-5" width="18" height="38" rx="5"/><rect x="-18" y="-44" width="36" height="22" rx="5"/></g><ellipse cx="0" cy="0" rx="89" ry="35" fill="#f2e5ce" stroke="url(#gold)" stroke-width="5"/><ellipse cx="0" cy="0" rx="78" ry="27" fill="#d4b17c"/><g fill="#fff9e9" stroke="#a78c69" stroke-width="1"><ellipse cx="-42" cy="-4" rx="15" ry="10"/><ellipse cx="0" cy="-9" rx="15" ry="10"/><ellipse cx="42" cy="-4" rx="15" ry="10"/></g><g fill="#e9b954"><circle cx="-42" cy="-4" r="4"/><circle cx="0" cy="-9" r="4"/><circle cx="42" cy="-4" r="4"/></g><g fill="#27323b"><circle cx="-61" cy="-25" r="11"/><path d="M-75 -14Q-61 -25 -47 -14L-43 9H-79Z"/><circle cx="58" cy="-25" r="11"/><path d="M44 -14Q58 -25 72 -14L76 9H40Z"/></g></g>
+<g transform="translate(510 365) scale(.82)"><ellipse cx="0" cy="50" rx="98" ry="19" fill="#08090a" opacity=".6"/><g fill="#21191a" stroke="#bb8b4d" stroke-width="2"><path d="M-65 20L-58 75H-45L-42 21ZM42 21L45 75H58L65 20Z"/><rect x="-91" y="-5" width="18" height="38" rx="5"/><rect x="73" y="-5" width="18" height="38" rx="5"/><rect x="-18" y="-44" width="36" height="22" rx="5"/></g><ellipse cx="0" cy="0" rx="89" ry="35" fill="#f2e5ce" stroke="url(#gold)" stroke-width="5"/><ellipse cx="0" cy="0" rx="78" ry="27" fill="#d4b17c"/><g fill="#fff9e9" stroke="#a78c69"><ellipse cx="-42" cy="-4" rx="15" ry="10"/><ellipse cx="0" cy="-9" rx="15" ry="10"/><ellipse cx="42" cy="-4" rx="15" ry="10"/></g><g fill="#e9b954"><circle cx="-42" cy="-4" r="4"/><circle cx="0" cy="-9" r="4"/><circle cx="42" cy="-4" r="4"/></g><g fill="#27323b"><circle cx="-61" cy="-25" r="11"/><path d="M-75 -14Q-61 -25 -47 -14L-43 9H-79Z"/><circle cx="58" cy="-25" r="11"/><path d="M44 -14Q58 -25 72 -14L76 9H40Z"/></g></g>
+<g transform="translate(770 319) scale(.68)"><ellipse cx="0" cy="48" rx="90" ry="17" fill="#08090a" opacity=".6"/><g fill="#21191a" stroke="#bb8b4d" stroke-width="2"><path d="M-60 18L-54 68H-42L-40 19ZM40 19L42 68H54L60 18Z"/><rect x="-82" y="-5" width="16" height="35" rx="5"/><rect x="66" y="-5" width="16" height="35" rx="5"/></g><ellipse cx="0" cy="0" rx="80" ry="32" fill="#f2e5ce" stroke="url(#gold)" stroke-width="5"/><ellipse cx="0" cy="0" rx="70" ry="24" fill="#d4b17c"/><g fill="#fff9e9"><ellipse cx="-36" cy="-4" rx="14" ry="9"/><ellipse cx="0" cy="-9" rx="14" ry="9"/><ellipse cx="36" cy="-4" rx="14" ry="9"/></g><g fill="#e9b954"><circle cx="-36" cy="-4" r="4"/><circle cx="0" cy="-9" r="4"/><circle cx="36" cy="-4" r="4"/></g></g></g>
+<rect x="10" y="10" width="980" height="450" rx="10" fill="none" stroke="#d8b36a" stroke-width="3" opacity=".75"/>
+<rect x="28" y="420" width="300" height="28" rx="5" fill="#12161b" stroke="#a77d42"/><text x="42" y="438" fill="#f6d78e" font-family="sans-serif" font-size="12" letter-spacing="2">GRAND DINING ROOM</text><rect x="790" y="420" width="178" height="28" rx="5" fill="#12161b" stroke="#a77d42"/><text x="879" y="438" fill="#f6d78e" font-family="sans-serif" font-size="12" text-anchor="middle" letter-spacing="2">TABLES · 03</text>
+</svg><div class="world-caption"><span><b>THE GRAND DINING ROOM</b><small>Fine dining · Live competition</small></span><span class="gold-caption">✦ CHEF’S TABLE ✦</span></div></div>
+<section class="competition-setup" id="competitionSetup">
+ <div class="setup-kicker">THE THREE-ROUND COOK-OFF</div>
+ <h2 style="border:0;margin:4px 0 8px">Two chefs. Three rounds. One champion.</h2>
+ <p class="s">Two chefs · three rounds · score each dish out of 10. Highest total wins.</p>
+ <div class="player-fields"><label>🔴 Chef One <input id="playerOne" type="text" maxlength="22" value="Chef One" aria-label="First player name"></label><label>🔵 Chef Two <input id="playerTwo" type="text" maxlength="22" value="Chef Two" aria-label="Second player name"></label></div>
+ <button class="go" id="startCompetition">Start the 3-round cook-off</button>
+</section>
+<section class="competition-hud" id="competitionHud" hidden></section>
+
+<h2>INGREDIENT MARKET</h2>
+<div class="grid" id="spots"></div>
+<div id="room"></div>
+<div id="inside" hidden></div>
+<div class="msg" id="msg">Where will you look first?</div>
+
+<h2>YOUR INGREDIENTS <span id="cnt" style="color:var(--mut)"></span></h2>
+<div id="basket"></div>
+
+<h2>COOKING STYLE</h2>
+<div class="chips" id="methods"></div>
+
+<h2>PLATING VISION</h2>
+<p class="s">How do you picture the finished meal? Pick a style and describe it.</p>
+<div class="chips" id="styles"></div>
+<p class="s" style="margin-top:10px">What kind of food?</p>
+<div class="chips" id="cuisines"></div>
+<textarea id="vision" rows="3" placeholder="e.g. a steaming bowl, golden and crispy on top, sprinkled with fresh herbs, candlelit table"></textarea>
+<div id="visprev"></div>
+<button class="go" id="cook" disabled>Cook it!</button>
+<h2>LIVE COOKING LINE</h2>
+<div id="kg"><p class="s">Press Cook it! on the last screen to start.</p></div>
+<h2>JUDGES’ REVIEW</h2>
+<div id="result"><p class="s">Cook something first!</p></div>
+
+<h2>🛍️ Kitchen store</h2>
+<p class="s">Coins: <b id="coinCount">0</b> 🪙 · Earn coins from reviews, then buy kitchen upgrades.</p>
+<div id="store"></div>
+<h2>📖 My recipe book</h2>
+<div class="book" id="book"><p class="s">Nothing saved yet.</p></div>
+</main>
+<script>
+const SPOTS_OLD=[
+{n:"Fridge",e:"🧊",p:[["🥚","Egg"],["🧀","Cheese"],["🥛","Milk"],["🍅","Tomato"],["🥬","Lettuce"],["🧈","Butter"],["🍗","Chicken"],["🥓","Bacon"]]},
+{n:"Pantry",e:"🚪",p:[["🍝","Pasta"],["🍚","Rice"],["🍞","Bread"],["🧅","Onion"],["🥔","Potato"],["🥫","Beans"],["🥜","Peanuts"]]},
+{n:"Spice rack",e:"🧂",p:[["🧂","Salt"],["🌶️","Chili"],["🧄","Garlic"],["🌿","Basil"],["🍯","Honey"],["🫚","Ginger"]]},
+{n:"Fruit bowl",e:"🧺",p:[["🍋","Lemon"],["🍎","Apple"],["🍌","Banana"],["🥑","Avocado"],["🍍","Pineapple"]]},
+{n:"Garden window",e:"🪟",p:[["🥕","Carrot"],["🌽","Corn"],["🍄","Mushroom"],["🫑","Pepper"],["🥦","Broccoli"]]},
+{n:"Under the sink",e:"🤫",p:[["🍫","Chocolate"],["🌭","Hot dog"],["🍿","Popcorn"],["🍕","Leftover pizza"]]}
+];
+const D="🥛 Dairy & Eggs",M="🍗 Meat",V="🥬 Veggies",F="🍎 Fruit",P="🍚 Grains & Pantry",S="🌿 Spices & Herbs",X="🫙 Seasoning Mixes",W="🍬 Snacks & Sweets";
+const INFO={Egg:[D,"Binds, scrambles or fries"],Milk:[D,"Creamy base for sauces and shakes"],Butter:[D,"Sautés and adds richness"],Mozzarella:[D,"Melts into gooey, stretchy layers"],Parmesan:[D,"Grate on top for salty, nutty flavor"],Cheddar:[D,"Sharp and melty, great in bakes"],Tomato:[V,"Juicy sauce or fresh slices"],Lettuce:[V,"Crisp, fresh base"],Onion:[V,"Aromatic base, sweet when cooked"],Potato:[V,"Hearty, starchy filler"],Carrot:[V,"Sweet crunch"],Corn:[V,"Sweet pops of flavor"],Mushroom:[V,"Earthy, meaty bite"],Pepper:[V,"Sweet crunch and color"],Broccoli:[V,"Fresh green crunch"],Chicken:[M,"Main protein to grill, roast or fry"],Bacon:[M,"Crispy, salty topping"],"Hot dog":[M,"Quick sliced protein"],Steak:[M,"Sear hard for a browned crust, then rest before slicing"],Lamb:[M,"Season boldly, sear, and rest before serving"],Shrimp:[M,"Sear quickly until pink and just opaque"],Salmon:[M,"Sear skin-side down until crisp, then finish gently"],Scallops:[M,"Pat dry and sear until deeply golden"],Squid:[M,"Cook quickly over high heat to keep it tender"],Pancetta:[M,"Render slowly until crisp and golden"],Turkey:[M,"Cook through while keeping the meat moist"],Sausage:[M,"Brown evenly and cook through"],"Pork chop":[M,"Sear both sides and rest before serving"],Duck:[M,"Render the skin slowly, then finish to temperature"],Crab:[M,"Warm gently and preserve its delicate sweetness"],Lobster:[M,"Cook gently and finish with butter"],Pasta:[P,"Starchy base to carry sauce"],Rice:[P,"Fluffy base that soaks up flavor"],Bread:[P,"Toast it or use it for crunch"],Beans:[P,"Hearty, protein-packed filler"],Peanuts:[W,"Crunchy, rich topping"],Salt:[S,"Brings out every flavor"],Chili:[S,"Adds heat"],Garlic:[S,"Fresh, punchy aroma"],Basil:[S,"Fresh finishing herb"],Ginger:[S,"Warm, zesty kick"],Honey:[W,"Sweet glaze or drizzle"],Lemon:[F,"Bright acid to finish"],Apple:[F,"Sweet and crisp"],Banana:[F,"Creamy sweetness"],Avocado:[F,"Creamy and rich"],Pineapple:[F,"Sweet and tangy"],Chocolate:[W,"Melts into rich sweetness"],Popcorn:[W,"Light crunchy topping"],"Leftover pizza":[W,"Chaotic bonus topping"],"Cajun Seasoning":[X,"Smoky, spicy rub for meat and veg"],"Garlic Powder":[X,"Even garlic flavor in everything"],"Onion Powder":[X,"Savory depth without chopping"],"Italian Seasoning":[X,"Herby blend for pasta and bakes"],"Taco Seasoning":[X,"Cumin and chili warmth"],"Smoked Paprika":[X,"Smoky color and flavor"]};
+const SPOTS=SPOTS_OLD.map(s=>({...s,p:s.p.filter(x=>x[1]!=="Cheese")}));
+// Extra restaurant-grade pantry stations with more ingredient choices.
+SPOTS.push(
+ {n:"Seafood counter",e:"🦐",p:[["🐟","Salmon"],["🦐","Shrimp"],["🦪","Scallops"],["🦑","Squid"],["🦀","Crab"],["🦞","Lobster"],["🍋","Lemon"],["🧈","Butter"]]},
+ {n:"Butcher's station",e:"🥩",p:[["🥩","Steak"],["🍖","Lamb"],["🥓","Pancetta"],["🍗","Turkey"],["🌭","Sausage"],["🍖","Pork chop"],["🦆","Duck"],["🥚","Egg"]]},
+ {n:"Bakery & patisserie",e:"🥐",p:[["🥐","Croissant"],["🥖","Baguette"],["🍰","Cake"],["🍪","Cookie"],["🍓","Strawberry"],["🫐","Blueberry"]]},
+ {n:"Chef's garde-manger",e:"🫒",p:[["🫒","Olives"],["🧀","Feta"],["🥒","Cucumber"],["🌱","Microgreens"],["🍄","Truffle"],["🥣","Yogurt"]]},
+ {n:"Sauce station",e:"🫙",p:[["🥫","Tomato paste"],["🫙","Soy sauce"],["🥛","Cream"],["🟡","Mustard"],["🫒","Olive oil"],["🍶","Vinegar"]]}
+);
+SPOTS.push({n:"Meat & seafood counter",e:"🥩",p:[["🍗","Chicken"],["🥩","Steak"],["🍤","Shrimp"],["🦑","Squid"],["🍖","Lamb"],["🐟","Salmon"],["🦪","Scallops"],["🥓","Bacon"],["🥓","Pancetta"],["🦃","Turkey"],["🌭","Sausage"],["🍖","Pork chop"],["🦆","Duck"],["🦀","Crab"],["🦞","Lobster"],["🌭","Hot dog"]]});
+[[0,"🧀","Mozzarella"],[0,"🧀","Parmesan"],[0,"🧀","Cheddar"],[2,"🫙","Cajun Seasoning"],[2,"🫙","Garlic Powder"],[2,"🫙","Onion Powder"],[2,"🫙","Italian Seasoning"],[2,"🫙","Taco Seasoning"],[2,"🫙","Smoked Paprika"]].forEach(([i,e,n])=>SPOTS[i].p.push([e,n]));
+SPOTS.forEach(s=>s.p.forEach(x=>{const f=INFO[x[1]]||[W,"Adds its own flavor"];x[2]=f[0];x[3]=f[1]}));
+const METHODS=[
+{n:"Sauté",e:"🍳",noun:"Sauté",step:"Heat a pan with a little oil and sauté everything until golden, about 8 minutes."},
+{n:"Simmer",e:"🍲",noun:"Stew",step:"Add to a pot with a cup of water or broth and simmer gently for 20 minutes."},
+{n:"Bake",e:"♨️",noun:"Bake",step:"Layer in a dish and bake at 200°C / 400°F for 25 minutes until bubbling."},
+{n:"Toss",e:"🥗",noun:"Salad",step:"Toss everything in a big bowl with a splash of oil and a pinch of salt."},
+{n:"Blend",e:"🥤",noun:"Smoothie",step:"Add everything to a blender with a handful of ice and a splash of milk or water. Blend until silky smooth."},
+{n:"Shake",e:"🥛",noun:"Milkshake",step:"Blend everything with two big scoops of ice cream and a cup of cold milk until thick and creamy."},
+{n:"Grill",e:"🔥",noun:"Grill",step:"Heat the grill to medium-high and cook everything for 4 to 6 minutes per side until charred and tender."},
+{n:"Fry",e:"🍟",noun:"Fry-Up",step:"Heat oil in a deep pan and fry in batches until crispy and golden. Drain on paper towel."},
+{n:"Roast",e:"🍖",noun:"Roast",step:"Spread on a tray, drizzle with oil, and roast at 220°C / 425°F for 30 minutes, turning once."},
+{n:"Freeze",e:"🍦",noun:"Ice Cream",step:"Blend until creamy, pour into a container, and freeze for 4 hours, stirring once an hour."}
+];
+const STYLES=[{n:"Cozy bowl",e:"🥣"},{n:"Fancy plate",e:"🍽️"},{n:"Street food",e:"🌮"},{n:"Picnic",e:"🧺"},{n:"Feast",e:"🎉"}];
+const CUISINES=[{n:"Anything",e:"🍴",adj:"",bg:"#fde9cf",c:"#e0622b",tip:""},{n:"Italian",e:"🍝",adj:"Italian",bg:"#f7e3d0",c:"#b83b3b",tip:"Finish with olive oil, garlic and a handful of basil, the Italian way."},{n:"Mexican",e:"🌮",adj:"Mexican",bg:"#fbe3b5",c:"#2f9e63",tip:"Squeeze over fresh lime, add chili and a sprinkle of cilantro."},{n:"Asian",e:"🥢",adj:"Asian",bg:"#e7efe0",c:"#c0392b",tip:"Finish with soy sauce, a drizzle of sesame oil and sliced green onion."},{n:"American",e:"🍔",adj:"Diner",bg:"#dfe9f5",c:"#3b6fb8",tip:"Go big: extra cheese and a side of something crispy."},{n:"Indian",e:"🍛",adj:"Spiced",bg:"#fbe0b0",c:"#d98a1c",tip:"Bloom cumin, turmeric and garam masala in hot oil before anything else."},{n:"Dessert",e:"🍰",adj:"Sweet",bg:"#fadde8",c:"#d95f93",tip:"Finish with something sweet: a dusting of sugar or a drizzle of syrup."}];
+let basket=[],sel=new Set(),method=0,meal=null,book=[],style=0,cuisine=0;
+const $=id=>document.getElementById(id);
+let coins=0, owned=new Set();
+let competition={active:false,finished:false,players:['Chef One','Chef Two'],round:1,player:0,scores:[[],[]],lastScore:null};
+function renderCompetitionHud(){
+ const hud=$("competitionHud"),setup=$("competitionSetup");
+ if(!competition.active&&!competition.finished){hud.hidden=true;setup.hidden=false;return}
+ setup.hidden=true;hud.hidden=false;
+ const total=i=>competition.scores[i].reduce((a,b)=>a+b,0);
+ const rounds=i=>[0,1,2].map(r=>competition.scores[i][r]===undefined?'—':competition.scores[i][r].toFixed(1)).join(' · ');
+ hud.innerHTML=`<div class="hud-top"><div><div class="setup-kicker">LIVE SCOREBOARD</div><b>${competition.finished?'MATCH COMPLETE':'ROUND '+competition.round+' OF 3 · '+['SIGNATURE PLATE','MYSTERY BASKET','FINAL SERVICE'][competition.round-1]}</b></div><span class="round-pill">${competition.finished?'FINAL SCORES':`NOW COOKING: ${esc(competition.players[competition.player])}`}</span></div><div class="scoreboard">${competition.players.map((n,i)=>`<div class="score-player ${!competition.finished&&i===competition.player?'active':''}"><b>${i===0?'🔴':'🔵'} ${esc(n)}</b><div class="score-big">${total(i).toFixed(1)} <span style="font-size:.85rem;color:#a8b2bf">/ 30</span></div><div class="score-rounds">Rounds: ${rounds(i)}</div></div>`).join('')}</div>`;
+}
+function resetForNextTurn(){basket=[];sel=new Set();method=0;style=1;cuisine=0;$("vision").value='';renderBasket();renderMethods();renderStyles();renderCuisines();renderVis();$("cook").disabled=true;$("result").innerHTML='<p class="s">Your review will appear here after service.</p>';$('kg').innerHTML='<p class="s">Choose ingredients and prepare your signature dish.</p>';renderCompetitionHud();$("msg").textContent=`Round ${competition.round}: ${competition.players[competition.player]}, choose your ingredients.`;go(0)}
+function continueCompetition(){
+ if(competition.player===0){competition.player=1}
+ else if(competition.round<3){competition.player=0;competition.round++}
+ else {competition.active=false;competition.finished=true;renderCompetitionHud();const a=competition.scores[0].reduce((x,y)=>x+y,0),b=competition.scores[1].reduce((x,y)=>x+y,0),winner=a===b?'It’s a tie!':a>b?competition.players[0]:competition.players[1];$('result').innerHTML+=`<div class="final-winner"><div class="trophy">${a===b?'🤝':'🏆'}</div><div class="setup-kicker">THE FINAL VERDICT</div><h2 style="border:0;margin:8px 0">${esc(winner)} ${a===b?'— dead even!':'wins the cook-off!'}</h2><p>${esc(competition.players[0])}: <b>${a.toFixed(1)}/30</b> &nbsp; · &nbsp; ${esc(competition.players[1])}: <b>${b.toFixed(1)}/30</b></p><p class="s">Three rounds. Every score counts. Respect to both chefs.</p><button class="go" id="newMatch">Start a new match</button></div>`;$('newMatch').onclick=()=>{competition={active:false,finished:false,players:['Chef One','Chef Two'],round:1,player:0,scores:[[],[]],lastScore:null};$('playerOne').value='Chef One';$('playerTwo').value='Chef Two';renderCompetitionHud();$('result').innerHTML='<p class="s">Cook something first!</p>';go(0)};return}
+ resetForNextTurn();
+}
+$("startCompetition").onclick=()=>{competition={active:true,finished:false,players:[$("playerOne").value.trim()||'Chef One',$("playerTwo").value.trim()||'Chef Two'],round:1,player:0,scores:[[],[]],lastScore:null};$("competitionSetup").hidden=true;renderCompetitionHud();resetForNextTurn();$("msg").textContent=`Round 1: ${competition.players[0]}, choose your ingredients.`};
+function renderSpots(){$("spots").innerHTML=SPOTS.map((s,i)=>`<button class="spot" data-i="${i}"><b>${s.e}</b>${s.n}</button>`).join("")}
+function renderBasket(){
+ $("cnt").textContent=basket.length?`(${basket.length})`:"";
+ $("basket").innerHTML=basket.length?[...new Set(basket.map(b=>b[2]))].map(c=>`<div class="sec2">${c}</div><div class="chips">${basket.map((b,i)=>b[2]===c?`<button class="chip ${sel.has(i)?'on':''}" data-i="${i}" title="${b[3]}">${b[0]} ${b[1]}</button>`:"").join("")}</div>`).join(""):'<span class="s">Empty — go search!</span>';
+ $("cook").disabled=sel.size<2;if($("visprev"))renderVis();if($("bk"))updNav();
+}
+function renderStyles(){$("styles").innerHTML=STYLES.map((s,i)=>`<button class="chip ${i===style?'on':''}" data-i="${i}">${s.e} ${s.n}</button>`).join("")}
+function renderVis(){const v=$("vision").value.trim(),ing=[...sel].map(i=>basket[i][0]).join("")||"🍽️";$("visprev").innerHTML=`<div class="vb"><div class="vs">${STYLES[style].e} ${STYLES[style].n} · ${CUISINES[cuisine].e} ${CUISINES[cuisine].n}</div><div class="vi">${ing}</div><div>${v?esc(v):"Your vision will show up here…"}</div></div>`}
+$("styles").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;style=+b.dataset.i;renderStyles();renderVis()};
+$("vision").oninput=renderVis;
+function renderCuisines(){$("cuisines").innerHTML=CUISINES.map((c,i)=>`<button class="chip ${i===cuisine?'on':''}" data-i="${i}">${c.e} ${c.n}</button>`).join("")}
+$("cuisines").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;cuisine=+b.dataset.i;renderCuisines();renderVis()};
+function dishSVG(ing,st,vis,cu,m,pl){
+ const v=vis.toLowerCase(),has=(...w)=>w.some(x=>v.includes(x)),k=st.n,n=ing.length;
+ const cy={"Cozy bowl":118,"Fancy plate":140,"Street food":110,"Picnic":148,"Feast":145}[k],fs=Math.max(24,46-n*3);
+ let s=`<svg viewBox="0 0 300 260" style="width:100%;max-width:480px;display:block;margin:0 auto;cursor:crosshair" role="img" aria-label="Your restaurant-style plated dish"><defs><radialGradient id="tableGlow"><stop offset="0" stop-color="#35414c"/><stop offset="1" stop-color="#111820"/></radialGradient><linearGradient id="porcelain"><stop offset="0" stop-color="#fffdf7"/><stop offset=".55" stop-color="#e5e1d8"/><stop offset="1" stop-color="#b7b9b8"/></linearGradient></defs><rect width="300" height="260" rx="18" fill="url(#tableGlow)"/>`;
+ if(has("candle","romantic","cozy"))s+=`<text x="28" y="90" font-size="34">🕯️</text>`;
+ s+=`<ellipse cx="150" cy="224" rx="120" ry="18" fill="#000" opacity=".42"/><ellipse cx="150" cy="143" rx="127" ry="67" fill="#000" opacity=".26"/><ellipse cx="150" cy="140" rx="127" ry="67" fill="url(#porcelain)" stroke="#fff" stroke-width="2" opacity=".99"/><ellipse cx="150" cy="140" rx="115" ry="57" fill="none" stroke="#c6bda9" stroke-width="1.2" opacity=".75"/><ellipse cx="150" cy="140" rx="108" ry="51" fill="none" stroke="#ffffff" stroke-width="2" opacity=".8"/>`;
+ if(k==="Cozy bowl")s+=`<path d="M40 130 H260 Q252 215 150 222 Q48 215 40 130Z" fill="${cu.c}"/><ellipse cx="150" cy="130" rx="110" ry="34" fill="#f1d7a6"/>`;
+ else if(k==="Fancy plate")s+=`<ellipse cx="150" cy="140" rx="125" ry="62" fill="#fff"/><ellipse cx="150" cy="140" rx="92" ry="44" fill="none" stroke="${cu.c}" stroke-width="3"/>`;
+ else if(k==="Street food")s+=`<path d="M45 105 H255 L235 205 H65Z" fill="#c9a06a"/><path d="M45 105 H255 L252 122 H48Z" fill="${cu.c}"/>`;
+ else if(k==="Picnic")s+=`<rect x="25" y="95" width="250" height="125" rx="10" fill="${cu.c}"/>`+[0,1,2,3,4].map(i=>`<rect x="${25+i*50}" y="95" width="25" height="125" fill="#fff" opacity=".35"/>`).join("")+`<ellipse cx="150" cy="150" rx="85" ry="42" fill="#f6ead6"/>`;
+ else s+=`<ellipse cx="150" cy="145" rx="135" ry="68" fill="#d9b25f"/><ellipse cx="150" cy="145" rx="112" ry="52" fill="#f6e3a8"/>`;
+ if(has("drizzle","sauce","glaze","honey","gravy"))s+=`<path d="M85 ${cy+14} Q150 ${cy-12} 215 ${cy+14}" stroke="#d98a1c" stroke-width="6" fill="none" stroke-linecap="round" opacity=".8"/>`;
+ (pl?[]:ing).forEach((x,i)=>{const a=i/n*6.283-1.57,r=n>1?1:0,px=150+Math.cos(a)*r*(30+n*7),py=cy+Math.sin(a)*r*(10+n*3);s+=`<text x="${px}" y="${py}" font-size="${fs}" text-anchor="middle" dominant-baseline="middle">${x[0]}</text>`});
+ (pl||[]).forEach(q=>{
+  const meat=/steak|lamb|shrimp|salmon|scallop|squid|pancetta|turkey|sausage|pork chop|duck|crab|lobster|chicken|bacon/i.test(q.n);
+  if(meat){const rot=((q.x*7+q.y*3)%36)-18,ww=/shrimp|scallop|squid|crab|lobster/i.test(q.n)?27:37,hh=/shrimp|scallop|squid|crab|lobster/i.test(q.n)?18:25;
+   s+=`<ellipse cx="${q.x+2}" cy="${q.y+5}" rx="${ww/2+3}" ry="${hh/2+3}" fill="#3a2519" opacity=".24"/><g transform="rotate(${rot} ${q.x} ${q.y})"><ellipse cx="${q.x}" cy="${q.y}" rx="${ww/2}" ry="${hh/2}" fill="${/shrimp|crab|lobster/i.test(q.n)?'#e98664':'#9c4b35'}" stroke="#f1b27a" stroke-width="2"/><path d="M${q.x-ww*.3} ${q.y-hh*.15} Q${q.x} ${q.y-hh*.35} ${q.x+ww*.28} ${q.y-hh*.1} M${q.x-ww*.25} ${q.y+hh*.15} Q${q.x} ${q.y+hh*.3} ${q.x+ww*.24} ${q.y+hh*.12}" fill="none" stroke="#542d25" stroke-width="2.4" stroke-linecap="round"/><path d="M${q.x-ww*.15} ${q.y-hh*.35} l5 4 M${q.x+ww*.1} ${q.y-hh*.38} l5 4" stroke="#f8d09a" stroke-width="2"/></g><text x="${q.x}" y="${q.y+1}" font-size="16" text-anchor="middle" dominant-baseline="middle">${q.e}</text>`;
+  }else{s+=`<text x="${q.x}" y="${q.y}" font-size="32" text-anchor="middle" dominant-baseline="middle" style="filter:drop-shadow(0 2px 2px #51402b)">${q.e}</text>`}
+ });
+ const deco=[[["crisp","golden","fried","crunch"],"✨"],[["herb","fresh","green","basil","garnish"],"🌿"],[["spic","chili","fire"],"🌶️"],[["cheese","melt","gooey"],"🧀"],[["cold","ice","frozen","chill"],"❄️"],[["choco","sweet","dessert"],"🍫"],[["lemon","citrus","zest"],"🍋"]];
+ let j=0;deco.forEach(([w,e])=>{if(has(...w)){const x=[70,215,105,185,150,90,200][j%7];for(let q=0;q<3;q++)s+=`<text x="${x+q*14}" y="${cy-22+q*12}" font-size="20">${e}</text>`;j++}});
+ // Fine-dining sauce pearls and micro-herbs frame the focal point without crowding it.
+ [[55,128,4],[67,151,3],[79,174,2.5],[235,123,3.5],[244,145,2.5],[229,169,3]].forEach(([x,y,r],i)=>s+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${i%2?'#b83c2e':'#d7a04c'}" stroke="#fff0cc" stroke-width=".7" opacity=".92"/>`);
+ [[96,105],[204,108],[105,182],[198,177]].forEach(([x,y])=>s+=`<path d="M${x} ${y} q-8 -9 -12 -2 q7 8 12 2 q5 -10 12 -5 q-4 9 -12 5Z" fill="#52834a" stroke="#2f5b32" stroke-width=".7"/>`);
+ if(has("steam","hot","warm","smok"))[120,150,180].forEach(x=>{s+=`<path d="M${x} ${cy-35} q-10 -12 0 -24 q10 -12 0 -24" stroke="#fff" stroke-width="5" fill="none" opacity=".8" stroke-linecap="round"/>`});
+ s+=`<text x="262" y="34" font-size="26" text-anchor="middle">${m.e}</text><text x="14" y="30" font-size="13" fill="#5a4632">${cu.e} ${cu.n} · ${k}</text></svg>`;
+ return s}
+function renderMethods(){$("methods").innerHTML=METHODS.map((m,i)=>`<button class="chip ${i===method?'on':''}" data-i="${i}">${m.e} ${m.n}</button>`).join("")}
+$("spots").onclick=e=>{
+ const b=e.target.closest(".spot");if(!b)return;
+ const s=SPOTS[+b.dataset.i],pool=[...s.p].sort(()=>Math.random()-.5).slice(0,2),found=[];
+ pool.forEach(it=>{if(!basket.some(x=>x[1]===it[1])){basket.push(it);found.push(it)}});
+ $("msg").textContent=found.length?`${s.n}: you found ${found.map(f=>f[0]+" "+f[1]).join(" and ")}!`:`${s.n}: nothing new this time — try again!`;
+ renderBasket();
+};
+$("basket").onclick=e=>{
+ const b=e.target.closest(".chip");if(!b)return;const i=+b.dataset.i;
+ if(sel.has(i))sel.delete(i);else sel.add(i);
+ renderBasket();
+};
+$("methods").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;method=+b.dataset.i;renderMethods()};
+let G=null,raf=0,rep=[];
+const SWEET=["Apple","Banana","Pineapple","Honey","Chocolate","Peanuts"],SAV=["Egg","Cheese","Mozzarella","Parmesan","Cheddar","Cajun Seasoning","Taco Seasoning","Garlic Powder","Onion Powder","Chicken","Bacon","Steak","Lamb","Shrimp","Salmon","Scallops","Squid","Pancetta","Turkey","Sausage","Pork chop","Duck","Crab","Lobster","Onion","Garlic","Beans","Hot dog","Mushroom","Leftover pizza","Chili","Pepper","Lettuce","Broccoli"];
+const HEAD={1:["This is an insult to my kitchen.","Disgusting. Absolutely disgusting."],2:["I’ve had better meals at a gas station.","Barely edible. Barely."],3:["Mediocre. I’ve seen worse. Barely.","Fine. Nobody’s getting a medal."],4:["Not bad. Don’t let it go to your head.","Good. I hate that I’m saying that."],5:["Perfection. I’m furious at how good this is.","Chef’s kiss. Get out of my kitchen. You’re hired."]};
+function startGame(){if(!competition.active){alert('Start the 3-round cook-off first, then choose your ingredients.');return}if(sel.size<2){alert('Choose at least two ingredients for your dish.');return}G={ing:[...sel].map(i=>basket[i]),i:0,k:0,q:[],cuts:[],pl:[],sel:0,y:"Two measured chops per ingredient. Press SPACE or use the chop button."};go(5);renderCut()}
+function renderCut(){
+ const it=G.ing[G.i],sp=0.0042; // fixed, deliberately slower pace for every ingredient
+ $("kg").innerHTML=`<div class="arcade-stage"><div class="arcade-stage-title"><span>PREP STATION</span><b>ROUND ${competition.round} · KNIFE SKILLS</b></div><div class="chef">👨‍🍳 <b>Chef Brutus:</b> ${esc(G.y)}</div><p class="s">Ingredient ${G.i+1} of ${G.ing.length} · chop ${G.k+1} of 2 · hit the green zone. Press <b>SPACE</b> or tap the button.</p><div class="board">${("<span>"+it[0]+"</span>").repeat(G.k*2+1)}</div><div class="bar"><div class="zone"></div><div class="mk" id="mk">🔪</div></div><button class="go" id="act">✂️ CHOP! <span style="font-size:.75em;opacity:.8">[SPACE]</span></button>`;
+ const t0=performance.now();let p=0.5;cancelAnimationFrame(raf);
+ const loop=()=>{p=0.5+0.5*Math.sin((performance.now()-t0)*sp-1.57);$("mk").style.left=p*100+"%";raf=requestAnimationFrame(loop)};loop();
+ $("act").onclick=()=>{
+  const a=Math.max(0,1-Math.abs(p-0.5)*2);G.q.push(a);G.k++;
+  G.y=a>0.85?"Clean cut.":a>0.55?"Sloppy. Again.":"ARE YOU BLIND?!";
+  if(G.k>=2){G.cuts.push(G.q.reduce((x,y)=>x+y,0)/2);G.q=[];G.k=0;G.i++}
+  if(G.i<G.ing.length)renderCut();else{cancelAnimationFrame(raf);renderHeat()}
+ };
+}
+window.addEventListener('keydown',e=>{
+ if(e.code!=='Space'||!G)return;
+ const active=document.activeElement;
+ if(active&&(['INPUT','TEXTAREA','SELECT'].includes(active.tagName)||active.isContentEditable))return;
+ const act=$("act");
+ if(act&&(/CHOP/i.test(act.textContent)||/Finish cooking|Drain pasta at al dente/i.test(act.textContent))){e.preventDefault();act.click()}
+});
+function renderHeat(){
+ const m=METHODS[method],zc=0.6+Math.random()*0.22,dur=4200+Math.random()*1800;
+ const hasPasta=G.ing.some(x=>x[1].toLowerCase()==='pasta');
+ $("kg").innerHTML=`<div class="arcade-stage under-pressure"><div class="arcade-stage-title"><span>⚠ LIVE SERVICE · HEAT UNDER PRESSURE</span><b>STOVE ${G.i+1} / ${G.ing.length}</b></div><div class="heat-alert"><span>ORDER UP · KEEP YOUR EYES ON THE PAN</span><span class="leds"><i></i><i></i><i></i></span></div><div class="arcade-backwall"><div class="arcade-chef-portrait"><span>★</span><b>HEAD CHEF</b></div><div class="arcade-tiles"></div><div class="arcade-range">${[0,1,2,3,4].map((n)=>`<div class="range-pot"><div class="pot-lid"></div><div class="pot-body">${n===0&&hasPasta?'🍝':n===1?'🥘':n===2?'🍲':n===3?'🍳':'♨️'}</div><small>${n===0&&hasPasta?'BOIL':n===1?'SAUTÉ':n===2?'SIMMER':n===3?'SEAR':'HOLD'}</small></div>`).join('')}</div></div><div class="arcade-ingredient-rail">${G.ing.map((it,i)=>`<span class="mini-bowl"><b>${it[0]}</b><small>${esc(it[1])}</small></span>`).join('')}</div><div class="chef">👨‍🍳 <b>Chef Brutus:</b> ${esc(G.y)} ${hasPasta?'Pasta station: boil in salted water, then drain it al dente.':'Control the heat. Build flavor, watch the pan, and pull it at the right moment.'}</div><div class="flame-row" aria-hidden="true">🔥　♨️　🔥　♨️　🔥</div><div class="pan">${hasPasta?'🍝 ♨️':(G.ing[G.i]?.[0]||'🥘')+' '+m.e}</div><p class="s" style="text-align:center;color:#ffd59a!important;font-weight:900;letter-spacing:.08em">${hasPasta?'ROLLING BOIL · AL DENTE WINDOW':'HOT PASS · HIT THE PERFECT COOK WINDOW'}</p><div class="gauge"><div class="gz" style="left:${(zc-0.08)*100}%;width:16%"></div><div class="gf" id="gf"></div></div><button class="go" id="act">${hasPasta?'🍝 Drain pasta at al dente [SPACE]':'🔥 Finish cooking [SPACE]'}</button><p class="s" style="text-align:center">Press <b>SPACE</b> at the right moment to pull the pan off the heat.</p></div>`;
+ const t0=performance.now();let h=0,done=false;
+ const end=()=>{if(done)return;done=true;cancelAnimationFrame(raf);G.cook=h>=1?0:Math.max(0,1-Math.abs(h-zc)/0.45);G.burnt=h>zc+0.2;G.raw=h<zc-0.25;const seasonings=G.ing.filter(x=>isSeasoning(x[1]));if(seasonings.length)renderSeasoning(seasonings);else renderPlate()};
+ const loop=()=>{h=Math.min(1,(performance.now()-t0)/dur);$("gf").style.width=h*100+"%";if(h>=1)end();else raf=requestAnimationFrame(loop)};loop();
+ $("act").onclick=end;
+}
+function isSeasoning(name){return /^(Salt|Chili|Basil|Microgreens|Cajun Seasoning|Garlic Powder|Onion Powder|Italian Seasoning|Taco Seasoning|Smoked Paprika|Olive oil|Vinegar|Mustard)$/i.test(name)}
+function renderSeasoning(items){
+ G.sprinkled=G.sprinkled||new Set();
+ $("kg").innerHTML=`<div class="chef">👩🏽‍🍳 <b>Chef Amara:</b> Season with intention. A light, even sprinkle is better than burying the dish. Choose each seasoning you want to apply.</div><div class="panel-head">🧂 SEASONING STATION</div><div class="seasoning-list">${items.map((it,i)=>`<div class="seasoning-card ${G.sprinkled.has(it[1])?'done':''}"><b>${it[0]} ${esc(it[1])}</b><small>${G.sprinkled.has(it[1])?'Applied to the dish':'Tap to sprinkle'}</small><button data-season="${i}" ${G.sprinkled.has(it[1])?'disabled':''}>${G.sprinkled.has(it[1])?'✓ Sprinkled':'✦ Sprinkle'}</button></div>`).join('')}</div><p class="s">Tip: salt and spices are sprinkled; herbs and microgreens are best added at the finish.</p><button class="go" id="finishSeasoning">Continue to plating →</button>`;
+ $("kg").querySelectorAll('[data-season]').forEach(btn=>btn.onclick=()=>{const it=items[+btn.dataset.season];G.sprinkled.add(it[1]);renderSeasoning(items)});
+ $("finishSeasoning").onclick=()=>{G.seasoningScore=items.length?G.sprinkled.size/items.length:1;renderPlate()};
+}
+function renderPlate(){
+ const items=[...G.ing.filter(x=>!isSeasoning(x[1])),["🌿","Microgreens garnish"],["🍋","Lemon finish"],["🌶️","Chili oil dots"],["✨","Finishing detail"]];
+ $("kg").innerHTML=`<div class="chef">👨‍🍳 <b>Chef Brutus:</b> Build a fine-dining plate: pick an element, then tap the porcelain to place it. Keep negative space, use a focal point, and finish with garnish.</div><div class="panel-head">✦ BUILD YOUR SIGNATURE PLATE</div><p class="plating-note">Select an element · place it with intention · leave room for the plate to breathe</p><div class="chips" id="tray">${items.map((x,i)=>`<button class="chip ${i===G.sel?'on':''}" data-i="${i}">${x[0]} ${x[1]}</button>`).join("")}</div><div id="pv"></div><div class="chips"><button class="save" id="und">↩ Undo</button><button class="save" id="clr">Clear plate</button></div><button class="go" id="act">🍽️ Serve it!</button>`;
+ const draw=()=>{$("pv").innerHTML=dishSVG(G.ing,STYLES[style],$("vision").value.trim(),CUISINES[cuisine],METHODS[method],G.pl)};draw();
+ $("tray").onclick=e=>{const b=e.target.closest(".chip");if(!b)return;G.sel=+b.dataset.i;[...$("tray").children].forEach((c,i)=>c.classList.toggle("on",i===G.sel))};
+ $("pv").onclick=e=>{const sv=$("pv").querySelector("svg"),r=sv.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*300,y=(e.clientY-r.top)/r.height*260;
+  if(x<45||x>255||y<85||y>215)return;const it=items[G.sel];G.pl.push({e:it[0],n:it[1],x,y});draw()};
+ $("und").onclick=()=>{G.pl.pop();draw()};$("clr").onclick=()=>{G.pl=[];draw()};
+ $("act").onclick=()=>{
+  const need=G.ing.filter(x=>!isSeasoning(x[1])).map(x=>x[1]),placed=new Set(G.pl.map(p=>p.n)),miss=need.filter(n=>!placed.has(n)),all=need.length?1-miss.length/need.length:1;
+  let sp=0.3;if(G.pl.length>1){const d=G.pl.map((p,i)=>Math.min(...G.pl.map((q,j)=>j===i?999:Math.hypot(p.x-q.x,p.y-q.y))));sp=Math.min(1,d.reduce((a,b)=>a+b,0)/d.length/38)}
+  const ctr=G.pl.length?G.pl.reduce((a,p)=>a+Math.hypot(p.x-150,p.y-150),0)/G.pl.length:200,cen=Math.max(0,1-Math.max(0,ctr-45)/90),gar=G.pl.some(p=>!need.includes(p.n))?1:0;
+  G.miss=miss[0]||"";G.plate=0.4*all+0.3*sp+0.15*cen+0.15*gar;endGame()};
+}
+function endGame(){
+ const m=METHODS[method],cu=CUISINES[cuisine],names=G.ing.map(x=>x[1]),vis=$("vision").value.trim();
+ const cut=G.cuts.reduce((a,b)=>a+b,0)/G.cuts.length,cook=G.cook;
+ const sweetMode=["Blend","Shake","Freeze"].includes(m.n)||cu.n==="Dessert",sw=names.filter(x=>SWEET.includes(x)),sv=names.filter(x=>SAV.includes(x));
+ let h=0.85,note="";
+ if(sweetMode&&sv.length){h-=0.25*sv.length+0.15;note=`${sv[0]} in a ${m.noun.toLowerCase()}? Who raised you?`}
+ else if(!sweetMode&&sw.length&&sv.length){h-=0.35*Math.min(sw.length,sv.length)+0.1;note=`${sw[0]} with ${sv[0]}? Pick a lane.`}
+ if(names.length>6){h-=0.25;note=note||"You emptied the whole kitchen into one dish."}
+ h=Math.min(1,h+(G.seasoningScore||0)*0.08);h=Math.max(0.05,h);
+ const b=(vis.length>15?0.06:0)+(cu.adj?0.04:0)+Math.min(0.08,names.filter(x=>vis.toLowerCase().includes(x.toLowerCase())).length*0.04);
+ const pl=G.plate,t=0.3*cut+0.3*cook+0.25*h+0.15*pl+b,score10=Math.round(Math.min(10,Math.max(1,(0.3*cut+0.3*cook+0.25*h+0.15*pl)*10))*10)/10,stars=Math.max(1,Math.min(5,Math.floor((t-0.25)/0.16)+1));
+ const crit=[],good=[];
+ if(G.burnt)crit.push("You burnt it. I can taste the regret.");else if(G.raw)crit.push("It’s raw in the middle. Do you want to hurt people?");
+ if(cut<0.5)crit.push("Your knife work? A toddler with safety scissors does better.");
+ if(note)crit.push(note);
+ if(G.miss)crit.push(`Where is the ${G.miss}? You forgot to plate it!`);else if(pl<0.5)crit.push("Did you plate this blindfolded? Spread it out and use the whole plate.");
+ if(pl>0.8)good.push("Beautiful plating.");
+ if(cut>0.8)good.push("Lovely knife work.");if(cook>0.8)good.push("Perfect heat.");
+ const text=(HEAD[stars][Math.floor(Math.random()*2)]+" "+crit.slice(0,2).join(" ")+" "+(stars>=3?good.slice(0,2).join(" "):"")).trim();
+ rep.push(stars);
+  const earned=stars===5?6:stars===4?3:stars===2?2:0;
+  coins+=earned;renderStore();
+  finishCook({stars,earned,cut,cook,h,pl,score10,text,face:["😡","😡","😤","🙂","🤩"][stars-1]});
+}
+function judgesHTML(sc){
+ const comments=[
+  {name:"Chef Marco · Technique",role:"Precision & knife skills",avatar:"👨🏻‍🍳",line:sc.cut>.75?"Clean, deliberate prep. You respected the ingredient.":"Your cuts need consistency. Take your time and make every piece count."},
+  {name:"Chef Amara · Flavor",role:"Balance & seasoning",avatar:"👩🏽‍🍳",line:sc.h>.72?"There is a clear point of view here. The flavors make sense.":"I need more balance and a clearer flavor story on this plate."},
+  {name:"Chef Victor · Presentation",role:"Plating & restaurant standards",avatar:"🧑🏻‍🍳",line:sc.pl>.72?"Elegant composition. I could see this leaving a fine-dining pass.":"The plate needs more intention: clean edges, negative space, and a focal point."}
+ ];
+ return `<div class="panel-head">🎬 THE JUDGES' TABLE <span style="float:right;color:#f0c777">FINAL VERDICT: ${sc.score10.toFixed(1)}/10</span></div><div class="judge-grid">${comments.map((j,i)=>`<div class="judge-card"><div class="judge-avatar">${j.avatar}</div><b>${j.name}</b><small>${j.role}</small><p>${j.line}</p><div class="stars">${'★'.repeat(Math.max(1,Math.min(5,sc.stars+(i===0&&sc.cut>.8?1:0))))}${'☆'.repeat(5-Math.max(1,Math.min(5,sc.stars+(i===0&&sc.cut>.8?1:0))))}</div></div>`).join('')}</div>`;
+}
+function reviewHTML(sc){const pc=x=>Math.round(x*100)+"%",avg=(rep.reduce((a,b)=>a+b,0)/rep.length).toFixed(1);
+ return `${judgesHTML(sc)}<div class="rev"><div class="jd">${sc.face}</div><div><div class="round-score">${sc.score10.toFixed(1)}<span style="font-size:1rem;color:#b7c0ca"> / 10</span></div><div class="stars">${"⭐".repeat(sc.stars)}${"☆".repeat(5-sc.stars)}</div><b>Chef Brutus:</b> “${esc(sc.text)}”<p class="s">Knife skills ${pc(sc.cut)} · Heat control ${pc(sc.cook)} · Flavor harmony ${pc(sc.h)} · Plating ${pc(sc.pl)}</p><p class="s">Your reputation: ${avg}★ over ${rep.length} dish${rep.length>1?"es":""}</p></div></div>`}
+$("cook").onclick=startGame;
+function finishCook(sc){
+ const ing=[...sel].map(i=>basket[i]),m=METHODS[method];
+ const chefName=competition.players[competition.player];
+ if(competition.active){competition.scores[competition.player].push(sc.score10);competition.lastScore=sc.score10;renderCompetitionHud();}
+ const names=ing.map(x=>x[1]);const vis=$("vision").value.trim(),st=STYLES[style],cu=CUISINES[cuisine];
+ const list=names.length>2?names.slice(0,-1).join(", ")+" & "+names.slice(-1):names.join(" & ");
+ const name=(cu.adj?cu.adj+"-Style ":"")+list+" "+m.noun;
+ const steps=[`Wash and chop the ${names.join(", ").toLowerCase()}.`,m.step];
+ steps.splice(1,0,...ing.map(x=>`${x[0]} ${x[1]}: ${x[3]}.`));
+ if(cu.tip)steps.push(cu.tip);
+
+ steps.push(vis?`Plate it up to match your vision (${st.n}): ${vis}`:`Plate it up ${st.n.toLowerCase()} style and enjoy your dinner.`);
+ meal={name,plate:ing.map(x=>x[0]).join("")+m.e,steps,vis,st,stars:sc.stars};
+ const photo=foodPhoto(m,cu,st);
+  const h=`<div class="meal"><img class="food-photo" src="${photo}" alt="Realistic food plating inspiration" loading="lazy" onerror="this.style.display='none'">${dishSVG(ing,st,vis,cu,m,G.pl)}<p class="s" style="text-align:center">Plated by you, from your vision${cu.adj?" and "+cu.n+" style":""}</p>${reviewHTML(sc)}<p class="s" style="text-align:center"><b>🪙 +${sc.earned||0} coins earned</b> · Wallet: ${coins} coins</p><h3>${esc(name)}</h3><p class="s" style="text-align:center">${st.e} ${st.n} style${vis?` — your vision: “${esc(vis)}”`:""}</p>
+ <ol>${steps.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>
+ <button class="save" id="save">Save to recipe book</button>${competition.active?`<div class="turn-card"><div class="setup-kicker">ROUND ${competition.round} REVIEW</div><h3>${esc(chefName)} scored</h3><div class="round-score">${sc.score10.toFixed(1)} <span style="font-size:1rem;color:#b7c0ca">/ 10</span></div><p class="s">${competition.player===0?`Pass the device to ${esc(competition.players[1])}. Keep the competition fair — let them cook their own dish.`:competition.round<3?`Round ${competition.round} is complete. Next up: ${esc(competition.players[0])} for Round ${competition.round+1}.`:`All three rounds are complete. Reveal the champion when you’re ready.`}</p><button class="go" id="nextTurn">${competition.player===0?`Pass to ${esc(competition.players[1])} →`:competition.round<3?`Start Round ${competition.round+1} →`:'Reveal the champion 🏆'}</button></div>`:''}</div>`;
+ $("result").innerHTML=h;go(6);
+ if(competition.active){$("nextTurn").onclick=continueCompetition;}
+ $("save").onclick=()=>{book.unshift(meal);$("save").disabled=true;$("save").textContent="Saved ✓";renderBook()};
+};
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function foodPhoto(m,cu,st){
+ const photos={Italian:"photo-1473093295043-cdd812d0e601",Mexican:"photo-1565299624946-b28f40a0ae38",Asian:"photo-1512003867696-6d5f7b8e8c4f",American:"photo-1568901346375-23c9450c58cd",Indian:"photo-1585937421612-70a008356fbe",Dessert:"photo-1563729784474-d77dbb933a9e",Anything:"photo-1547592180-85f173990554"};
+ return `https://images.unsplash.com/${photos[cu.n]||photos.Anything}?auto=format&fit=crop&w=900&q=85`;
+}
+const STORE_ITEMS=[
+ {id:"knife",name:"Pro chef's knife",emoji:"🔪",section:"Kitchen tools",cost:8,desc:"Sharper blade · faster chopping"},
+ {id:"board",name:"Premium cutting board",emoji:"🪵",section:"Kitchen tools",cost:12,desc:"A sturdy prep surface"},
+ {id:"plates",name:"Restaurant plate set",emoji:"🍽️",section:"Plating upgrades",cost:10,desc:"Fancy plating inspiration"},
+ {id:"herbs",name:"Fresh herb bundle",emoji:"🌿",section:"Plating upgrades",cost:5,desc:"Extra garnish inspiration"},
+ {id:"pan",name:"Professional pan",emoji:"🍳",section:"Cookware",cost:15,desc:"A pro-kitchen upgrade"},
+ {id:"camera",name:"Food photography kit",emoji:"📸",section:"Special upgrades",cost:20,desc:"Showcase your finished dishes"}
+];
+function renderStore(){
+ $("coinCount").textContent=coins;
+ $("store").innerHTML=[...new Set(STORE_ITEMS.map(x=>x.section))].map(section=>
+  `<h3 class="sec2">${section}</h3><div class="store-grid">${STORE_ITEMS.filter(x=>x.section===section).map(x=>
+   `<div class="store-item"><div class="em">${x.emoji}</div><b>${x.name}</b><p class="s">${x.desc}</p><p><b>${x.cost} 🪙</b></p>${owned.has(x.id)?'<button disabled>Owned ✓</button>':`<button data-buy="${x.id}" ${coins<x.cost?'disabled':''}>Buy</button>`}</div>`
+  ).join("")}</div>`
+ ).join("");
+}
+$("store").onclick=e=>{
+ const b=e.target.closest("[data-buy]");if(!b)return;
+ const item=STORE_ITEMS.find(x=>x.id===b.dataset.buy);
+ if(!item||owned.has(item.id)||coins<item.cost)return;
+ coins-=item.cost;owned.add(item.id);renderStore();
+ $("msg").textContent=`Purchased ${item.name}!`;
+};
+function renderBook(){
+ $("book").innerHTML=book.length?book.map(r=>`<div class="meal"><span class="e">${r.plate.slice(0,6)}</span><div><b>${esc(r.name)}</b> ${"⭐".repeat(r.stars||0)}</div></div>`).join(""):'<p class="s">Nothing saved yet.</p>';
+}
+renderSpots();renderStyles();renderCuisines();renderBasket();renderMethods();
+const BG=["linear-gradient(#eaf4fa,#cfe3ee)","linear-gradient(#c28f58,#9a6a3a)","linear-gradient(#d9b58a,#b88a5c)","linear-gradient(#f3dfc0,#e2c590)","linear-gradient(#bfe6ff,#8ccf7a)","linear-gradient(#8a7a6a,#5d5045)"];
+function renderRoom(){
+ const H=(i,x,y,w,h,inner,l)=>`<g class="hot" data-i="${i}" tabindex="0" role="button" aria-label="Open ${l}">${inner}<rect class="hot-outline" x="${x}" y="${y}" width="${w}" height="${h}" rx="2"/><text class="l" x="${x+w/2}" y="${y+h+17}" text-anchor="middle">${l}</text></g>`;
+ const svg=`<div class="room arcade-room"><svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg" aria-label="Retro arcade-style interactive kitchen with ingredient counters">
+ <defs>
+  <pattern id="pixelTiles" width="34" height="28" patternUnits="userSpaceOnUse"><rect width="34" height="28" fill="#7d181c"/><path d="M0 0H34V28H0Z" fill="none" stroke="#c85c54" stroke-width="3"/><rect x="3" y="3" width="27" height="21" fill="#9d2428"/></pattern>
+  <linearGradient id="arcSteel" x2="0" y2="1"><stop stop-color="#f0f0e8"/><stop offset=".2" stop-color="#9ba3a5"/><stop offset=".55" stop-color="#515b61"/><stop offset="1" stop-color="#252c31"/></linearGradient>
+  <linearGradient id="arcWood" x2="0" y2="1"><stop stop-color="#d6ad70"/><stop offset="1" stop-color="#8e542f"/></linearGradient>
+  <linearGradient id="arcFloor" x2="0" y2="1"><stop stop-color="#4a4546"/><stop offset="1" stop-color="#1a1c21"/></linearGradient>
+  <filter id="arcGlow"><feGaussianBlur stdDeviation="9"/></filter>
+ </defs>
+ <rect width="1000" height="560" fill="#17191d"/><rect width="1000" height="270" fill="url(#pixelTiles)"/>
+ <rect x="12" y="12" width="976" height="245" fill="none" stroke="#e6b95f" stroke-width="5"/>
+ <g fill="#fff3d0" opacity=".85"><path d="M80 0V40M920 0V40" stroke="#d9b66c" stroke-width="4"/><rect x="52" y="34" width="56" height="9"/><rect x="892" y="34" width="56" height="9"/></g>
+ <rect x="380" y="20" width="240" height="50" fill="#191b20" stroke="#e7bf68" stroke-width="4"/><text x="500" y="41" text-anchor="middle" font-family="monospace" font-weight="bold" font-size="14" fill="#f8d887">KITCHEN TWIST</text><text x="500" y="58" text-anchor="middle" font-family="monospace" font-size="10" fill="#f7eee0">LIVE SERVICE</text>
+ <!-- tiny chef portrait / judging board -->
+ <rect x="420" y="78" width="160" height="116" fill="#d6d4cc" stroke="#f0ca77" stroke-width="5"/><rect x="428" y="86" width="144" height="100" fill="#333b43"/>
+ <path d="M458 119Q454 88 477 91Q501 87 500 119L493 127H464Z" fill="#eeeae1"/><circle cx="478" cy="119" r="20" fill="#d6a17d"/><path d="M458 118Q458 96 479 98Q497 97 499 117L491 111H465Z" fill="#343035"/><path d="M448 180Q450 143 478 143Q506 143 508 180Z" fill="#eeeae3"/><path d="M470 145L478 159L486 145L491 180H465Z" fill="#b52b2c"/>
+ <g fill="#fff4d0" stroke="#e5bd69" stroke-width="2"><path d="M150 86H188V103Q188 119 169 119Q150 119 150 103Z"/><path d="M150 91H138V101Q138 111 155 111M188 91H200V101Q200 111 183 111" fill="none"/><rect x="163" y="119" width="12" height="15"/><rect x="156" y="134" width="26" height="6"/><path d="M812 86H850V103Q850 119 831 119Q812 119 812 103Z"/><path d="M812 91H800V101Q800 111 817 111M850 91H862V101Q862 111 845 111" fill="none"/><rect x="825" y="119" width="12" height="15"/><rect x="818" y="134" width="26" height="6"/></g>
+ <!-- back shelves -->
+ <rect x="25" y="202" width="950" height="20" fill="url(#arcSteel)" stroke="#f4d28b" stroke-width="3"/>
+ ${Array.from({length:18},(_,i)=>{const x=38+i*52;const colors=['#d7b765','#8cbd7a','#c94d40','#f0e7d0','#6ea5ba'];const c=colors[i%colors.length];return `<rect x="${x}" y="151" width="32" height="47" rx="2" fill="${c}" stroke="#f4e4c6" stroke-width="2"/><rect x="${x+5}" y="143" width="22" height="9" fill="#cfd2cf" stroke="#5b6267" stroke-width="2"/>`}).join('')}
+ <rect y="270" width="1000" height="290" fill="url(#arcFloor)"/><path d="M0 316H1000M0 390H1000M0 480H1000M0 540H1000" stroke="#77747a" stroke-width="3" opacity=".5"/>
+ <!-- back range and pots -->
+ <rect x="20" y="275" width="960" height="118" fill="url(#arcSteel)" stroke="#f0d7a2" stroke-width="4"/><rect x="30" y="286" width="940" height="12" fill="#e6e6dd"/>
+ ${[0,1,2,3,4,5].map(i=>{const x=55+i*150;return `<g><rect x="${x}" y="306" width="112" height="74" fill="#30363c" stroke="#bfc3c0" stroke-width="3"/><ellipse cx="${x+56}" cy="329" rx="35" ry="15" fill="#14191d" stroke="#d6d8d1" stroke-width="4"/><ellipse cx="${x+56}" cy="329" rx="24" ry="9" fill="#b64b2d" opacity=".8"/><rect x="${x+9}" y="352" width="94" height="19" fill="#b8b9b2"/><text x="${x+56}" y="366" text-anchor="middle" font-family="monospace" font-size="12" font-weight="bold" fill="#23262a">${String(30-i*3).padStart(2,'0')}</text></g>`}).join('')}
+ <!-- selectable front ingredient counters with bowls -->
+ <rect x="18" y="405" width="964" height="126" fill="url(#arcWood)" stroke="#f0d28b" stroke-width="5"/><rect x="28" y="416" width="944" height="15" fill="#f5e7c8"/>
+ ${[0,1,2,3,4,5,6,7,8,9,10].map(i=>{const x=45+i*91;const fills=['#b52c2f','#78a849','#d7b54b','#e8e1d2','#4f93b9','#6d3e98','#c75e43','#e8e3d8','#8aaf58','#d9a25b','#bb4c4c'];return `<g><ellipse cx="${x+25}" cy="452" rx="29" ry="15" fill="#5a554f"/><path d="M${x-4} 450Q${x+25} 488 ${x+54} 450Z" fill="#e3e2d8" stroke="#8d9696" stroke-width="3"/><ellipse cx="${x+25}" cy="449" rx="25" ry="12" fill="${fills[i]}" stroke="#f8f0dc" stroke-width="2"/><circle cx="${x+18}" cy="446" r="4" fill="#fff6d6" opacity=".7"/><circle cx="${x+32}" cy="452" r="4" fill="#fff6d6" opacity=".7"/></g>`}).join('')}
+ ${H(0,20,405,170,125,'<rect x="25" y="410" width="160" height="116" fill="#f7d879" opacity=".07"/>','PRODUCE')}
+ ${H(1,205,405,160,125,'<rect x="210" y="410" width="150" height="116" fill="#f7d879" opacity=".07"/>','PANTRY')}
+ ${H(2,380,405,150,125,'<rect x="385" y="410" width="140" height="116" fill="#f7d879" opacity=".07"/>','SEASONING')}
+ ${H(3,545,405,150,125,'<rect x="550" y="410" width="140" height="116" fill="#f7d879" opacity=".07"/>','BAKERY')}
+ ${H(4,710,405,130,125,'<rect x="715" y="410" width="120" height="116" fill="#f7d879" opacity=".07"/>','FRESH')}
+ ${H(11,850,405,130,125,'<rect x="855" y="410" width="120" height="116" fill="#f7d879" opacity=".07"/>','MEATS & SEAFOOD')}
+ <rect x="20" y="535" width="300" height="18" fill="#17191d" stroke="#e7bf68" stroke-width="2"/><text x="170" y="548" text-anchor="middle" fill="#f8d887" font-family="monospace" font-size="11">SELECT A COUNTER</text>
+ <rect x="815" y="535" width="165" height="18" fill="#17191d" stroke="#e7bf68" stroke-width="2"/><text x="897" y="548" text-anchor="middle" fill="#f8d887" font-family="monospace" font-size="11">★ ★ ★</text>
+ </svg><div class="kitchen-caption"><span>INGREDIENT MARKET</span><small>Tap a counter to browse ingredients</small></div></div>`;
+ $("room").innerHTML=svg;
+}
+function openSpot(i){
+ const s=SPOTS[i],cats={};s.p.forEach(x=>(cats[x[2]]=cats[x[2]]||[]).push(x));
+ $("room").hidden=true;const el=$("inside");el.hidden=false;
+ el.innerHTML=`<button class="save" id="out">◀ Back to the kitchen</button><div class="ins" style="background:${BG[i]}"><div class="ttl">${s.e} Inside the ${s.n.toLowerCase()}</div>${i===11?'<p class="s">MEATS & SEAFOOD · Choose your main protein</p>':''}${Object.entries(cats).map(([c,arr])=>`<div class="sec">${c}</div><div class="shelf">${arr.map(it=>`<button class="it ${basket.some(x=>x[1]===it[1])?'got':''}" data-n="${it[1]}"><b>${it[0]}</b>${it[1]}<small>${it[3]}</small></button>`).join("")}</div>`).join("")}</div>`;
+ $("msg").textContent="Tap things to take them. Each shows how it’s used in a meal.";
+}
+function openSpotOld(i){
+ const s=SPOTS[i],rows=[];for(let k=0;k<s.p.length;k+=3)rows.push(s.p.slice(k,k+3));
+ $("room").hidden=true;const el=$("inside");el.hidden=false;
+ el.innerHTML=`<button class="save" id="out">◀ Back to the kitchen</button><div class="ins" style="background:${BG[i]}"><div class="ttl">${s.e} Inside the ${s.n.toLowerCase()}</div>${rows.map(r=>`<div class="shelf">${r.map(it=>`<button class="it ${basket.some(x=>x[1]===it[1])?'got':''}" data-n="${it[1]}"><b>${it[0]}</b>${it[1]}</button>`).join("")}</div>`).join("")}</div>`;
+ $("msg").textContent="Tap things to take them!";
+}
+$("room").onclick=e=>{const g=e.target.closest(".hot");if(g)openSpot(+g.dataset.i)};
+$("room").onkeydown=e=>{const g=e.target.closest(".hot");if(g&&(e.key==="Enter"||e.key===" ")){e.preventDefault();openSpot(+g.dataset.i)}};
+$("inside").onclick=e=>{
+ if(e.target.closest("#out")){$("inside").hidden=true;$("room").hidden=false;$("msg").textContent="Where to next?";return}
+ const b=e.target.closest(".it");if(!b)return;const n=b.dataset.n,it=SPOTS.flatMap(s=>s.p).find(x=>x[1]===n);
+ if(!basket.some(x=>x[1]===n)){basket.push(it);b.classList.add("got");$("msg").textContent=`You took ${it[0]} ${n}!`;renderBasket()}
+};
+renderRoom();renderStore();renderCompetitionHud();
+const SC=[];let cur=0,g=null;
+[...document.querySelector("main").children].forEach(el=>{if(el.tagName==="H2"){g=document.createElement("div");g.className="screen";g.hidden=true;SC.push(g);el.before(g)}if(g)g.appendChild(el)});
+const nav=document.createElement("div");nav.className="nav";nav.innerHTML='<button class="b" id="bk">◀ Back</button><span id="stp"></span><button id="nx">Next ▶</button>';
+document.querySelector("main").appendChild(nav);
+function go(n){cur=Math.max(0,Math.min(SC.length-1,n));SC.forEach((s,i)=>s.hidden=i!==cur);updNav();window.scrollTo({top:0,behavior:"smooth"})}
+function updNav(){$("bk").disabled=cur===0||cur===5;$("nx").disabled=cur===SC.length-1||(cur===1&&sel.size<2);$("nx").style.display=(cur===4||cur===5)?"none":"";$("stp").textContent=`${cur+1} / ${SC.length}`}
+$("bk").onclick=()=>go(cur===6?4:cur-1);$("nx").onclick=()=>go(cur+1);
+go(0);
+</script><script>document.addEventListener("keydown",function(event){if(event.key==="Escape"){event.preventDefault();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>

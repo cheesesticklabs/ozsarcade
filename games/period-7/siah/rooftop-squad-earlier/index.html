@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rooftop Squad</title>
+<style>
+:root{--bg:#eceae4;--fg:#1d2330;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10131c;--fg:#e8e6df}}
+:root[data-theme="dark"]{--bg:#10131c;--fg:#e8e6df}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:Georgia,"Times New Roman",serif}
+body{display:flex;flex-direction:column;align-items:center;padding:12px}
+canvas{width:100%;max-width:800px;height:auto;border-radius:6px;cursor:crosshair;touch-action:none}
+p{max-width:800px;margin:10px 0;font-size:15px;line-height:1.5}
+</style></head><body>
+<canvas id="c" width="800" height="450"></canvas>
+<p>Click or tap to fire. Your squad of five snipers shares the work: the closest sniper who has reloaded takes the shot. Every target wears a red marker, so we always know who to stop. Careful: shoot a civilian and they pull a gun and shoot back at the squad (-20 HP). Shoot an armed civilian again to put them down.</p>
+<script>
+const c=document.getElementById('c'),g=c.getContext('2d');
+const W=800,H=450,RELOAD=1.4;
+const snipers=[{x:90,cd:0},{x:245,cd:0},{x:400,cd:0},{x:555,cd:0},{x:710,cd:0}];
+let hp,flash,people,score,lives,spawnT,over,mouse={x:400,y:250},tracers,msg,msgT,best=0,started=false,t0=0;
+function reset(){people=[];score=0;lives=5;hp=100;flash=0;spawnT=1;over=false;tracers=[];msg='';msgT=0;snipers.forEach(s=>s.cd=0);for(let i=0;i<16;i++){spawn();const q=people[people.length-1];q.x=40+Math.random()*(W-80)}}
+reset();
+function spawn(){
+  const crim=Math.random()<0.4,dir=Math.random()<0.5?1:-1,lane=330+Math.random()*80;
+  const sp=crim?(40+Math.random()*30+score*6):(22+Math.random()*18+score*1.5);
+  people.push({x:dir>0?-20:W+20,y:lane,vx:dir*Math.min(sp,340),crim,ph:Math.random()*6});
+}
+function say(t){msg=t;msgT=1.2}
+function fire(px,py){
+  if(!started){started=true;return}
+  if(over){reset();return}
+  const near=people.filter(p=>Math.hypot(p.x-px,p.y-30-py)<26);
+  
+  let best=null;
+  snipers.forEach((s,i)=>{if(s.cd<=0&&(!best||Math.abs(s.x-px)<Math.abs(snipers[best].x-px)))best=i});
+  if(best===null){say('Squad reloading…');return}
+  const s=snipers[best];s.cd=RELOAD;
+  tracers.push({x1:s.x,y1:112,x2:px,y2:py,a:1});
+  let hit=null;
+  const cand=people.filter(p=>Math.hypot(p.x-px,p.y-30-py)<26);hit=cand.find(p=>p.crim)||cand[0]||null;
+  if(!hit){say('Sniper '+(best+1)+' missed');return}
+  if(hit.crim)people.splice(people.indexOf(hit),1);
+  if(hit.crim){score++;say('Sniper '+(best+1)+' got one!')}
+  else if(!hit.gun){hit.fd=hit.vx>0?1:-1;hit.gun=0.7;hit.vx=0;say('Civilian drew a gun!')}else{people.splice(people.indexOf(hit),1);say('Armed civilian down')}
+}
+function checkEnd(){if(lives<=0||hp<=0){over=true;best=Math.max(best,score)}}
+function shootBack(p){const s=snipers[Math.floor(Math.random()*snipers.length)];tracers.push({x1:p.x,y1:p.y-30*p.s,x2:s.x,y2:125,a:1,bad:1});hp-=20;flash=0.35;say('Civilian shot back! -20 HP');p.gun=-1;p.vx=(p.x<W/2?-1:1)*170;p.fd=p.vx>0?1:-1;checkEnd()}
+function pos(e){const r=c.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
+c.addEventListener('pointermove',e=>{mouse=pos(e)});
+c.addEventListener('pointerdown',e=>{mouse=pos(e);fire(mouse.x,mouse.y)});
+function person(p,t){
+  if(!p.sk){const R=a=>a[Math.floor(Math.random()*a.length)];p.sk=R(['#f1c9a5','#e0ac82','#c68a5e','#8d5a3b','#5e3b26']);p.hr=R(['#2b1d14','#4a3022','#7a5233','#c9a24a','#1c1c1c','#8a8a8a']);p.tp=R(['#6b8fb8','#c7566a','#5aa17f','#e0c25a','#8a6bb8','#d8d8d8','#3f4e6b']);p.bt=R(['#3e4a63','#5a4a3a','#2f2f38','#7a8aa0']);p.s=0.85+(p.y-330)/80*0.35}
+  const s=p.s,d=p.fd||(p.vx>0?1:-1),x=p.x,y=p.y,w=t*(6+Math.min(Math.abs(p.vx),300)/30)+p.ph,sw=Math.sin(w),cr=p.crim;
+  const skin=p.sk,top=cr?'#f2761f':p.tp,bot=cr?'#e0651a':p.bt;
+  g.fillStyle='rgba(0,0,0,.2)';g.beginPath();g.ellipse(x,y+1,11*s,3.5*s,0,0,7);g.fill();
+  g.lineCap='round';
+  const arm=k=>{const hx=x+k*sw*9*s*d,hy=y-29*s;g.strokeStyle=top;g.lineWidth=4.5*s;g.beginPath();g.moveTo(x,y-44*s);g.lineTo(hx,hy);g.stroke();g.fillStyle=skin;g.beginPath();g.arc(hx,hy+s,2.3*s,0,7);g.fill()};
+  const leg=k=>{const fx=x+k*sw*10*s*d,fy=y-Math.max(0,k*Math.cos(w))*3*s;g.strokeStyle=bot;g.lineWidth=5.5*s;g.beginPath();g.moveTo(x+k*1.5*s,y-24*s);g.lineTo(fx,fy-2*s);g.stroke();g.fillStyle='#22222a';g.beginPath();g.ellipse(fx+d*2*s,fy,4.2*s,2.2*s,0,0,7);g.fill()};
+  arm(-1);leg(-1);leg(1);
+  g.fillStyle=top;g.beginPath();g.ellipse(x,y-35*s,6.5*s,11.5*s,0,0,7);g.fill();
+  if(cr){g.fillStyle='rgba(0,0,0,.35)';for(let k=0;k<3;k++)g.fillRect(x-6*s,y-40*s+k*6*s,12*s,1.5*s)}
+  arm(1);
+  if(p.gun){g.fillStyle='#e9e9ee';g.fillRect(d>0?x+4*s:x-13*s,y-41*s,9*s,3*s);g.fillStyle=skin;g.beginPath();g.arc(x+d*4*s,y-39.5*s,2.3*s,0,7);g.fill()}
+  if(p.gun>0){g.fillStyle='#d33';g.font='bold '+(18*s)+'px Georgia,serif';g.textAlign='center';g.fillText('!',x,y-66*s)}
+  g.fillStyle=skin;g.fillRect(x-1.8*s,y-48*s,3.6*s,4*s);
+  g.beginPath();g.ellipse(x,y-53*s,5.2*s,6*s,0,0,7);g.fill();
+  g.fillStyle=p.hr;g.beginPath();g.ellipse(x-d*0.8*s,y-55.5*s,5.6*s,4.6*s,0,Math.PI,0);g.fill();
+  g.fillStyle='#222';g.fillRect(x+d*2.2*s-0.8*s,y-54*s,1.6*s,1.6*s);
+  if(cr){g.fillStyle='#111';g.fillRect(x-5.4*s,y-55.2*s,10.8*s,2.6*s);
+    g.fillStyle='#ff3b3b';g.beginPath();g.moveTo(x-7,y-77*s);g.lineTo(x+7,y-77*s);g.lineTo(x,y-66*s);g.fill()}
+}
+function personOld(p,t){
+  const step=Math.sin(t*10+p.ph)*3;
+  g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(p.x,p.y+2,10,3,0,0,7);g.fill();
+  g.fillStyle=p.crim?'#f2761f':'#4b7fb8';
+  g.fillRect(p.x-6,p.y-26,12,18);
+  g.fillStyle='#e9c9a4';g.beginPath();g.arc(p.x,p.y-32,6,0,7);g.fill();
+  g.fillStyle='#2a2f3d';g.fillRect(p.x-5,p.y-8,4,8+step/2);g.fillRect(p.x+1,p.y-8,4,8-step/2);
+  if(p.crim){g.fillStyle='#ff3b3b';g.beginPath();g.moveTo(p.x-7,p.y-56);g.lineTo(p.x+7,p.y-56);g.lineTo(p.x,p.y-45);g.fill()}
+}
+let last=performance.now();
+function loop(now){
+  const dt=Math.min((now-last)/1000,0.05);last=now;const t=now/1000;
+  if(started&&!over){
+    spawnT-=dt;if(spawnT<=0){if(people.length<50)spawn();spawnT=Math.max(0.15,1.2-score*0.06)}
+    snipers.forEach(s=>{if(s.cd>0)s.cd-=dt});
+    for(let i=people.length-1;i>=0;i--){const p=people[i];if(p.gun>0){p.gun-=dt;if(p.gun<=0)shootBack(p)}p.x+=p.vx*dt;
+      if(p.x<-30||p.x>W+30){people.splice(i,1);if(p.crim){lives--;say('A criminal got away!');checkEnd()}}}
+  }
+  tracers.forEach(r=>r.a-=dt*4);tracers=tracers.filter(r=>r.a>0);if(msgT>0)msgT-=dt;
+  // sky
+  const sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#cfe8f3');sky.addColorStop(1,'#fdeedd');
+  g.fillStyle=sky;g.fillRect(0,0,W,H);
+  // far skyline
+  g.fillStyle='#c4e3d0';for(let x=-20;x<W+40;x+=50){g.beginPath();g.arc(x,240+((x*7)%40),55,0,7);g.fill()}
+  // rooftops
+  snipers.forEach((s,i)=>{g.fillStyle='#c9a98f';g.fillRect(s.x-14,125,28,200);g.fillStyle='#a8d5b5';[[0,110,62],[-42,150,46],[42,150,46],[0,170,50]].forEach(a=>{g.beginPath();g.arc(s.x+a[0],a[1],a[2],0,7);g.fill()});
+    g.fillStyle='#b08d74';g.fillRect(s.x-40,118,80,7);
+    g.fillStyle='#f6c1d0';for(let k=0;k<3;k++){g.beginPath();g.arc(s.x-30+k*30+i*3,150+k*12,5,0,7);g.fill()}
+    g.fillStyle='#6b7fa8';g.beginPath();g.arc(s.x,112,8,0,7);g.fill();
+    g.fillStyle='#5a5a6a';g.fillRect(s.x-3,106,24,3);
+  });
+  // street
+  g.fillStyle='#d6edc0';g.fillRect(0,320,W,130);
+  g.fillStyle='#bfe0a6';g.fillRect(0,320,W,5);g.fillStyle='#f3e3c8';g.fillRect(0,345,W,72);
+  people.slice().sort((a,b)=>a.y-b.y).forEach(p=>person(p,t));
+  // tracers
+  tracers.forEach(r=>{g.strokeStyle=r.bad?'rgba(220,40,40,'+r.a+')':'rgba(80,80,100,'+r.a+')';g.lineWidth=2;g.beginPath();g.moveTo(r.x1,r.y1);g.lineTo(r.x2,r.y2);g.stroke()});
+  // crosshair
+  g.strokeStyle='#2f3b36';g.lineWidth=1.5;g.beginPath();g.arc(mouse.x,mouse.y,16,0,7);
+  g.moveTo(mouse.x-24,mouse.y);g.lineTo(mouse.x+24,mouse.y);g.moveTo(mouse.x,mouse.y-24);g.lineTo(mouse.x,mouse.y+24);g.stroke();
+  // HUD
+  g.fillStyle='#2f3b36';g.font='bold 20px Georgia,serif';g.textAlign='left';g.fillText('Caught: '+score,16,30);
+  g.textAlign='right';g.fillText('Lives: '+'♥'.repeat(Math.max(lives,0)),W-16,30);
+  g.fillStyle='rgba(0,0,0,.35)';g.fillRect(16,40,140,10);g.fillStyle=hp>40?'#6ec58a':'#e0524a';g.fillRect(16,40,140*Math.max(hp,0)/100,10);g.fillStyle='#2f3b36';g.font='12px Georgia,serif';g.textAlign='left';g.fillText('Squad HP '+Math.max(hp,0),162,50);
+  if(flash>0){g.fillStyle='rgba(220,40,40,'+flash*0.5+')';g.fillRect(0,0,W,H);flash-=dt}
+  g.font='14px Georgia,serif';g.textAlign='center';
+  snipers.forEach((s,i)=>{const w=60,f=1-Math.max(s.cd,0)/RELOAD;
+    g.fillStyle='rgba(0,0,0,.5)';g.fillRect(s.x-w/2,96,w,6);
+    g.fillStyle=f>=1?'#7ee08a':'#e0b04a';g.fillRect(s.x-w/2,96,w*f,6);
+    g.fillStyle='#2f3b36';g.fillText('Sniper '+(i+1),s.x,90)});
+  if(msgT>0){g.font='italic 18px Georgia,serif';g.fillStyle='#2f3b36';g.fillText(msg,W/2,60)}
+  if(!started||over){
+    g.fillStyle='rgba(8,10,16,.72)';g.fillRect(0,0,W,H);g.fillStyle='#fff';g.textAlign='center';
+    g.font='bold 40px Georgia,serif';g.fillText(over?'Case closed':'Rooftop Squad',W/2,190);
+    g.font='18px Georgia,serif';
+    g.fillText(over?'You caught '+score+' (best: '+best+'). Click to play again.':'Five snipers, one forest, no escapes. Click to start.',W/2,235);
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script><script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>

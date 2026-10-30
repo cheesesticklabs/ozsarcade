@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Night Ride: Fast Chase & Traps</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#070610;color:#fff;font-family:system-ui,Arial;text-align:center}
+h1{font-size:clamp(20px,4vw,30px);margin:10px 4px 2px;color:#ff547b;text-shadow:0 0 14px #ff174f}p{margin:0 8px 8px;color:#cbd4ff;font-size:14px}
+.hud{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:8px;font-weight:800}
+canvas{display:block;width:min(94vw,500px);height:auto;margin:auto;border:2px solid #ff315c;border-radius:12px;box-shadow:0 0 26px #ff174f66;touch-action:none}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:9px auto}
+button{background:#191329;border:2px solid #ff315c;color:#fff;border-radius:12px;padding:11px 15px;font-size:15px;font-weight:800;box-shadow:0 0 12px #ff174f33;touch-action:manipulation}
+button:active{background:#5b1c3b;transform:scale(.97)}.hint{font-size:12px;color:#aab4df;margin:8px}
+</style>
+</head>
+<body>
+<h1>🏍️ NIGHT RIDE: FAST CHASE & TRAPS 👹</h1>
+<p>DON'T LOOK BACK. The monster is learning your moves...</p>
+<div class="hud"><span id="dist">DISTANCE 0 m</span><span id="hp">❤️❤️❤️</span><span id="gap">MONSTER GAP 100%</span><span id="score">SCORE 0</span></div>
+<canvas id="game" width="420" height="560"></canvas>
+<div class="controls"><button id="left">⬅ LEFT</button><button id="boost">⚡ TURBO</button><button id="right">RIGHT ➡</button></div>
+<div class="controls"><button id="start">START / RESTART</button></div>
+<div class="hint">← → steer · SPACE turbo · Avoid spikes, pits, electric gates and wrecks · Surprise monster lunges · Collect blue orbs</div>
+<script>
+(()=>{
+const c=document.getElementById('game'),x=c.getContext('2d'),W=420,H=560;
+const distEl=document.getElementById('dist'),hpEl=document.getElementById('hp'),gapEl=document.getElementById('gap'),scoreEl=document.getElementById('score');
+let px=210,objs=[],sparks=[],distance=0,score=0,hp=3,frame=0,playing=false,ended=false,won=false,turbo=0,shake=0,keys={},chase=.17,monsterX=210,damageFlash=0,trapCooldown=0,scare=0,scareCooldown=0,fog=0;
+const lanes=[130,210,290];
+function start(){px=210;objs=[];sparks=[];distance=0;score=0;hp=3;frame=0;playing=true;ended=false;won=false;turbo=0;shake=0;keys={};chase=.17;monsterX=210;damageFlash=0;trapCooldown=0;}
+function rounded(a,b,w,h,r){x.beginPath();x.roundRect(a,b,w,h,r);x.fill()}
+function road(){
+ let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#090817');g.addColorStop(1,'#292039');x.fillStyle=g;x.fillRect(0,0,W,H);
+ for(let i=0;i<13;i++){let yy=(i*58+(frame*2.7)%58)-25,side=i%2?18:402;x.fillStyle='#05050d';x.beginPath();x.moveTo(side,yy-28);x.lineTo(side-18,yy+18);x.lineTo(side+17,yy+18);x.fill();}
+ x.save();x.shadowBlur=28;x.shadowColor='#9ab5ff';x.fillStyle='#c2ceff';x.beginPath();x.arc(365,54,19,0,7);x.fill();x.restore();
+ x.fillStyle='#10101d';x.fillRect(75,0,270,H);
+ x.shadowBlur=18;x.shadowColor=frame%24<12?'#ff174f':'#8d38ff';x.fillStyle=frame%24<12?'#ff174f':'#a34cff';x.fillRect(72,0,4,H);x.fillRect(344,0,4,H);x.shadowBlur=0;
+ x.strokeStyle='#f7eaff';x.lineWidth=3;x.setLineDash([18,18]);x.lineDashOffset=-(frame*6.2)%36;x.beginPath();x.moveTo(165,0);x.lineTo(165,H);x.moveTo(255,0);x.lineTo(255,H);x.stroke();x.setLineDash([]);
+ let light=x.createRadialGradient(px,H-105,4,px,H-220,210);light.addColorStop(0,'#fff4c644');light.addColorStop(1,'#9bd9ff00');x.fillStyle=light;x.beginPath();x.moveTo(px,H-105);x.lineTo(px-135,H-400);x.lineTo(px+135,H-400);x.closePath();x.fill();
+ // crawling fog and ominous silhouettes
+ for(let i=0;i<5;i++){
+   let fx=((i*113+frame*(i%2?1.1:-.7))%500)-40;
+   let fy=110+i*76+Math.sin(frame*.025+i)*16;
+   let fg=x.createRadialGradient(fx,fy,2,fx,fy,54);
+   fg.addColorStop(0,'#9a8cff18');fg.addColorStop(1,'#9a8cff00');
+   x.fillStyle=fg;x.fillRect(fx-55,fy-25,110,50);
+ }
+ if(frame%170<3){x.fillStyle='#ff001f22';x.fillRect(0,0,W,H);}
+ if(damageFlash>0){x.fillStyle='#ff001f55';x.fillRect(0,0,W,H);damageFlash--;}
+}
+function bike(){
+ x.save();x.translate(px,H-90);x.shadowBlur=20;x.shadowColor='#00eaff';x.fillStyle='#020208';rounded(-12,-3,24,30,8);rounded(-10,-54,20,25,7);x.shadowBlur=0;
+ x.fillStyle='#00eaff';rounded(-6,-8,12,25,5);rounded(-5,-50,10,18,4);x.fillStyle='#ff275d';
+ x.beginPath();x.moveTo(0,-65);x.lineTo(18,-31);x.lineTo(12,-7);x.lineTo(-12,-7);x.lineTo(-18,-31);x.closePath();x.fill();
+ x.fillStyle='#232d4d';rounded(-12,-48,24,20,7);x.fillStyle='#c9d8ff';x.beginPath();x.arc(0,-65,10,0,7);x.fill();
+ x.fillStyle='#fff4a5';x.shadowBlur=15;x.shadowColor='#fff4a5';rounded(-5,-80,10,7,3);
+ if(turbo>0){x.fillStyle='#ffb52e';x.shadowColor='#ff3d18';x.shadowBlur=20;x.beginPath();x.moveTo(-7,-4);x.lineTo(0,24+Math.random()*14);x.lineTo(7,-4);x.fill();}
+ x.restore();
+}
+function drawChaser(){
+ let closeness=Math.min(1,chase),y=H-30-closeness*70,scale=.82+closeness*.48;
+ x.save();x.translate(monsterX,y);x.scale(scale,scale);x.globalAlpha=.48+closeness*.52;x.shadowBlur=30;x.shadowColor='#9dff32';
+ x.strokeStyle='#a8ff45';x.lineWidth=7;x.lineCap='round';x.beginPath();x.moveTo(-15,10);x.lineTo(-32,30);x.lineTo(-38,42);x.moveTo(15,10);x.lineTo(32,30);x.lineTo(38,42);x.stroke();
+ x.fillStyle='#315c21';x.beginPath();x.ellipse(0,15,26,36,0,0,7);x.fill();x.fillStyle='#79ed3d';x.beginPath();x.arc(0,-18,24,0,7);x.fill();
+ x.fillStyle='#d8ff9a';x.beginPath();x.moveTo(-16,-33);x.lineTo(-27,-51);x.lineTo(-8,-39);x.moveTo(16,-33);x.lineTo(27,-51);x.lineTo(8,-39);x.fill();
+ x.shadowBlur=15;x.shadowColor='#ff172f';x.fillStyle='#ff263f';x.beginPath();x.ellipse(-9,-20,5,8,-.2,0,7);x.ellipse(9,-20,5,8,.2,0,7);x.fill();x.shadowBlur=0;
+ x.fillStyle='#180b12';x.beginPath();x.moveTo(-12,-4);x.lineTo(-7,6);x.lineTo(-2,-2);x.lineTo(3,6);x.lineTo(8,-4);x.fill();
+ // extra eyes that flare when it gets close
+ if(closeness>.52){x.shadowBlur=24;x.shadowColor='#ff001e';x.fillStyle='#ff001e';x.beginPath();x.arc(-15,-10,3,0,7);x.arc(15,-10,3,0,7);x.fill();}
+ x.restore();
+ if(chase>.65){x.save();x.globalAlpha=Math.min(.85,(chase-.65)*2.8);x.strokeStyle='#ff1f4b';x.lineWidth=3;x.setLineDash([5,7]);x.beginPath();x.moveTo(monsterX,H-66);x.lineTo(px,H-105);x.stroke();x.restore();}
+}
+function drawWreck(o){x.save();x.translate(o.x,o.y);x.rotate(Math.sin(frame*.08)*.08);x.shadowBlur=12;x.shadowColor='#ff4b24';x.fillStyle='#ed762b';rounded(-17,-22,34,44,7);x.shadowBlur=0;x.fillStyle='#272a3c';rounded(-11,-13,22,13,3);x.fillStyle='#fff3b0';x.fillRect(-13,15,7,4);x.fillRect(6,15,7,4);x.restore();}
+function orb(o){x.save();x.translate(o.x,o.y);x.shadowBlur=24;x.shadowColor='#00eaff';x.fillStyle='#6ef6ff';x.beginPath();x.arc(0,0,10+Math.sin(frame*.15)*2,0,7);x.fill();x.strokeStyle='#fff';x.lineWidth=2;x.beginPath();x.arc(0,0,15,0,7);x.stroke();x.restore();}
+function trap(o){
+ x.save();x.translate(o.x,o.y);
+ if(o.type==='spikes'){
+  x.shadowBlur=13;x.shadowColor='#ff3737';x.fillStyle='#5f1026';rounded(-37,-14,74,28,4);x.shadowBlur=0;
+  x.fillStyle='#d8e1f5';for(let i=-30;i<=25;i+=15){x.beginPath();x.moveTo(i,11);x.lineTo(i+7,-10);x.lineTo(i+14,11);x.closePath();x.fill();}
+  x.fillStyle='#ff424f';x.fillRect(-37,-15,74,3);
+ }else if(o.type==='pit'){
+  x.shadowBlur=18;x.shadowColor='#a128ff';x.fillStyle='#020208';x.beginPath();x.ellipse(0,0,39,19,0,0,7);x.fill();
+  x.strokeStyle='#a128ff';x.lineWidth=3;x.stroke();x.strokeStyle='#fa50e8';x.lineWidth=2;x.beginPath();x.ellipse(0,0,25,10,0,0,7);x.stroke();
+ }else if(o.type==='gate'){
+  x.shadowBlur=16;x.shadowColor='#27eaff';x.strokeStyle='#6af6ff';x.lineWidth=5;x.beginPath();x.moveTo(-39,-18);x.lineTo(39,-18);x.stroke();
+  for(let i=-30;i<=30;i+=15){x.fillStyle='#b8ffff';x.fillRect(i,-28,4,20);}
+  x.fillStyle='#ff315c';x.fillRect(-42,-32,84,4);
+ }
+ x.restore();
+}
+function overlay(title,sub){x.fillStyle='#03030be8';x.fillRect(0,0,W,H);x.textAlign='center';x.shadowBlur=18;x.shadowColor='#ff174f';x.fillStyle='#fff';x.font='900 25px system-ui';x.fillText(title,W/2,H/2-22);x.shadowBlur=0;x.font='14px system-ui';x.fillStyle='#cbd7ff';x.fillText(sub,W/2,H/2+12);x.fillStyle='#ff9ab0';x.font='12px system-ui';x.fillText('PRESS START TO RIDE AGAIN',W/2,H/2+44);}
+function spawn(){
+ let r=Math.random(),lane=lanes[Math.floor(Math.random()*3)];
+ let type=r<.29?'spikes':r<.48?'pit':r<.65?'gate':r<.83?'wreck':'orb';
+ objs.push({x:lane,y:-40,type,hit:false});
+}
+function loop(){
+ frame++;if(shake>0)shake--;x.save();if(shake)x.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);road();
+ if(playing&&!ended&&!won){
+  let base=4.4+Math.min(8.0,distance/115),v=base+(turbo>0?5.5:0);
+  if(keys.left)px-=5.4;if(keys.right)px+=5.4;px=Math.max(97,Math.min(323,px));
+  if(turbo>0)turbo--;if(trapCooldown>0)trapCooldown--;
+  if(scareCooldown>0)scareCooldown--;
+  if(scare>0)scare--;
+  // Rare sudden lunges: the monster surges toward the rider, with a red screen flash.
+  if(scareCooldown===0 && distance>90 && Math.random()<.006){
+    scare=24;scareCooldown=145;chase=Math.min(1.06,chase+.13);shake=9;damageFlash=5;
+  }
+  monsterX+=(px-monsterX)*.052;
+  chase+=turbo>0?-.016:.00105;chase=Math.max(.12,Math.min(1.06,chase));
+  if(chase>=1){ended=true;playing=false;shake=17;}
+  distance+=v*.09;if(distance>=1500){won=true;playing=false;}
+  let spawnEvery=Math.max(13,31-Math.floor(distance/120));
+  if(frame%spawnEvery===0)spawn();
+  objs.forEach(o=>{
+    o.y+=v;
+    if(!o.hit&&o.y>H-180&&o.y<H-78&&Math.abs(o.x-px)<34){
+      if(o.type==='orb'){o.hit=true;score+=50;turbo=Math.max(turbo,45);chase=Math.max(.12,chase-.11);}
+      else if(trapCooldown===0){o.hit=true;hp--;chase=Math.min(1.06,chase+.16);shake=12;damageFlash=8;trapCooldown=22;if(hp<=0){ended=true;playing=false;}}
+    }
+  });
+  objs=objs.filter(o=>o.y<H+45&&!o.hit);
+ }
+ objs.forEach(o=>{if(o.type==='wreck')drawWreck(o);else if(o.type==='orb')orb(o);else trap(o);});
+ drawChaser();bike();
+ if(scare>0){
+   x.save();let alpha=Math.min(.55,scare/28*.55);x.fillStyle=`rgba(255,0,30,${alpha*.45})`;x.fillRect(0,0,W,H);
+   // looming monster face briefly fills the upper edge of the screen
+   x.globalAlpha=Math.min(.95,(24-scare)/9+.25);x.translate(W/2,100+Math.sin(frame*1.8)*5);x.scale(1.3+scare*.012,1.3+scare*.012);
+   x.shadowBlur=24;x.shadowColor='#ff001e';x.fillStyle='#253b1b';x.beginPath();x.ellipse(0,0,52,42,0,0,7);x.fill();
+   x.fillStyle='#ff102f';x.beginPath();x.ellipse(-20,-5,8,13,-.15,0,7);x.ellipse(20,-5,8,13,.15,0,7);x.fill();
+   x.fillStyle='#05040a';x.beginPath();x.moveTo(-24,15);x.lineTo(-13,30);x.lineTo(-5,17);x.lineTo(5,30);x.lineTo(15,16);x.lineTo(24,27);x.lineTo(18,8);x.lineTo(-18,8);x.fill();
+   x.restore();
+ }
+ x.restore();
+ distEl.textContent='DISTANCE '+Math.floor(distance)+' m';hpEl.textContent='❤️'.repeat(hp)+'🖤'.repeat(3-hp);gapEl.textContent='MONSTER GAP '+Math.max(0,Math.round((1-chase)*100))+'%';scoreEl.textContent='SCORE '+score;
+ if(!playing){if(won)overlay('YOU ESCAPED! 🏆','You outran the monster!');else if(ended&&chase>=1)overlay('IT CAUGHT YOU! 👹','Turbo sooner and avoid the traps!');else if(ended)overlay('CRASHED! 💥','Avoid the traps and grab blue orbs.');else overlay('DON’T LOOK BACK…','It can lunge at you when you least expect it.');}
+ requestAnimationFrame(loop);
+}
+function bind(id,k){let b=document.getElementById(id);b.onpointerdown=e=>{e.preventDefault();if(k==='boost')turbo=85;else keys[k]=true};b.onpointerup=()=>keys[k]=false;b.onpointerleave=()=>keys[k]=false;b.onpointercancel=()=>keys[k]=false;}
+bind('left','left');bind('right','right');bind('boost','boost');document.getElementById('start').onclick=start;
+addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft')keys.left=true;if(e.key==='ArrowRight')keys.right=true;if(e.key===' ')turbo=85;if(e.key==='Enter'&&!playing)start();});
+addEventListener('keyup',e=>{if(e.key==='ArrowLeft')keys.left=false;if(e.key==='ArrowRight')keys.right=false;});
+road();drawChaser();bike();overlay('READY? IT IS RIGHT BEHIND YOU!','');requestAnimationFrame(loop);
+})();
+</script>
+<script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>

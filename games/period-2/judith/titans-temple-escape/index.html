@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Titans Temple Escape</title>
+<style>
+:root{--bg:#1b1340;--fg:#fff;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#1b1340;--fg:#fff}}
+:root[data-theme="dark"]{--bg:#1b1340;--fg:#fff}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg)}
+body{display:flex;align-items:center;justify-content:center}
+canvas{width:100%;max-width:960px;height:auto;max-height:100%;display:block}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+<script>
+const T=32,C=25,RW=15,cv=document.getElementById("c"),x=cv.getContext("2d");
+cv.width=C*T;cv.height=RW*T;
+// Legend: # wall, D gate, K button, P purple goo (hurts Beast Boy), G green slime (hurts Raven), r/b doors, R/B spawns
+const L1=[
+"#########################",
+"#......D................#",
+"#......D................#",
+"#.rb.K.D................#",
+"###################.....#",
+"#.......................#",
+"#.....................K.#",
+"#.....###################",
+"#.......................#",
+"#.......................#",
+"###################.....#",
+"#.......................#",
+"#.R.B...................#",
+"#########.##PP##GG#######",
+"#########.###############"];
+// Level 2: floating islands, gate in the middle of the top island
+const L2=[
+"#########################",
+"#...........D...........#",
+"#...........D...........#",
+"#.rb........D...........#",
+"#########...D...........#",
+"#...........D...........#",
+"#.........K.D.K.........#",
+"#........######.........#",
+"#.......................#",
+"#.......................#",
+"#................########",
+"#.......................#",
+"#R.B....................#",
+"#####PP##.##GG###########",
+"#########.###############"];
+// Level 3: tunnel with a gate, then climb to the doors
+const L3=[
+"#########################",
+"#.......................#",
+"#.......................#",
+"#.......................#",
+"#.......................#",
+"#.......................#",
+"#.......................#",
+"#.......................#",
+"#.......................#",
+"#.rb.....##.............#",
+"####################....#",
+"#...........D...........#",
+"#R.B....K...D...K.......#",
+"######P###.###G##########",
+"##########.##############"];
+const LEVELS=[L1,L2,L3];
+const KEYS=[{l:"KeyA",r:"KeyD",u:"KeyW"},{l:"ArrowLeft",r:"ArrowRight",u:"ArrowUp"}];
+let lvl=0,state="title",msg="",g=[],pl=[],open=false,t=0,parts=[];
+const down={};
+addEventListener("keydown",e=>{
+  down[e.code]=true;
+  if(e.code.startsWith("Arrow")||e.code==="Space")e.preventDefault();
+  if(e.code==="Enter"||e.code==="Space"){
+    if(state==="title"){load(0)}
+    else if(state==="dead"){load(lvl)}
+    else if(state==="next"){load(lvl+1)}
+    else if(state==="won"){load(0)}
+  }
+  if(e.code==="KeyR"&&state==="play")load(lvl);
+});
+addEventListener("keyup",e=>{down[e.code]=false});
+cv.addEventListener("click",()=>{cv.focus();if(state==="title")load(0)});
+function mk(type,tx,ty){return{type,x:tx*T+5,y:ty*T+T-28,w:22,h:28,vx:0,vy:0,on:false,face:1,anim:0,coy:0,sq:0}}
+function load(n){
+  lvl=n;g=LEVELS[n].map(r=>r.split(""));pl=[];
+  for(let y=0;y<RW;y++)for(let i=0;i<C;i++){
+    if(g[y][i]==="R"){pl[0]=mk("r",i,y);g[y][i]="."}
+    if(g[y][i]==="B"){pl[1]=mk("b",i,y);g[y][i]="."}
+  }
+  state="play";msg="";
+}
+function tileAt(px,py){const tx=Math.floor(px/T),ty=Math.floor(py/T);return(tx<0||tx>=C||ty<0||ty>=RW)?".":g[ty][tx]}
+function solid(tx,ty){
+  if(tx<0||tx>=C||ty<0)return true;
+  if(ty>=RW)return false;
+  const c=g[ty][tx];return c==="#"||(c==="D"&&!open);
+}
+function hit(p){
+  for(let ty=Math.floor(p.y/T);ty<=Math.floor((p.y+p.h-.01)/T);ty++)
+    for(let tx=Math.floor(p.x/T);tx<=Math.floor((p.x+p.w-.01)/T);tx++)
+      if(solid(tx,ty))return true;
+  return false;
+}
+function moveX(p,d){const s=Math.sign(d);let n=Math.abs(d);while(n>0){const st=Math.min(1,n);p.x+=s*st;if(hit(p)){p.x-=s*st;return true}n-=st}return false}
+function moveY(p,d){const s=Math.sign(d);let n=Math.abs(d);while(n>0){const st=Math.min(1,n);p.y+=s*st;if(hit(p)){p.y-=s*st;return true}n-=st}return false}
+function burst(px,py,n,col,conf){for(let i=0;i<n;i++)parts.push({x:px,y:py,vx:(Math.random()-.5)*(conf?2:5),vy:conf?1:-Math.random()*3,g:conf?.05:.12,l:conf?220:25+Math.random()*15,c:col||`hsl(${Math.random()*360},90%,60%)`,s:conf?6:3+Math.random()*3})}
+function stepParts(){parts.forEach(q=>{q.x+=q.vx;q.y+=q.vy;q.vy+=q.g;q.l--});parts=parts.filter(q=>q.l>0);if(state!=="play"&&t%3===0)burst(Math.random()*800,-5,2,null,true)}
+function die(m){state="dead";msg=m;pl.forEach(p=>burst(p.x+11,p.y+14,14))}
+function update(){
+  t++;
+  open=pl.some(p=>tileAt(p.x+p.w/2,p.y+p.h-3)==="K"||tileAt(p.x+3,p.y+p.h/2)==="D"||tileAt(p.x+p.w-3,p.y+p.h/2)==="D");
+  pl.forEach((p,i)=>{
+    const k=KEYS[i],name=i?"Beast Boy":"Raven";
+    p.vx=0;
+    if(down[k.l]){p.vx=-3.4;p.face=-1}
+    if(down[k.r]){p.vx=3.4;p.face=1}
+    p.coy=p.on?7:p.coy-1;
+    if(down[k.u]&&p.coy>0){p.vy=-12;p.coy=0;p.on=false;p.sq=-.2;burst(p.x+11,p.y+28,8,"#fff")}
+    p.vy=Math.min(p.vy+.55,12);
+    moveX(p,p.vx);
+    p.on=false;
+    if(moveY(p,p.vy)){if(p.vy>3){burst(p.x+11,p.y+28,6,"#e6dcff");p.sq=.3}if(p.vy>0)p.on=true;p.vy=0}
+    if(p.vx&&p.on&&t%8===0)burst(p.x+11,p.y+28,1,"#ffffffaa");
+    p.anim+=p.vx?.35:.05;p.sq*=.85;
+    const c=tileAt(p.x+p.w/2,p.y+p.h-6);
+    if(c==="P"&&i===1)die("Beast Boy got zapped by Raven’s purple goo! Work together!");
+    if(c==="G"&&i===0)die("Raven got slimed by Beast Boy’s green slime! Work together!");
+    if(p.y>RW*T)die(name+" fell into the pit! Work together!");
+  });
+  if(state!=="play")return;
+  const a=tileAt(pl[0].x+11,pl[0].y+14)==="r",b=tileAt(pl[1].x+11,pl[1].y+14)==="b";
+  if(a&&b)state=(lvl>=LEVELS.length-1)?"won":"next";
+}
+function txt(s,px,py,size,col,align){
+  x.font="900 "+size+"px Impact,'Arial Black',sans-serif";x.textAlign=align||"center";
+  x.lineWidth=size/6;x.strokeStyle="#000";x.strokeText(s,px,py);x.fillStyle=col||"#fff";x.fillText(s,px,py);
+}
+function drawTile(i,y,c){
+  const px=i*T,py=y*T;
+  if(c==="#"){
+    x.fillStyle=`hsl(${225+((i*3+y*5)%6)*16},55%,${36+((i+y)%3)*5}%)`;x.fillRect(px,py,T,T);
+    x.strokeStyle="#262a6b";x.lineWidth=2;x.strokeRect(px+1,py+1,T-2,T-2);
+    x.beginPath();x.moveTo(px,py+T/2);x.lineTo(px+T,py+T/2);x.stroke();
+    if(!(y>0&&g[y-1][i]==="#")){x.fillStyle=`hsl(${(i*14+t)%360},85%,70%)`;x.fillRect(px,py,T,4)}
+  }else if(c==="P"||c==="G"){
+    x.fillStyle=c==="P"?"#9a3fe0":"#3fdc4a";x.fillRect(px,py+6,T,T-6);
+    x.fillStyle=c==="P"?"#c58bff":"#9bff8a";
+    const w=Math.sin((t+i*10)/10)*2;x.fillRect(px,py+6+w,T,4);
+    x.beginPath();x.arc(px+16+Math.sin(t/15+i)*8,py+20,3,0,7);x.fill();
+  }else if(c==="D"){
+    if(!open){
+      x.fillStyle="#ffcf2e";x.fillRect(px+8,py,16,T);
+      x.fillStyle="#222";for(let k=0;k<T;k+=8)x.fillRect(px+8,py+k,16,4);
+    }else{x.strokeStyle="rgba(255,207,46,.5)";x.strokeRect(px+8,py,16,T)}
+  }else if(c==="K"){
+    x.fillStyle="#555";x.fillRect(px+4,py+T-6,T-8,6);
+    const pr=open;x.fillStyle="#ff7a1a";x.fillRect(px+6,py+T-(pr?7:12),T-12,pr?4:7);
+  }else if(c==="r"||c==="b"){
+    x.shadowColor=c==="r"?"#c58bff":"#8aff6a";x.shadowBlur=10+Math.sin(t/10)*6;if(t%10===0)burst(px+16,py-6,1,c==="r"?"#caa6ff":"#a8ff8a");
+    x.fillStyle=c==="r"?"#7b4fd1":"#2fb34a";
+    x.beginPath();x.roundRect(px+1,py-10,T-2,T+10,[14,14,0,0]);x.fill();
+    x.lineWidth=3;x.strokeStyle="#000";x.stroke();x.shadowBlur=0;
+    txt(c==="r"?"R":"B",px+16,py+14,18,"#fff");
+  }
+}
+function drawP(p){
+  const air=p.on?0:Math.min(Math.abs(p.vy)*.02,.2),sy=1-p.sq+air,sx=1+p.sq-air*.5,bl=(t+(p.type==="r"?0:70))%150<6,bob=p.on&&p.vx?-Math.abs(Math.sin(p.anim))*2:Math.sin(t/12)*.8;
+  x.save();x.translate(p.x+p.w/2,p.y+p.h);x.scale(p.face*sx,sy);x.translate(0,-p.h/2+bob);
+  x.shadowColor=p.type==="r"?"#a06bff":"#6dff6d";x.shadowBlur=12;
+  if(p.type==="r"){
+    x.fillStyle="#4b2fa0";x.beginPath();x.moveTo(-12+Math.sin(t/5)*2,14);x.lineTo(-9,-8);x.quadraticCurveTo(0,-20,9,-8);x.lineTo(12+Math.sin(t/5+2)*2,14);x.closePath();x.fill();
+    x.fillStyle="#cfc9e6";x.fillRect(-5,-9,10,9);
+    x.fillStyle="#e0245e";x.fillRect(-1.5,-13,3,3);
+    x.fillStyle="#111";x.fillRect(0,bl?-5:-6,2,bl?1:3);x.fillRect(-4,bl?-5:-6,2,bl?1:3);
+  }else{
+    x.fillStyle="#6b2fa0";x.fillRect(-9,0,18,14);
+    x.fillStyle="#111";x.fillRect(-9,9,18,2);
+    x.fillStyle="#6dd84a";x.fillRect(-8,-14,16,14);
+    x.beginPath();x.moveTo(-8,-10);x.lineTo(-14,-14);x.lineTo(-8,-4);x.fill();
+    x.fillStyle="#2c8f2c";x.fillRect(-8,-15,16,5);
+    x.fillStyle="#fff";x.fillRect(1,-8,5,4);x.fillStyle="#000";x.fillRect(4,-7,2,2);
+    x.fillStyle="#fff";x.fillRect(-4,-8,4,4);x.fillStyle="#000";x.fillRect(-2,-7,2,2);
+  }
+  x.fillStyle=p.type==="r"?"#222":"#111";const s=p.on&&p.vx?Math.sin(p.anim)*4:0;x.fillRect(-8+s,12,7,4);x.fillRect(1-s,12,7,4);
+  x.restore();
+}
+function panel(lines){
+  x.fillStyle="rgba(10,5,40,.82)";x.fillRect(100,110,600,260);
+  x.lineWidth=5;x.strokeStyle=`hsl(${t*3%360},90%,60%)`;x.strokeRect(100,110,600,260);
+  lines.forEach((l,i)=>txt(l[0],400,l[1]+Math.sin(t/12+i)*3,l[2],l[3]));
+}
+function draw(){
+  const h=(t/3)%360,bg=x.createLinearGradient(0,0,cv.width,cv.height);
+  bg.addColorStop(0,`hsl(${260+Math.sin(t/200)*40},65%,28%)`);bg.addColorStop(1,`hsl(${320+Math.cos(t/170)*40},70%,18%)`);
+  x.fillStyle=bg;x.fillRect(0,0,cv.width,cv.height);
+  for(let i=0;i<22;i++){const px=(i*137+t*(.3+i%3*.25))%860-30,py=(i*71)%460+Math.sin(t/40+i)*14;
+    x.fillStyle=`hsla(${(i*40+h)%360},90%,65%,.35)`;
+    x.beginPath();if(i%2)x.arc(px,py,6+i%4*3,0,7);else x.rect(px,py,10+i%3*5,10+i%3*5);x.fill()}
+  if(state!=="title"){
+    for(let y=0;y<RW;y++)for(let i=0;i<C;i++){const c=g[y][i];if(c!=="."&&c!==undefined)drawTile(i,y,c)}
+    pl.forEach(drawP);
+    txt("LEVEL "+(lvl+1),10,24,18,"#ffd21f","left");
+    txt("Raven: W A D   Beast Boy: Arrows",790,24,14,"#fff","right");
+    txt(["Hold the orange button so your friend can pass the gate!","Climb the islands! One holds a button while the other crosses the gate.","Cross the tunnel together, then climb up to the doors!"][lvl],400,470,14,"#ffd21f");
+  }
+  if(state==="title")[0,1].forEach(i=>{const p=mk(i?"b":"r",i?17:5,12);p.y-=Math.abs(Math.sin(t/12+i*2))*30;p.vy=0;p.anim=t/5;p.face=i?-1:1;drawP(p)});
+  if(state==="title")panel([["TEEN TITANS GO!",170,48,"#ffd21f"],["TEMPLE ESCAPE",218,38,"#b58cff"],["Raven: W A D   |   Beast Boy: ← ↑ →",270,20,"#fff"],["Both reach your doors together!",305,20,"#6dd84a"],["Click here, then press Enter to start",345,18,"#fff"]]);
+  if(state==="dead")panel([["TITANS DOWN!",180,48,"#ff4d6d"],["Not working together…",235,22,"#fff"],[msg.length>58?msg.slice(0,58)+"…":msg,280,16,"#ffd21f"],["Press Enter to try again",335,22,"#fff"]]);
+  if(state==="next")panel([["TITANS, GO!",190,50,"#6dd84a"],["Level cleared!",245,28,"#fff"],["Press Enter for the next level",320,22,"#ffd21f"]]);
+  if(state==="won")panel([["YOU ESCAPED!",190,50,"#ffd21f"],["Raven and Beast Boy are free. Booyah!",250,22,"#fff"],["Press Enter to play again",320,22,"#b58cff"]]);
+  parts.forEach(q=>{x.globalAlpha=Math.min(1,q.l/15);x.fillStyle=q.c;x.fillRect(q.x,q.y,q.s,q.s)});x.globalAlpha=1;
+}
+let last=0,acc=0;
+function loop(ts){
+  acc+=Math.min(ts-last,100);last=ts;
+  while(acc>=1000/60){if(state==="play")update();else t++;stepParts();acc-=1000/60}
+  draw();requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+cv.focus();
+</script>
+<script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>
+</html>
