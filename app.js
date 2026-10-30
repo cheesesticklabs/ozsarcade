@@ -6,6 +6,8 @@ const rosters = {
 };
 // Each student has an array of games, keyed by period/name. Append new games to that array.
 const games = {
+  '2/Milo': [{ title: 'Beanstalk: Rise and Fall', url: 'games/period-2/milo/beanstalk-rise-and-fall/index.html', screenshot: 'screenshots/milo-beanstalk.svg' }],
+  '5/Abdul': [{ title: 'Kitchen Twist', url: 'games/period-5/abdul/kitchen-twist/index.html', screenshot: 'screenshots/abdul-kitchen-twist.svg' }],
   '5/Abrahim': [{ title: 'Dark School Obby', url: 'games/period-5/abrahim/dark-school-obby/index.html', screenshot: 'screenshots/abrahim-dark-school-obby.svg' }],
   '5/Issa': [{ title: 'Cap Gun Graveyard — Local Split-Screen Co-op', url: 'games/period-5/issa/cap-gun-graveyard/index.html', screenshot: 'screenshots/issa-cap-gun-graveyard.svg' }],
   '5/Yeronni': [{ title: 'X-Wing: Dogfight', url: 'games/period-5/yeronni/x-wing-dogfight/index.html', screenshot: 'screenshots/yeronni-x-wing-dogfight.svg' }],
@@ -25,7 +27,10 @@ const games = {
     { title: 'Haunted Mansion: The Great Escape', url: 'games/period-7/jhoriel/haunted-mansion/index.html', screenshot: 'screenshots/jhoriel-haunted-mansion.svg' },
     { title: 'Zombie Base Tycoon', url: 'games/period-7/jhoriel/zombie-base-tycoon/index.html', screenshot: 'screenshots/jhoriel-zombie-base-tycoon.svg' }
   ],
-  '7/Siah': [{ title: 'Rooftop Squad', url: 'games/period-7/siah/rooftop-squad/index.html', screenshot: 'screenshots/siah-rooftop-squad.svg' }],
+  '7/Siah': [
+    { title: 'Rooftop Squad', url: 'games/period-7/siah/rooftop-squad/index.html', screenshot: 'screenshots/siah-rooftop-squad.svg' },
+    { title: 'Rooftop Squad — Earlier Version', url: 'games/period-7/siah/rooftop-squad-earlier/index.html' }
+  ],
   '7/Chad': [
     { title: 'Tag & Escape — Two Player', url: 'games/period-7/chad/tag-and-escape/index.html', screenshot: 'screenshots/chad-tag-and-escape.svg' },
     { title: 'Inferno: Town Burner', url: 'games/period-7/chad/inferno-town-burner/index.html', screenshot: 'screenshots/chad-inferno-town-burner.svg' }
@@ -38,12 +43,17 @@ const games = {
   ],
   '6/Kemil': [
     { title: 'Veteran Line', url: 'games/period-6/kemil/veteran-line/index.html', screenshot: 'screenshots/kemil-veteran-line.svg' },
-    { title: 'ANNIHILATOR', url: 'games/period-6/kemil/annihilator/index.html', screenshot: 'screenshots/kemil-annihilator.svg' }
+    { title: 'ANNIHILATOR', url: 'games/period-6/kemil/annihilator/index.html', screenshot: 'screenshots/kemil-annihilator.svg' },
+    { title: 'ANNIHILATOR — Earlier Version', url: 'games/period-6/kemil/annihilator-earlier/index.html' }
   ],
-  '6/Joseph': [{ title: 'Tap Pets', url: 'games/period-6/joseph/tap-pets/index.html', screenshot: 'screenshots/joseph-tap-pets.svg' }],
+  '6/Joseph': [
+    { title: 'Tap Pets', url: 'games/period-6/joseph/tap-pets/index.html', screenshot: 'screenshots/joseph-tap-pets.svg' },
+    { title: 'Tap Pets — Alternate Version', url: 'games/period-6/joseph/tap-pets-alternate/index.html' }
+  ],
   '6/Jahseal': [
     { title: 'Power Fighters', url: 'games/period-6/jahseal/power-fighters/index.html', screenshot: 'screenshots/jahseal-power-fighters.svg' },
-    { title: 'Brawl Maker', url: 'games/period-6/jahseal/brawl-maker/index.html', screenshot: 'screenshots/jahseal-brawl-maker.svg' }
+    { title: 'Brawl Maker', url: 'games/period-6/jahseal/brawl-maker/index.html', screenshot: 'screenshots/jahseal-brawl-maker.svg' },
+    { title: 'Power Fighters — Earlier Version', url: 'games/period-6/jahseal/power-fighters-earlier/index.html' }
   ],
   '6/Jacob': [{ title: 'Neon Dash Duo — Solo & Two Player', url: 'games/period-6/jacob/neon-dash-duo/index.html', screenshot: 'screenshots/jacob-neon-dash-duo.svg' }],
   '5/Mamady': [
@@ -66,7 +76,8 @@ const games = {
   ],
   '6/Melanie': [
     { title: 'Hollow — Ward 09', url: 'games/period-6/melanie/hollow/index.html', screenshot: 'screenshots/melanie-hollow-preview.svg', previewAlt: 'Hollow Ward 09 gameplay screenshot' },
-    { title: 'Dead Quiet', url: 'games/period-6/melanie/dead-quiet/index.html', screenshot: 'screenshots/melanie-dead-quiet.svg' }
+    { title: 'Dead Quiet', url: 'games/period-6/melanie/dead-quiet/index.html', screenshot: 'screenshots/melanie-dead-quiet.svg' },
+    { title: 'Night Ride: Fast Chase & Traps', url: 'games/period-6/melanie/night-ride/index.html' }
   ],
   '5/Prince': [{ title: 'Green Meter Soccer', url: 'games/period-5/prince/green-meter-soccer/index.html', screenshot: 'screenshots/prince-green-meter-soccer.svg' }],
   '5/Ilannah': [{ title: 'Spike Dash', url: 'games/period-5/ilannah/spike-dash/index.html', screenshot: 'screenshots/ilannah-spike-dash.svg' }],
@@ -79,7 +90,10 @@ const games = {
     { title: 'Night Shift at Pizza Palace', url: 'games/period-2/ivannah/pizza-palace/index.html', screenshot: 'screenshots/ivannah-pizza-palace.svg' }
   ],
   '2/Chelsea': [{ title: 'Tower of Dread 3D', url: 'games/period-2/chelsea/tower-of-dread/index.html', screenshot: 'screenshots/chelsea-tower-of-dread.svg' }],
-  '2/Judith': [{ title: 'Kawaii Chomp', url: 'games/period-2/judith/index.html', screenshot: 'screenshots/judith-preview.webp' }],
+  '2/Judith': [
+    { title: 'Kawaii Chomp', url: 'games/period-2/judith/index.html', screenshot: 'screenshots/judith-preview.webp' },
+    { title: 'Titans Temple Escape', url: 'games/period-2/judith/titans-temple-escape/index.html' }
+  ],
   '2/Kofi A': [
     { title: 'Marceline: Rise of the Vampire Queen', url: 'games/period-2/kofi-a/index.html', screenshot: 'screenshots/kofi-a-night-hunt.svg' },
     { title: 'Steven Universe: Fusion Dance Battle', url: 'games/period-2/kofi-a/fusion-dance-battle/index.html', screenshot: 'screenshots/kofi-a-fusion-dance.svg' },
@@ -91,11 +105,13 @@ const games = {
   ],
   '2/Chris': [
     { title: 'Free Kick Pro', url: 'games/period-2/chris/index.html', screenshot: 'screenshots/chris-preview.webp' },
-    { title: 'Free Kick Pro — Alternate Version', url: 'games/period-2/chris/alternate-version/index.html', screenshot: 'screenshots/chris-free-kick-alternate.svg' }
+    { title: 'Free Kick Pro — Alternate Version', url: 'games/period-2/chris/alternate-version/index.html', screenshot: 'screenshots/chris-free-kick-alternate.svg' },
+    { title: 'Free Kick Pro — Ultimate Team (Earlier Version)', url: 'games/period-2/chris/free-kick-ultimate-team-earlier/index.html' }
   ],
   '2/Amanda': [
     { title: 'Operation Deaddrop', url: 'games/period-2/amanda/index.html', screenshot: 'screenshots/amanda-preview.webp' },
-    { title: 'Chained: Gotham Obby', url: 'games/period-2/amanda/chained-gotham-obby/index.html', screenshot: 'screenshots/amanda-gotham-obby.svg' }
+    { title: 'Chained: Gotham Obby', url: 'games/period-2/amanda/chained-gotham-obby/index.html', screenshot: 'screenshots/amanda-gotham-obby.svg' },
+    { title: 'Chained: NYC Obby', url: 'games/period-2/amanda/chained-nyc-obby/index.html' }
   ],
   '2/Evelyn': [
     { title: 'Sky Obby', url: 'games/period-2/evelyn/index.html', screenshot: 'screenshots/evelyn-preview.webp' },
@@ -107,11 +123,11 @@ const games = {
     { title: 'Cube Dash', url: 'games/period-2/gabriel/cube-dash/index.html', screenshot: 'screenshots/gabriel-cube-dash.svg' }
   ],
   '2/Amy': [{ title: 'St. Morrow Hospital: Dead Wing', url: 'games/period-2/amy/index.html', screenshot: 'screenshots/amy-preview.webp' }],
-  '2/Fauziya': [{ title: 'Zombie Panic: Fast Forest', url: 'games/period-2/fauziya/index.html', screenshot: 'screenshots/fauziya-preview.webp' }],
-  '5/Alie': [
-    { title: 'Escape Mr Pino', url: 'games/period-5/alie/index.html', screenshot: 'screenshots/alie-preview.webp' },
-    { title: 'Escape Mr Pino — Updated Version', url: 'games/period-5/alie/updated-version/index.html', screenshot: 'screenshots/alie-mr-pino-updated.svg' }
+  '2/Fauziya': [
+    { title: 'Zombie Panic: Fast Forest', url: 'games/period-2/fauziya/index.html', screenshot: 'screenshots/fauziya-preview.webp' },
+    { title: 'Besties vs Rivals', url: 'games/period-2/fauziya/besties-vs-rivals/index.html' }
   ],
+  '5/Alie': [{ title: 'Escape Mr Pino', url: 'games/period-5/alie/index.html', screenshot: 'screenshots/alie-preview.webp' }],
   '2/Cristian': [{ title: 'Blight Rain', url: 'games/period-2/cristian/index.html', screenshot: 'screenshots/cristian-preview.webp' }]
 };
 const colors=['#ff7b9c','#78d9d4','#b69ae9','#ffca73'];
