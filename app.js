@@ -6,6 +6,7 @@ const rosters = {
 };
 // Each student has an array of games, keyed by period/name. Append new games to that array.
 const games = {
+  '5/Bryan': [{ title: 'Zombie Survival', url: 'games/period-5/bryan/zombie-survival/index.html' }],
   '2/Milo': [{ title: 'Beanstalk: Rise and Fall', url: 'games/period-2/milo/beanstalk-rise-and-fall/index.html', screenshot: 'screenshots/milo-beanstalk.svg' }],
   '5/Abdul': [{ title: 'Kitchen Twist', url: 'games/period-5/abdul/kitchen-twist/index.html', screenshot: 'screenshots/abdul-kitchen-twist.svg' }],
   '5/Abrahim': [{ title: 'Dark School Obby', url: 'games/period-5/abrahim/dark-school-obby/index.html', screenshot: 'screenshots/abrahim-dark-school-obby.svg' }],
