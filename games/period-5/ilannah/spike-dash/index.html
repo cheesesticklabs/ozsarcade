@@ -8,74 +8,175 @@
   body{margin:0;background:#111;color:#fff;font-family:system-ui,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh}
   #wrap{position:relative;width:960px;max-width:100vw}
   canvas{width:100%;display:block;background:#000;border-radius:6px}
-  .overlay{position:absolute;inset:0;background:rgba(10,10,20,.93);display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;text-align:center;padding:10px;box-sizing:border-box}
+  .overlay{position:absolute;inset:0;background:rgba(10,10,20,.95);display:flex;flex-direction:column;overflow:auto;border-radius:6px;text-align:center;box-sizing:border-box;padding:8px}
+  .inner{margin:auto}
   .hidden{display:none}
-  h1{margin:0 0 6px;font-size:34px}
-  .row{display:flex;gap:30px;margin:10px 0}
-  .card{background:#222a;border:2px solid #444;border-radius:10px;padding:10px 16px;min-width:220px}
-  .card h3{margin:0 0 6px}
-  label{display:block;margin:6px 0;font-size:14px}
-  select,input[type=color]{margin-left:6px;vertical-align:middle}
-  input[type=color]{width:44px;height:28px;border:none;background:none;padding:0}
-  button{font-size:20px;padding:10px 28px;border-radius:8px;border:none;background:#4ade80;color:#042;cursor:pointer;font-weight:700;margin-top:8px}
-  canvas.prev{width:70px;height:70px;background:none;border-radius:0}
-  small{opacity:.75}
+  h1{margin:0 0 4px;font-size:30px}
+  .row{display:flex;gap:18px;margin:8px 0;justify-content:center}
+  .card{background:#2228;border:2px solid #444;border-radius:10px;padding:8px 12px;width:230px}
+  .card h3{margin:0 0 4px;font-size:15px}
+  label{display:block;margin:5px 0;font-size:13px}
+  select,input[type=text]{margin-left:4px;vertical-align:middle;font-size:13px;padding:2px 4px;border-radius:4px;border:1px solid #666;background:#fff;color:#111}
+  input[type=text]{width:120px}
+  button{font-size:20px;padding:10px 28px;border-radius:8px;border:none;background:#4ade80;color:#042;cursor:pointer;font-weight:700;margin-top:6px}
+  button.sw{width:26px;height:26px;padding:0;margin:2px;border-radius:6px;border:3px solid transparent;font-size:0}
+  button.sw.on{border-color:#fff}
+  button.small{font-size:15px;padding:8px 14px;position:absolute;top:10px;left:10px;margin:0;background:rgba(255,255,255,.85);color:#222;z-index:2}
+  .sws{display:flex;justify-content:center;flex-wrap:wrap;margin:4px 0}
+  canvas.prev{width:56px;height:56px;background:none;border-radius:0;margin:0 auto 2px}
+  small{opacity:.8;font-size:12px}
+
+  /* welcome page */
+  #welcome{background:
+    radial-gradient(circle at 50% 108%,#fff3b0 0,#ffc46b 10%,rgba(255,150,80,.0) 38%),
+    linear-gradient(#2b1a6b 0%,#a8386f 45%,#ff8a3d 85%,#ffc46b 100%)}
+  #welcome h1.big{font-size:64px;letter-spacing:4px;margin:0;text-shadow:0 4px 0 #7a2d63,0 8px 18px rgba(0,0,0,.45)}
+  .tag{margin:2px 0 8px;font-size:18px;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+  .chars{display:flex;justify-content:center;align-items:center;gap:20px;margin:4px 0 8px;font-weight:700}
+  .chars canvas{width:48px;height:48px;border-radius:8px;margin:0 auto;background:rgba(0,0,0,.3)}
+  .chars span.vs{font-size:20px;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+  .chars div.nm{font-size:14px;margin-top:2px;text-shadow:0 2px 4px rgba(0,0,0,.6)}
+  .how{display:flex;gap:14px;justify-content:center;text-align:left;margin-bottom:6px}
+  .how .box{background:rgba(20,10,40,.55);border-radius:10px;padding:8px 14px;font-size:14px;line-height:1.45}
+  .how .box h3{margin:0 0 4px;font-size:15px}
+  .how ul{margin:0;padding-left:18px;width:400px}
+  .how table{border-collapse:collapse}
+  .how td{padding:3px 8px 3px 0}
+  kbd{background:#fff;color:#222;border-radius:4px;padding:1px 6px;font-size:12px;font-weight:700}
+
+  /* scoreboard */
+  table.sb{border-collapse:collapse;margin:10px auto 6px;font-size:15px}
+  table.sb th,table.sb td{border:1px solid #556;padding:6px 8px;min-width:30px}
+  table.sb th{background:#223}
+  table.sb td.nm{text-align:left;font-weight:700;min-width:110px}
+  table.sb td.tot{font-weight:800;font-size:18px;background:#223}
+  table.sb .dim{opacity:.35}
 </style>
 </head>
 <body>
 <div id="wrap">
   <canvas id="c" width="960" height="540"></canvas>
 
-  <div id="menu" class="overlay">
-    <h1>SPIKE DASH</h1>
-    <small>Race to the flag. Spikes get nastier the farther you go. Two players, one keyboard.</small>
+  <!-- WELCOME PAGE -->
+  <div id="welcome" class="overlay">
+    <button id="goCustom" class="small">🎨 Customize</button>
+    <div class="inner">
+      <h1 class="big">SPIKE DASH</h1>
+      <p class="tag">Dodge the spikes. Reach the flag. Beat your friend!</p>
+      <div class="chars">
+        <div><canvas id="wp0" width="48" height="48"></canvas><div class="nm" id="wn0"></div></div>
+        <span class="vs">VS</span>
+        <div><canvas id="wp1" width="48" height="48"></canvas><div class="nm" id="wn1"></div></div>
+      </div>
+      <div class="how">
+        <div class="box"><h3>How to play</h3>
+          <ul>
+            <li>Two players share one keyboard and race through the same level.</li>
+            <li>Touch a spike and you lose a life and restart the level. Harder levels give you fewer lives (5, then 4, 3, and just 2 on level 10).</li>
+            <li>First one to the flag wins the level. There are <b>10 levels</b>, each harder than the last.</li>
+            <li>Win the most levels to win the game!</li>
+          </ul>
+        </div>
+        <div class="box"><h3>Controls</h3>
+          <table>
+            <tr><td><b>Player 1</b></td><td><kbd>A</kbd> <kbd>D</kbd> move &nbsp; <kbd>W</kbd> jump</td></tr>
+            <tr><td><b>Player 2</b></td><td><kbd>←</kbd> <kbd>→</kbd> move &nbsp; <kbd>Space</kbd> jump</td></tr>
+          </table>
+        </div>
+      </div>
+      <button id="start">PLAY</button>
+    </div>
+  </div>
+
+  <!-- CUSTOMIZE PAGE -->
+  <div id="custom" class="overlay hidden"><div class="inner">
+    <h1>Customize</h1>
+    <small>Pick your name, color and look, and choose your sunset sky.</small>
     <div class="row">
       <div class="card">
         <h3>Player 1</h3>
-        <canvas class="prev" id="pv0" width="70" height="70"></canvas>
-        <label>Color <input type="color" id="col0" value="#38bdf8"></label>
+        <canvas class="prev" id="pv0" width="56" height="56"></canvas>
+        <label>Name <input type="text" id="name0" maxlength="12" value="Player 1"></label>
+        <div class="sws" id="sw_c0"></div>
         <label>Shape <select id="shape0"><option value="square">Square</option><option value="round">Rounded</option><option value="outline">Outline</option></select></label>
         <label>Face <select id="face0"><option value="smile">Smile</option><option value="cool">Sunglasses</option><option value="angry">Angry</option><option value="none">None</option></select></label>
-        <small>A / D move, W jump</small>
+        <small>A / D move, W jumps</small>
       </div>
       <div class="card">
         <h3>Player 2</h3>
-        <canvas class="prev" id="pv1" width="70" height="70"></canvas>
-        <label>Color <input type="color" id="col1" value="#f472b6"></label>
+        <canvas class="prev" id="pv1" width="56" height="56"></canvas>
+        <label>Name <input type="text" id="name1" maxlength="12" value="Player 2"></label>
+        <div class="sws" id="sw_c1"></div>
         <label>Shape <select id="shape1"><option value="square">Square</option><option value="round">Rounded</option><option value="outline">Outline</option></select></label>
         <label>Face <select id="face1"><option value="cool">Sunglasses</option><option value="smile">Smile</option><option value="angry">Angry</option><option value="none">None</option></select></label>
         <small>Left / Right arrows move, Space jumps</small>
       </div>
       <div class="card">
-        <h3>Background</h3>
-        <label>Color <input type="color" id="bg" value="#1e293b"></label>
-        <small>Spikes change color to stay visible.</small>
+        <h3>Sunset sky</h3>
+        <div class="sws" id="sw_bg"></div>
+        <small>Each color is a different summer sunset.<br>The scenery keeps moving while you play.</small>
       </div>
     </div>
-    <button id="start">START</button>
-  </div>
+    <button id="done">DONE</button>
+  </div></div>
 
-  <div id="end" class="overlay hidden">
+  <!-- RESULTS / SCOREBOARD -->
+  <div id="end" class="overlay hidden"><div class="inner">
     <h1 id="endTitle"></h1>
-    <p id="endMsg"></p>
-    <button id="again">PLAY AGAIN</button>
-  </div>
+    <div id="endMsg" style="font-size:17px;line-height:1.5"></div>
+    <button id="again">NEXT LEVEL</button>
+  </div></div>
 </div>
 
 <script>
-const W=960, H=540, PH=270, GROUND=PH-50, SZ=30, LEVEL_END=7000;
+const W=960, H=540, PH=270, GROUND=PH-50, SZ=30, TOTAL=10;
 const cv=document.getElementById('c'), ctx=cv.getContext('2d');
 const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const wrap=(v,m)=>((v%m)+m)%m;
+
+// ---------- Colors (limited palette) ----------
+const PLAYER_COLORS={red:'#ef4444',orange:'#f97316',yellow:'#facc15',green:'#22c55e',blue:'#3b82f6',purple:'#a855f7',pink:'#ec4899'};
+// Each sunset theme: sky gradient (top -> horizon), sun, cloud, 3 hill/silhouette tones, ground
+const THEMES={
+  orange:{sky:['#3a2a78','#c8456f','#ff8a3d','#ffd27a'],sun:'#fff1b8',cloud:'#ffb199',hills:['#7a2d63','#4e1f55','#2c1442'],ground:'#1d0f2e',grass:'#4a2858'},
+  red:   {sky:['#2a0f3a','#9b1c3c','#ff4d3d','#ffb067'],sun:'#ffe0b0',cloud:'#ff8f8a',hills:['#6a1840','#471236','#2a0b26'],ground:'#1b0a1c',grass:'#45193a'},
+  yellow:{sky:['#5b3b8c','#e8785a','#ffb627','#fff2a0'],sun:'#fffbe0',cloud:'#ffd08a',hills:['#8a3f5f','#5e2d54','#36193f'],ground:'#25122d',grass:'#533058'},
+  green: {sky:['#0f3b4f','#1f8a70','#f2a65a','#ffe08a'],sun:'#fff3c4',cloud:'#a8e6cf',hills:['#175e5a','#0f4a4d','#0a2f3a'],ground:'#07222b',grass:'#14524f'},
+  blue:  {sky:['#0d1b4c','#4a5fc1','#ee8f9b','#ffd0a0'],sun:'#fff0d0',cloud:'#b8b8ff',hills:['#2c3a8a','#1f2a68','#121a45'],ground:'#0b1033',grass:'#233074'},
+  purple:{sky:['#1f1147','#6b2fa0','#e0559e','#ffa87a'],sun:'#ffe4c8',cloud:'#e0a8ff',hills:['#4a2380','#341a63','#1f0f45'],ground:'#150a30',grass:'#3a1d70'},
+  pink:  {sky:['#5a3a9a','#e96fb0','#ffa6b8','#ffe0c0'],sun:'#fff4e0',cloud:'#ffc8e6',hills:['#a24a8a','#7a3577','#4d2262'],ground:'#2f1546',grass:'#6a3380'}
+};
+const BG_SWATCH={};for(const k in THEMES)BG_SWATCH[k]=`linear-gradient(${THEMES[k].sky[0]},${THEMES[k].sky[2]})`;
+const sel={c0:'blue',c1:'pink',bg:'orange'};
+let theme=THEMES.orange;
+
+function buildSwatches(id,palette,key){
+  const box=$(id);box.innerHTML='';
+  for(const name in palette){
+    const b=document.createElement('button');
+    b.className='sw'+(sel[key]===name?' on':'');
+    b.style.background=palette[name];b.title=name;
+    b.onclick=()=>{sel[key]=name;buildSwatches(id,palette,key);updatePreviews();b.blur()};
+    box.appendChild(b);
+  }
+}
+function buildAll(){
+  buildSwatches('sw_c0',PLAYER_COLORS,'c0');
+  buildSwatches('sw_c1',PLAYER_COLORS,'c1');
+  buildSwatches('sw_bg',BG_SWATCH,'bg');
+}
 
 // ---------- Customization ----------
-function opts(i){return {color:$('col'+i).value,shape:$('shape'+i).value,face:$('face'+i).value}}
+function opts(i){return {color:PLAYER_COLORS[sel['c'+i]],shape:$('shape'+i).value,face:$('face'+i).value}}
 function drawSquare(g,x,y,s,o,alpha=1){
   g.save();g.globalAlpha=alpha;
   g.fillStyle=o.color;g.strokeStyle=o.color;g.lineWidth=4;
   const r=o.shape==='round'?s*0.3:0;
   g.beginPath();
   if(g.roundRect)g.roundRect(x,y,s,s,r);else g.rect(x,y,s,s);
-  if(o.shape==='outline'){g.fillStyle='rgba(0,0,0,.25)';g.fill();g.stroke();}else g.fill();
+  if(o.shape==='outline'){g.fillStyle='rgba(0,0,0,.25)';g.fill();g.stroke();}
+  else{g.fill();g.lineWidth=2;g.strokeStyle='rgba(0,0,0,.5)';g.stroke();}
   g.fillStyle='#000';
   const e=s*0.2;
   if(o.face==='smile'){
@@ -93,51 +194,79 @@ function drawSquare(g,x,y,s,o,alpha=1){
   }
   g.restore();
 }
+function skyGradient(g,h){
+  const T=THEMES[sel.bg];
+  const gr=g.createLinearGradient(0,0,0,h);
+  gr.addColorStop(0,T.sky[0]);gr.addColorStop(.4,T.sky[1]);gr.addColorStop(.8,T.sky[2]);gr.addColorStop(1,T.sky[3]);
+  return gr;
+}
 function updatePreviews(){
   for(let i=0;i<2;i++){
+    const o=opts(i);
     const g=$('pv'+i).getContext('2d');
-    g.clearRect(0,0,70,70);
-    g.fillStyle=$('bg').value;g.fillRect(0,0,70,70);
-    drawSquare(g,17,17,36,opts(i));
+    g.clearRect(0,0,56,56);g.fillStyle=skyGradient(g,56);g.fillRect(0,0,56,56);
+    drawSquare(g,10,10,36,o);
+    const w=$('wp'+i).getContext('2d');
+    w.clearRect(0,0,48,48);w.fillStyle=skyGradient(w,48);w.fillRect(0,0,48,48);
+    drawSquare(w,8,8,32,o);
+    $('wn'+i).textContent=$('name'+i).value.trim()||'Player '+(i+1);
   }
 }
-document.querySelectorAll('select,input').forEach(e=>e.addEventListener('input',updatePreviews));
-updatePreviews();
+document.querySelectorAll('select,input[type=text]').forEach(e=>e.addEventListener('input',updatePreviews));
+buildAll();updatePreviews();
 
-// ---------- Level ----------
-let spikes=[];
-function makeLevel(){
+// ---------- Screens ----------
+$('goCustom').onclick=()=>{$('welcome').classList.add('hidden');$('custom').classList.remove('hidden')};
+$('done').onclick=()=>{updatePreviews();$('custom').classList.add('hidden');$('welcome').classList.remove('hidden')};
+
+// ---------- Level generation ----------
+let spikes=[],levelEnd=4000;
+function makeLevel(n){
   spikes=[];
-  let x=700, seed=12345;
+  levelEnd=3500+n*450;               // levels get longer
+  let x=700-n*25, seed=1000+n*7919;
   const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};
-  while(x<LEVEL_END-400){
-    const t=x/LEVEL_END;                      // 0 -> 1 difficulty
-    const count=1+Math.floor(rnd()*(1+t*3.2)); // bigger clusters later
-    const h=24+Math.floor(t*14);               // taller spikes later
+  while(x<levelEnd-400){
+    const t=x/levelEnd;
+    const d=Math.min(1,0.02+0.9*(n-1)/9+0.12*t);   // mostly by level, ramps inside each level too
+    const count=1+Math.floor(rnd()*(1+d*4));      // bigger clusters on later levels
+    const h=20+Math.floor(d*22);                  // taller spikes on later levels
     for(let k=0;k<count;k++){
-      spikes.push({x:x+k*28,w:28,h:h,bob:t>0.55&&rnd()<0.3?rnd()*6:0});
+      spikes.push({x:x+k*28,w:28,h:h,bob:(d>0.45&&rnd()<0.35*d)?2+rnd()*(4+d*6):0});
     }
-    const gap=330-t*170+rnd()*(120-t*50);      // tighter gaps later
+    const gap=360-d*210+rnd()*(140-d*80);         // tighter gaps on later levels
     x+=count*28+Math.max(gap,150);
   }
 }
 
 // ---------- Game state ----------
-let players=[],state='menu',frame=0,bgColor='#1e293b',winner=-1;
+let players=[],state='welcome',frame=0,winner=-1;
+let lvl=1,introT=0,wins=[0,0],results=[],names=['Player 1','Player 2'],nextAction='next';
 const keys={};
-addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault()});
+addEventListener('keydown',e=>{keys[e.code]=true;if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code)&&state==='play')e.preventDefault()});
 addEventListener('keyup',e=>keys[e.code]=false);
-
 const CTRL=[{l:'KeyA',r:'KeyD',j:'KeyW'},{l:'ArrowLeft',r:'ArrowRight',j:'Space'}];
 
 function startGame(){
-  bgColor=$('bg').value;makeLevel();frame=0;winner=-1;
-  players=[0,1].map(i=>({i,x:100,y:GROUND-SZ,vy:0,ground:true,lives:3,inv:0,out:false,done:false,opt:opts(i),cp:100}));
+  theme=THEMES[sel.bg];
+  names=[0,1].map(i=>($('name'+i).value.trim()||'Player '+(i+1)).slice(0,12));
+  wins=[0,0];results=[];
+  startLevel(1);
+}
+function startLevel(n){
+  lvl=n;makeLevel(n);frame=0;winner=-1;introT=100;
+  const opt=[opts(0),opts(1)];
+  const maxLives=n<=3?5:n<=6?4:n<=9?3:2;   // fewer lives on harder levels
+  players=[0,1].map(i=>({i,x:100,y:GROUND-SZ,vy:0,ground:true,lives:maxLives,max:maxLives,inv:0,out:false,done:false,opt:opt[i]}));
   state='play';
-  $('menu').classList.add('hidden');$('end').classList.add('hidden');
+  $('welcome').classList.add('hidden');$('custom').classList.add('hidden');$('end').classList.add('hidden');
 }
 $('start').onclick=startGame;
-$('again').onclick=()=>{state='menu';$('end').classList.add('hidden');$('menu').classList.remove('hidden');updatePreviews()};
+$('again').onclick=()=>{
+  $('again').blur();
+  if(nextAction==='next')startLevel(lvl+1);
+  else{state='welcome';players=[];ctx.clearRect(0,0,W,H);$('end').classList.add('hidden');$('welcome').classList.remove('hidden');updatePreviews()}
+};
 
 function hit(p){
   const px=p.x+3,py=p.y+3,pw=SZ-6,ph=SZ-3;
@@ -152,8 +281,8 @@ function hit(p){
 
 function update(){
   frame++;
-  // difficulty over time: a little extra speed the longer you play
-  const speed=4.6+Math.min(1.6,frame/3600*1.6);
+  if(introT>0){introT--;return}
+  const speed=4.0+lvl*0.2+Math.min(0.8,frame/3600*0.8);
   for(const p of players){
     if(p.out||p.done)continue;
     const c=CTRL[p.i];
@@ -163,129 +292,176 @@ function update(){
     p.vy+=0.62;p.y+=p.vy;
     if(p.y>=GROUND-SZ){p.y=GROUND-SZ;p.vy=0;p.ground=true}
     if(p.inv>0)p.inv--;
-    p.cp=Math.max(p.cp,Math.floor(p.x/1000)*1000+100);
     if(p.inv===0&&hit(p)){
       p.lives--;
       if(p.lives<=0){p.out=true}
-      else{p.x=p.cp;p.y=GROUND-SZ;p.vy=0;p.inv=100}
+      else{p.x=100;p.y=GROUND-SZ;p.vy=0;p.inv=100}   // back to the start of the level
     }
-    if(p.x>=LEVEL_END){p.done=true;if(winner<0)winner=p.i}
+    if(p.x>=levelEnd){p.done=true;if(winner<0)winner=p.i}
   }
-  if(winner>=0)endGame();
-  else if(players.every(p=>p.out))endGame();
+  if(winner>=0||players.every(p=>p.out))finishLevel();
 }
 
-function endGame(){
-  state='end';
-  const names=['Player 1','Player 2'];
-  if(winner>=0){
-    $('endTitle').textContent=names[winner]+' wins!';
-    $('endMsg').textContent=names[winner]+' reached the flag first.';
-  }else{
-    $('endTitle').textContent='Game over';
-    $('endMsg').textContent='Both players ran out of lives.';
+function scoreboard(){
+  let h='<table class="sb"><tr><th>Level</th>';
+  for(let l=1;l<=TOTAL;l++)h+=`<th class="${results[l-1]===undefined?'dim':''}">${l}</th>`;
+  h+='<th>Wins</th></tr>';
+  for(let i=0;i<2;i++){
+    h+=`<tr><td class="nm">${esc(names[i])}</td>`;
+    for(let l=1;l<=TOTAL;l++){
+      const r=results[l-1];
+      if(r===undefined)h+='<td class="dim">·</td>';
+      else if(r===i)h+=`<td style="background:${players[i].opt.color};color:#000">★</td>`;
+      else h+='<td>–</td>';
+    }
+    h+=`<td class="tot">${wins[i]}</td></tr>`;
   }
+  return h+'</table>';
+}
+
+function finishLevel(){
+  state='between';
+  results[lvl-1]=winner;
+  if(winner>=0)wins[winner]++;
+  const last=lvl>=TOTAL;
+  let title,msg;
+  if(!last){
+    title=winner>=0?`${names[winner]} wins level ${lvl}!`:`Level ${lvl}: nobody made it!`;
+    msg=(winner>=0?'First to the flag!':'Both players ran out of lives. No point awarded.')+scoreboard()+`<small>Next up: level ${lvl+1} of ${TOTAL}, with harder spikes.</small>`;
+    nextAction='next';$('again').textContent='NEXT LEVEL';
+  }else{
+    if(wins[0]===wins[1])title="It's a tie!";
+    else title=`${names[wins[0]>wins[1]?0:1]} wins the game!`;
+    msg=`Final scoreboard after ${TOTAL} levels (★ = level won)`+scoreboard()+(wins[0]===wins[1]?'Play again to settle it!':'Champion of the 10 levels!');
+    nextAction='welcome';$('again').textContent='BACK TO START';
+  }
+  $('endTitle').textContent=title;$('endMsg').innerHTML=msg;
   $('end').classList.remove('hidden');
 }
 
-// ---------- Drawing ----------
-function lum(hex){const n=parseInt(hex.slice(1),16);return (0.299*(n>>16)+0.587*((n>>8)&255)+0.114*(n&255))/255}
-// Background scenery (random but fixed, so it doesn't flicker)
+// ---------- Background scenery ----------
 let _s=777;const R=()=>{_s=(_s*16807)%2147483647;return _s/2147483647};
-const stars=Array.from({length:70},()=>({x:R()*W,y:R()*(PH-90),r:0.6+R()*1.8,t:R()*6}));
-const clouds=Array.from({length:7},()=>({x:R()*W*1.5,y:15+R()*90,s:0.6+R()*1.1,v:0.25+R()*0.35}));
-const motes=Array.from({length:28},()=>({x:R()*W,y:R()*PH,r:1+R()*2.5,v:0.4+R()*0.9,a:R()*6}));
-const shapes=Array.from({length:9},()=>({x:R()*W*1.3,y:30+R()*120,s:14+R()*26,v:0.15+R()*0.3,rot:R()*6,kind:Math.floor(R()*3)}));
-const wrap=(v,m)=>((v%m)+m)%m;
-
-function drawBackground(cx,light){
-  const f=frame;
-  const ink=a=>light?`rgba(0,0,0,${a})`:`rgba(255,255,255,${a})`;
-  // soft gradient: lighter near horizon
-  const g=ctx.createLinearGradient(0,0,0,PH);
-  g.addColorStop(0,light?'rgba(255,255,255,.0)':'rgba(0,0,0,.35)');
-  g.addColorStop(1,light?'rgba(0,0,0,.18)':'rgba(255,255,255,.10)');
-  ctx.fillStyle=g;ctx.fillRect(0,0,W,PH);
-  // twinkling stars / dust (slow parallax + drift)
-  for(const s of stars){
-    const x=wrap(s.x-cx*0.05-f*0.15,W);
-    ctx.fillStyle=ink(0.25+0.3*Math.sin(f/30+s.t));
-    ctx.beginPath();ctx.arc(x,s.y,s.r,0,6.3);ctx.fill();
-  }
-  // spinning geometric shapes drifting by
-  for(const s of shapes){
-    const x=wrap(s.x-cx*0.12-f*s.v*2,W*1.3)-60;
-    const rot=s.rot+f/120;
-    ctx.save();ctx.translate(x,s.y+Math.sin(f/50+s.rot)*8);ctx.rotate(rot);
-    ctx.strokeStyle=ink(0.18);ctx.lineWidth=2;ctx.beginPath();
-    if(s.kind===0)ctx.rect(-s.s/2,-s.s/2,s.s,s.s);
-    else if(s.kind===1){ctx.moveTo(0,-s.s/2);ctx.lineTo(s.s/2,s.s/2);ctx.lineTo(-s.s/2,s.s/2);ctx.closePath()}
-    else ctx.arc(0,0,s.s/2,0,6.3);
-    ctx.stroke();ctx.restore();
-  }
-  // clouds
-  for(const c of clouds){
-    const x=wrap(c.x-cx*0.18-f*c.v*2,W*1.5)-120;
-    ctx.fillStyle=ink(0.10);
-    ctx.beginPath();
-    ctx.ellipse(x,c.y,46*c.s,16*c.s,0,0,6.3);
-    ctx.ellipse(x+30*c.s,c.y-8*c.s,34*c.s,14*c.s,0,0,6.3);
-    ctx.ellipse(x-28*c.s,c.y-4*c.s,30*c.s,12*c.s,0,0,6.3);
-    ctx.fill();
-  }
-  // layered hills (far -> near), each scrolling at its own speed
-  const layers=[{par:0.25,drift:0.5,base:PH-110,a1:26,a2:12,f1:0.006,f2:0.015,al:0.10},
-                {par:0.45,drift:1.0,base:PH-80,a1:20,a2:9,f1:0.009,f2:0.021,al:0.14},
-                {par:0.7,drift:1.8,base:PH-58,a1:12,a2:6,f1:0.013,f2:0.03,al:0.18}];
-  for(const L of layers){
-    const off=cx*L.par+f*L.drift;
-    ctx.fillStyle=ink(L.al);ctx.beginPath();ctx.moveTo(0,PH);
-    for(let x=0;x<=W;x+=8){
-      const y=L.base+Math.sin((x+off)*L.f1)*L.a1+Math.sin((x+off)*L.f2+2)*L.a2;
-      ctx.lineTo(x,y);
-    }
-    ctx.lineTo(W,PH);ctx.closePath();ctx.fill();
-  }
-  // floating motes rushing past
-  for(const m of motes){
-    const x=wrap(m.x-cx*0.5-f*m.v*3,W);
-    const y=m.y+Math.sin(f/40+m.a)*10;
-    ctx.fillStyle=ink(0.22);ctx.beginPath();ctx.arc(x,y,m.r,0,6.3);ctx.fill();
+const stars=Array.from({length:45},()=>({x:R()*W,y:R()*95,r:0.5+R()*1.4,t:R()*6}));
+const clouds=Array.from({length:7},()=>({x:R()*W*1.5,y:18+R()*85,s:0.6+R()*1.1,v:0.25+R()*0.35}));
+const birds=Array.from({length:6},()=>({x:R()*(W+200),y:30+R()*80,v:0.6+R()*0.8,ph:R()*6,s:0.8+R()*0.6}));
+const motes=Array.from({length:24},()=>({x:R()*W,y:70+R()*180,r:1+R()*1.8,v:0.4+R()*0.8,a:R()*6}));
+const FAR ={base:PH-150,a1:40,a2:7,f1:0.006,f2:0.019,par:0.15,drift:0.3,sharp:true};
+const MID ={base:PH-92,a1:16,a2:8,f1:0.008,f2:0.02,par:0.3,drift:0.7};
+const NEAR={base:PH-60,a1:9,a2:5,f1:0.012,f2:0.03,par:0.55,drift:1.3};
+function hillY(L,x,off){
+  const u=(x+off);
+  return L.base+(L.sharp?Math.abs(Math.sin(u*L.f1)):Math.sin(u*L.f1))*L.a1+Math.sin(u*L.f2+2)*L.a2;
+}
+function drawHill(L,cx,color){
+  const off=cx*L.par+frame*L.drift;
+  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(0,PH);
+  for(let x=0;x<=W;x+=8)ctx.lineTo(x,hillY(L,x,off));
+  ctx.lineTo(W,PH);ctx.closePath();ctx.fill();
+  return off;
+}
+function palm(x,y,s,sway,color){
+  ctx.strokeStyle=color;ctx.lineCap='round';
+  ctx.lineWidth=4*s;ctx.beginPath();ctx.moveTo(x,y);
+  const tx=x+5*s+sway,ty=y-52*s;
+  ctx.quadraticCurveTo(x+9*s,y-26*s,tx,ty);ctx.stroke();
+  ctx.lineWidth=2.6*s;
+  for(const a of [-3.0,-2.4,-1.8,-1.2,-0.7,-0.2]){
+    ctx.beginPath();ctx.moveTo(tx,ty);
+    ctx.quadraticCurveTo(tx+Math.cos(a)*16*s,ty+Math.sin(a)*22*s-6*s,tx+Math.cos(a)*30*s,ty+Math.sin(a)*12*s+11*s);
+    ctx.stroke();
   }
 }
 
+function drawBackground(cx){
+  const T=theme,f=frame;
+  // sky
+  const g=ctx.createLinearGradient(0,0,0,GROUND);
+  g.addColorStop(0,T.sky[0]);g.addColorStop(.4,T.sky[1]);g.addColorStop(.8,T.sky[2]);g.addColorStop(1,T.sky[3]);
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,PH);
+  // faint stars high in the sky
+  for(const s of stars){
+    const x=wrap(s.x-cx*0.03-f*0.05,W);
+    ctx.fillStyle=`rgba(255,255,255,${Math.max(0,(0.55-s.y/190))*(0.6+0.4*Math.sin(f/30+s.t))})`;
+    ctx.beginPath();ctx.arc(x,s.y,s.r,0,6.3);ctx.fill();
+  }
+  // big setting sun with glow
+  const sx=W*0.68-Math.min(cx,6000)*0.01, sy=150+Math.sin(f/200)*3;
+  const glow=ctx.createRadialGradient(sx,sy,10,sx,sy,130+Math.sin(f/50)*6);
+  glow.addColorStop(0,'rgba(255,240,190,.75)');glow.addColorStop(1,'rgba(255,200,120,0)');
+  ctx.fillStyle=glow;ctx.fillRect(sx-150,sy-150,300,300);
+  ctx.fillStyle=T.sun;ctx.beginPath();ctx.arc(sx,sy,44,0,6.3);ctx.fill();
+  // drifting clouds lit by the sunset
+  for(const c of clouds){
+    const x=wrap(c.x-cx*0.18-f*c.v*2,W*1.5)-120;
+    ctx.fillStyle=T.cloud;ctx.globalAlpha=0.6;
+    ctx.beginPath();
+    ctx.ellipse(x,c.y,46*c.s,14*c.s,0,0,6.3);
+    ctx.ellipse(x+28*c.s,c.y-8*c.s,30*c.s,13*c.s,0,0,6.3);
+    ctx.ellipse(x-26*c.s,c.y-4*c.s,26*c.s,11*c.s,0,0,6.3);
+    ctx.fill();
+    ctx.globalAlpha=0.35;ctx.fillStyle='#fff';
+    ctx.beginPath();ctx.ellipse(x+4*c.s,c.y-6*c.s,30*c.s,5*c.s,0,0,6.3);ctx.fill();
+    ctx.globalAlpha=1;
+  }
+  // flapping birds
+  ctx.strokeStyle=T.hills[2];ctx.lineWidth=2;ctx.lineCap='round';
+  for(const b of birds){
+    const x=wrap(b.x-cx*0.1-f*b.v*1.5,W+200)-100;
+    const y=b.y+Math.sin(f/45+b.ph)*6, fl=Math.sin(f/6+b.ph)*5*b.s, w=9*b.s;
+    ctx.globalAlpha=0.75;ctx.beginPath();
+    ctx.moveTo(x-w,y+fl*0.3);ctx.quadraticCurveTo(x-w/2,y-fl-3,x,y);
+    ctx.quadraticCurveTo(x+w/2,y-fl-3,x+w,y+fl*0.3);ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  // layered mountains and hills
+  drawHill(FAR,cx,T.hills[0]);
+  drawHill(MID,cx,T.hills[1]);
+  const off=drawHill(NEAR,cx,T.hills[2]);
+  // palm trees on the near hill
+  const period=1450;
+  for(let k=0;k<5;k++){
+    const wx=k*290+60;
+    const x=wrap(wx-off,period)-120;
+    if(x>W+60)continue;
+    palm(x,hillY(NEAR,x,off)+4,0.9+(k%3)*0.15,Math.sin(f/40+k)*3,T.hills[2]);
+  }
+  // glowing fireflies drifting past
+  for(const m of motes){
+    const x=wrap(m.x-cx*0.5-f*m.v*2.5,W);
+    const y=m.y+Math.sin(f/40+m.a)*10;
+    const a=0.35+0.35*Math.sin(f/20+m.a);
+    ctx.fillStyle=`rgba(255,232,150,${a*0.25})`;ctx.beginPath();ctx.arc(x,y,m.r*3.2,0,6.3);ctx.fill();
+    ctx.fillStyle=`rgba(255,240,180,${a+0.2})`;ctx.beginPath();ctx.arc(x,y,m.r,0,6.3);ctx.fill();
+  }
+}
+
+// ---------- Drawing ----------
 function render(){
   ctx.clearRect(0,0,W,H);
-  const light=lum(bgColor)>0.5;
-  const spikeCol=light?'#7f1d1d':'#e5e7eb';
-  const groundCol=light?'rgba(0,0,0,.35)':'rgba(255,255,255,.15)';
+  const T=theme;
   for(const p of players){
     ctx.save();
     ctx.translate(0,p.i*PH);
     ctx.beginPath();ctx.rect(0,0,W,PH);ctx.clip();
-    ctx.fillStyle=bgColor;ctx.fillRect(0,0,W,PH);
     const cx=Math.max(0,p.x-250);
-    drawBackground(cx,light);
+    drawBackground(cx);
     ctx.translate(-cx,0);
     // ground
-    ctx.fillStyle=groundCol;ctx.fillRect(cx,GROUND,W,PH-GROUND);
-    // checkpoints
-    for(let x=1000;x<LEVEL_END;x+=1000){
-      ctx.fillStyle=groundCol;ctx.fillRect(x-1,GROUND-60,3,60);
-    }
+    ctx.fillStyle=T.ground;ctx.fillRect(cx,GROUND,W,PH-GROUND);
+    ctx.fillStyle=T.grass;ctx.fillRect(cx,GROUND,W,5);
     // finish flag
-    ctx.fillStyle=light?'#111':'#fff';ctx.fillRect(LEVEL_END,GROUND-120,5,120);
+    ctx.fillStyle='#fff';ctx.fillRect(levelEnd,GROUND-120,5,120);
     for(let r=0;r<4;r++)for(let c=0;c<4;c++){
-      ctx.fillStyle=(r+c)%2?'#fff':'#000';ctx.fillRect(LEVEL_END+5+c*14,GROUND-120+r*14,14,14);
+      ctx.fillStyle=(r+c)%2?'#fff':'#000';ctx.fillRect(levelEnd+5+c*14,GROUND-120+r*14,14,14);
     }
-    // spikes
-    ctx.fillStyle=spikeCol;
+    // spikes: bright with a dark edge so they show on any sunset
+    ctx.fillStyle='#f8fafc';ctx.strokeStyle=T.ground;ctx.lineWidth=2;ctx.lineJoin='round';
     for(const s of spikes){
       if(s.x<cx-40||s.x>cx+W+40)continue;
       const sy=GROUND-s.h+(s.bob?Math.sin(frame/25+s.x)*s.bob:0);
-      ctx.beginPath();ctx.moveTo(s.x,GROUND);ctx.lineTo(s.x+s.w/2,sy);ctx.lineTo(s.x+s.w,GROUND);ctx.closePath();ctx.fill();
+      ctx.beginPath();ctx.moveTo(s.x,GROUND);ctx.lineTo(s.x+s.w/2,sy);ctx.lineTo(s.x+s.w,GROUND);ctx.closePath();ctx.fill();ctx.stroke();
     }
-    // both players (so you can see your rival if they are near)
+    // players (rival drawn faded so you can still see them)
     for(const q of players){
       if(q.out)continue;
       const blink=q.inv>0&&Math.floor(q.inv/5)%2===0;
@@ -294,17 +470,26 @@ function render(){
     ctx.restore();
     // HUD
     ctx.save();ctx.translate(0,p.i*PH);
-    ctx.fillStyle=light?'#111':'#fff';ctx.font='bold 16px system-ui';
-    ctx.fillText('Player '+(p.i+1),12,24);
-    ctx.fillText('♥'.repeat(Math.max(0,p.lives))+'♡'.repeat(3-Math.max(0,p.lives)),12,46);
-    // progress bar
-    ctx.fillStyle='rgba(128,128,128,.4)';ctx.fillRect(W-232,14,220,10);
-    ctx.fillStyle=p.opt.color;ctx.fillRect(W-232,14,220*Math.min(1,p.x/LEVEL_END),10);
-    if(p.out){ctx.font='bold 28px system-ui';ctx.fillText('OUT',W/2-30,PH/2)}
+    ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=4;
+    ctx.fillStyle='#fff';ctx.font='bold 16px system-ui';ctx.textAlign='left';
+    ctx.fillText(names[p.i],12,24);
+    ctx.fillText('♥'.repeat(Math.max(0,p.lives))+'♡'.repeat(p.max-Math.max(0,p.lives)),12,46);
+    ctx.font='bold 14px system-ui';ctx.textAlign='center';
+    ctx.fillText(`Level ${lvl}/${TOTAL}   ${wins[0]} - ${wins[1]}`,W/2,24);
+    ctx.shadowBlur=0;
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(W-232,14,220,10);
+    ctx.fillStyle=p.opt.color;ctx.fillRect(W-232,14,220*Math.min(1,p.x/levelEnd),10);
+    ctx.shadowColor='rgba(0,0,0,.65)';ctx.shadowBlur=6;ctx.fillStyle='#fff';ctx.textAlign='center';
+    if(p.out){ctx.font='bold 28px system-ui';ctx.fillText('OUT',W/2,PH/2)}
+    if(introT>0){
+      ctx.globalAlpha=Math.min(1,introT/30);
+      ctx.font='bold 44px system-ui';ctx.fillText(`LEVEL ${lvl}`,W/2,PH/2-4);
+      ctx.font='18px system-ui';ctx.fillText(introT>45?'Get ready!':'Go!',W/2,PH/2+26);
+      ctx.globalAlpha=1;
+    }
     ctx.restore();
-    // divider
-    ctx.fillStyle='#000';ctx.fillRect(0,PH-2+(p.i?0:0),W,p.i===0?4:0);
   }
+  ctx.fillStyle='#000';ctx.fillRect(0,PH-2,W,4);
 }
 
 // ---------- Loop ----------
@@ -312,7 +497,7 @@ let last=0,acc=0;
 function loop(t){
   const dt=Math.min(100,t-last);last=t;acc+=dt;
   while(acc>=1000/60){ if(state==='play')update(); acc-=1000/60 }
-  if(players.length)render();
+  if(players.length&&state!=='welcome')render();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);

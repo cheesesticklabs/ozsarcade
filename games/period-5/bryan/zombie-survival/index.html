@@ -1,0 +1,3093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Zombie Survival</title>
+
+<style>
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:#080b08;
+  color:#fff;
+  font-family:Arial,sans-serif;
+}
+
+body{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+#gameBox{
+  width:min(1000px,100vw);
+  text-align:center;
+}
+
+h1{
+  margin:4px;
+  color:#72ff72;
+}
+
+p{
+  margin:5px;
+  font-size:13px;
+}
+
+canvas{
+  display:block;
+  width:100%;
+  max-height:80vh;
+  background:#182018;
+  border:2px solid #72ff72;
+}
+
+button{
+  border:2px solid #72ff72;
+  background:#142014;
+  color:white;
+  padding:12px 24px;
+  margin:8px;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+  border-radius:8px;
+}
+
+button:hover{
+  background:#254025;
+}
+
+#menu{
+  position:absolute;
+  z-index:20;
+  width:min(650px,90vw);
+  padding:30px;
+  background:rgba(8,12,8,.98);
+  border:2px solid #72ff72;
+  border-radius:18px;
+  box-shadow:0 0 35px rgba(80,255,80,.2);
+  text-align:center;
+}
+
+#menu h2{
+  margin:5px 0 15px;
+  font-size:38px;
+  color:#72ff72;
+}
+
+.menuButton{
+  display:block;
+  width:280px;
+  margin:15px auto;
+}
+
+#codeArea{
+  margin-top:15px;
+}
+
+#squadCode{
+  color:#ffd84d;
+  font-size:36px;
+  font-weight:bold;
+  letter-spacing:8px;
+  margin:12px;
+}
+
+input{
+  padding:12px;
+  width:190px;
+  border-radius:6px;
+  border:2px solid #72ff72;
+  background:#101510;
+  color:white;
+  font-size:20px;
+  text-align:center;
+  text-transform:uppercase;
+}
+
+#restart{
+  display:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="gameBox">
+
+<h1>🧟 ZOMBIE SURVIVAL</h1>
+
+<div id="menu">
+
+  <div id="mainMenu">
+
+    <h2>🧟 ZOMBIE SURVIVAL</h2>
+
+    <p>
+      Survive 15 waves across increasingly dangerous floors.
+    </p>
+
+    <button class="menuButton" id="singleBtn">
+      SINGLEPLAYER
+    </button>
+
+    <button class="menuButton" id="multiBtn">
+      MULTIPLAYER
+    </button>
+
+  </div>
+
+
+  <div id="squadMenu" style="display:none">
+
+    <h2>👥 CREATE SQUAD</h2>
+
+    <p>
+      Player 1 creates a squad.
+      Player 2 enters the same code.
+    </p>
+
+    <button class="menuButton" id="createBtn">
+      CREATE SQUAD
+    </button>
+
+    <div id="codeArea" style="display:none">
+
+      <p>Your Squad Code:</p>
+
+      <div id="squadCode"></div>
+
+      <p>Enter the code to join:</p>
+
+      <input
+        id="codeInput"
+        maxlength="6"
+        placeholder="CODE"
+      >
+
+      <br>
+
+      <button id="joinBtn">
+        JOIN SQUAD
+      </button>
+
+    </div>
+
+    <button id="backBtn">
+      BACK
+    </button>
+
+  </div>
+
+</div>
+
+
+<p>
+P1: WASD + F
+&nbsp; | &nbsp;
+P2: ARROWS + ENTER
+&nbsp; | &nbsp;
+1/2 = SWITCH WEAPON
+</p>
+
+
+<canvas id="game" width="900" height="560"></canvas>
+
+
+<button id="restart">
+START / RESTART
+</button>
+
+
+</div>
+
+
+<script>
+
+"use strict";
+
+
+/* =====================================
+   CANVAS
+===================================== */
+
+const canvas =
+  document.getElementById("game");
+
+const ctx =
+  canvas.getContext("2d");
+
+
+/* =====================================
+   MENU
+===================================== */
+
+const menu =
+  document.getElementById("menu");
+
+const mainMenu =
+  document.getElementById("mainMenu");
+
+const squadMenu =
+  document.getElementById("squadMenu");
+
+const singleBtn =
+  document.getElementById("singleBtn");
+
+const multiBtn =
+  document.getElementById("multiBtn");
+
+const createBtn =
+  document.getElementById("createBtn");
+
+const joinBtn =
+  document.getElementById("joinBtn");
+
+const backBtn =
+  document.getElementById("backBtn");
+
+const codeArea =
+  document.getElementById("codeArea");
+
+const squadCode =
+  document.getElementById("squadCode");
+
+const codeInput =
+  document.getElementById("codeInput");
+
+const restart =
+  document.getElementById("restart");
+
+
+/* =====================================
+   GAME VARIABLES
+===================================== */
+
+let mode = "single";
+
+let keys = {};
+
+let players = [];
+
+let zombies = [];
+
+let bullets = [];
+
+let powerUps = [];
+
+let particles = [];
+
+let texts = [];
+
+let playing = false;
+
+let lastTime = 0;
+
+let spawnTimer = 0;
+
+let wave = 1;
+
+let floor = 1;
+
+let waveKills = 0;
+
+let waveTarget = 10;
+
+let waveBreak = 0;
+
+let bossSpawned = false;
+
+let surge = false;
+
+let audio = null;
+
+let victory = false;
+
+
+/* =====================================
+   AUDIO
+===================================== */
+
+function startAudio(){
+
+  try{
+
+    if(!audio){
+
+      audio =
+        new (
+          window.AudioContext ||
+          window.webkitAudioContext
+        )();
+
+    }
+
+    audio.resume();
+
+  }catch(e){}
+
+}
+
+
+function sound(
+  frequency,
+  duration,
+  type="square",
+  volume=.08
+){
+
+  try{
+
+    startAudio();
+
+    const osc =
+      audio.createOscillator();
+
+    const gain =
+      audio.createGain();
+
+
+    osc.type = type;
+
+    osc.frequency.value =
+      frequency;
+
+
+    gain.gain.setValueAtTime(
+      volume,
+      audio.currentTime
+    );
+
+
+    gain.gain.exponentialRampToValueAtTime(
+      .001,
+      audio.currentTime + duration
+    );
+
+
+    osc.connect(gain);
+
+    gain.connect(audio.destination);
+
+
+    osc.start();
+
+    osc.stop(
+      audio.currentTime + duration
+    );
+
+  }catch(e){}
+
+}
+
+
+function gunSound(weapon){
+
+  if(weapon === 0){
+
+    sound(
+      125,
+      .08,
+      "sawtooth",
+      .13
+    );
+
+  }
+
+  else if(weapon === 1){
+
+    sound(
+      200,
+      .045,
+      "square",
+      .11
+    );
+
+  }
+
+  else{
+
+    sound(
+      70,
+      .12,
+      "sawtooth",
+      .18
+    );
+
+    setTimeout(
+      () =>
+        sound(
+          45,
+          .09,
+          "square",
+          .1
+        ),
+      40
+    );
+
+  }
+
+}
+
+
+function zombieNoise(){
+
+  if(Math.random() < .025){
+
+    sound(
+      60 + Math.random()*35,
+      .22,
+      "sawtooth",
+      .035
+    );
+
+  }
+
+}
+
+
+/* =====================================
+   WEAPONS
+===================================== */
+
+const weapons = [
+
+  {
+    name:"PISTOL",
+    damage:1,
+    cooldown:.28,
+    speed:650
+  },
+
+  {
+    name:"SMG",
+    damage:1,
+    cooldown:.11,
+    speed:700
+  },
+
+  {
+    name:"SHOTGUN",
+    damage:2,
+    cooldown:.65,
+    speed:600
+  }
+
+];
+
+
+/* =====================================
+   PLAYER
+===================================== */
+
+function makePlayer(
+  x,
+  color,
+  controls
+){
+
+  return {
+
+    x:x,
+
+    y:280,
+
+    r:16,
+
+    color:color,
+
+    speed:220,
+
+    hp:100,
+
+    maxHp:100,
+
+    up:controls[0],
+
+    down:controls[1],
+
+    left:controls[2],
+
+    right:controls[3],
+
+    shoot:controls[4],
+
+    cooldown:0,
+
+    weapon:0,
+
+    kills:0,
+
+    level:1,
+
+    xp:0,
+
+    ammoPower:0,
+
+    regen:0,
+
+    switchHeld:false
+
+  };
+
+}
+
+
+/* =====================================
+   RESET
+===================================== */
+
+function resetGame(){
+
+  players = [
+
+    makePlayer(
+      250,
+      "#4aa3ff",
+      ["w","s","a","d","f"]
+    ),
+
+    makePlayer(
+      650,
+      "#ffad45",
+      [
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "Enter"
+      ]
+    )
+
+  ];
+
+
+  if(mode === "single"){
+
+    players[1].hp = 0;
+
+  }
+
+
+  zombies = [];
+
+  bullets = [];
+
+  powerUps = [];
+
+  particles = [];
+
+  texts = [];
+
+
+  playing = true;
+
+  victory = false;
+
+
+  wave = 1;
+
+  floor = 1;
+
+  waveKills = 0;
+
+  waveTarget = 10;
+
+  waveBreak = 0;
+
+  spawnTimer = 0;
+
+  bossSpawned = false;
+
+  surge = false;
+
+
+  lastTime =
+    performance.now();
+
+}
+
+
+/* =====================================
+   SQUAD SYSTEM
+===================================== */
+
+function generateCode(){
+
+  const chars =
+    "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+  let result = "";
+
+  for(let i=0;i<6;i++){
+
+    result +=
+      chars[
+        Math.floor(
+          Math.random()*chars.length
+        )
+      ];
+
+  }
+
+  return result;
+
+}
+
+
+singleBtn.onclick = function(){
+
+  mode = "single";
+
+  menu.style.display = "none";
+
+  restart.style.display = "inline-block";
+
+  startAudio();
+
+  resetGame();
+
+  requestAnimationFrame(loop);
+
+};
+
+
+multiBtn.onclick = function(){
+
+  mainMenu.style.display = "none";
+
+  squadMenu.style.display = "block";
+
+};
+
+
+createBtn.onclick = function(){
+
+  const code =
+    generateCode();
+
+  squadCode.textContent =
+    code;
+
+  codeArea.style.display =
+    "block";
+
+};
+
+
+joinBtn.onclick = function(){
+
+  const entered =
+    codeInput.value
+      .trim()
+      .toUpperCase();
+
+
+  if(
+    entered ===
+    squadCode.textContent
+  ){
+
+    mode = "multi";
+
+    menu.style.display =
+      "none";
+
+    restart.style.display =
+      "inline-block";
+
+    startAudio();
+
+    resetGame();
+
+    requestAnimationFrame(loop);
+
+  }
+
+  else{
+
+    alert(
+      "Wrong squad code."
+    );
+
+  }
+
+};
+
+
+backBtn.onclick = function(){
+
+  squadMenu.style.display =
+    "none";
+
+  mainMenu.style.display =
+    "block";
+
+  codeArea.style.display =
+    "none";
+
+  codeInput.value = "";
+
+};
+
+
+restart.onclick = function(){
+
+  startAudio();
+
+  resetGame();
+
+  requestAnimationFrame(loop);
+
+};
+
+
+/* =====================================
+   KEYBOARD
+===================================== */
+
+window.addEventListener(
+  "keydown",
+  function(e){
+
+    keys[e.key] = true;
+
+    if(
+      [
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "Enter"
+      ].includes(e.key)
+    ){
+
+      e.preventDefault();
+
+    }
+
+  }
+);
+
+
+window.addEventListener(
+  "keyup",
+  function(e){
+
+    keys[e.key] = false;
+
+  }
+);
+
+
+/* =====================================
+   POWER UPS
+===================================== */
+
+function spawnPowerUp(){
+
+  const roll =
+    Math.random();
+
+
+  let type;
+
+
+  /*
+    5% chance:
+    KILL ALL ZOMBIES
+  */
+
+  if(roll < .05){
+
+    type = "nuke";
+
+  }
+
+  else{
+
+    const list = [
+      "ammo",
+      "regen",
+      "heal",
+      "weapon"
+    ];
+
+    type =
+      list[
+        Math.floor(
+          Math.random()*list.length
+        )
+      ];
+
+  }
+
+
+  powerUps.push({
+
+    x:
+      60 +
+      Math.random()*
+      (canvas.width-120),
+
+    y:
+      80 +
+      Math.random()*
+      (canvas.height-150),
+
+    r:16,
+
+    type:type,
+
+    time:15
+
+  });
+
+}
+
+
+/* =====================================
+   ZOMBIES
+===================================== */
+
+function spawnZombie(){
+
+  let x;
+  let y;
+
+
+  const side =
+    Math.floor(
+      Math.random()*4
+    );
+
+
+  if(side === 0){
+
+    x = -35;
+
+    y =
+      Math.random()*
+      canvas.height;
+
+  }
+
+  else if(side === 1){
+
+    x =
+      canvas.width+35;
+
+    y =
+      Math.random()*
+      canvas.height;
+
+  }
+
+  else if(side === 2){
+
+    x =
+      Math.random()*
+      canvas.width;
+
+    y = -35;
+
+  }
+
+  else{
+
+    x =
+      Math.random()*
+      canvas.width;
+
+    y =
+      canvas.height+35;
+
+  }
+
+
+  const difficulty =
+    Math.min(
+      (floor-1)/5,
+      1
+    );
+
+
+  let type =
+    "normal";
+
+  let hp = 1;
+
+  let speed =
+    55 +
+    Math.random()*25 +
+    difficulty*40;
+
+  let radius = 15;
+
+
+  const roll =
+    Math.random();
+
+
+  if(roll < .15){
+
+    type = "runner";
+
+    speed =
+      110 +
+      difficulty*40;
+
+    radius = 11;
+
+  }
+
+  else if(roll < .28){
+
+    type = "tank";
+
+    hp =
+      5 +
+      floor;
+
+    speed =
+      32 +
+      difficulty*18;
+
+    radius = 23;
+
+  }
+
+
+  /*
+    ZOMBIE SURGE
+  */
+
+  if(surge){
+
+    hp +=
+      2 + floor;
+
+    speed *=
+      1.2;
+
+  }
+
+
+  zombies.push({
+
+    x:x,
+
+    y:y,
+
+    r:radius,
+
+    hp:hp,
+
+    maxHp:hp,
+
+    speed:speed,
+
+    type:type,
+
+    anim:
+      Math.random()*
+      Math.PI*2
+
+  });
+
+}
+
+
+/* =====================================
+   BOSS
+===================================== */
+
+function spawnBoss(){
+
+  const side =
+    Math.floor(
+      Math.random()*4
+    );
+
+
+  let x;
+  let y;
+
+
+  if(side===0){
+
+    x=-60;
+
+    y=Math.random()*
+      canvas.height;
+
+  }
+
+  else if(side===1){
+
+    x=canvas.width+60;
+
+    y=Math.random()*
+      canvas.height;
+
+  }
+
+  else if(side===2){
+
+    x=Math.random()*
+      canvas.width;
+
+    y=-60;
+
+  }
+
+  else{
+
+    x=Math.random()*
+      canvas.width;
+
+    y=canvas.height+60;
+
+  }
+
+
+  zombies.push({
+
+    x:x,
+
+    y:y,
+
+    r:35,
+
+    hp:40 + floor*5,
+
+    maxHp:40 + floor*5,
+
+    speed:40 + floor*3,
+
+    type:"boss",
+
+    anim:0
+
+  });
+
+}
+
+
+/* =====================================
+   PARTICLES
+===================================== */
+
+function particlesAt(
+  x,
+  y,
+  amount
+){
+
+  for(
+    let i=0;
+    i<amount;
+    i++
+  ){
+
+    particles.push({
+
+      x:x,
+
+      y:y,
+
+      vx:
+        (Math.random()-.5)*
+        180,
+
+      vy:
+        (Math.random()-.5)*
+        180,
+
+      life:.5
+
+    });
+
+  }
+
+}
+
+
+/* =====================================
+   SHOOT
+===================================== */
+
+function shoot(
+  player,
+  playerIndex
+){
+
+  if(
+    player.cooldown > 0
+  ){
+
+    return;
+
+  }
+
+
+  const weapon =
+    weapons[player.weapon];
+
+
+  player.cooldown =
+    weapon.cooldown;
+
+
+  gunSound(
+    player.weapon
+  );
+
+
+  /*
+    Aim toward nearest zombie
+  */
+
+  let target = null;
+
+  let closest =
+    Infinity;
+
+
+  for(
+    const z of zombies
+  ){
+
+    const distance =
+      Math.hypot(
+        z.x-player.x,
+        z.y-player.y
+      );
+
+
+    if(distance < closest){
+
+      closest = distance;
+
+      target = z;
+
+    }
+
+  }
+
+
+  let dx = 0;
+
+  let dy = -1;
+
+
+  if(target){
+
+    dx =
+      target.x-player.x;
+
+    dy =
+      target.y-player.y;
+
+
+    const length =
+      Math.hypot(
+        dx,
+        dy
+      ) || 1;
+
+
+    dx/=length;
+
+    dy/=length;
+
+  }
+
+
+  const amount =
+    player.weapon === 2
+      ? 6
+      : 1;
+
+
+  for(
+    let i=0;
+    i<amount;
+    i++
+  ){
+
+    const spread =
+      player.weapon === 2
+        ? (Math.random()-.5)*.32
+        : 0;
+
+
+    const cos =
+      Math.cos(spread);
+
+    const sin =
+      Math.sin(spread);
+
+
+    bullets.push({
+
+      x:player.x,
+
+      y:player.y,
+
+      vx:
+        (dx*cos-dy*sin)*
+        weapon.speed,
+
+      vy:
+        (dx*sin+dy*cos)*
+        weapon.speed,
+
+      damage:
+        weapon.damage,
+
+      owner:
+        playerIndex,
+
+      life:1.5
+
+    });
+
+  }
+
+}
+
+
+/* =====================================
+   LEVEL UP
+===================================== */
+
+function levelUp(p){
+
+  p.level++;
+
+  p.maxHp += 10;
+
+  p.hp =
+    Math.min(
+      p.maxHp,
+      p.hp+25
+    );
+
+  p.speed += 7;
+
+
+  texts.push({
+
+    x:p.x,
+
+    y:p.y-40,
+
+    text:"LEVEL UP!",
+
+    life:1
+
+  });
+
+}
+
+
+/* =====================================
+   UPDATE
+===================================== */
+
+function update(dt){
+
+  /*
+    NEXT WAVE
+  */
+
+  if(waveBreak > 0){
+
+    waveBreak -= dt;
+
+
+    if(waveBreak <= 0){
+
+      wave++;
+
+
+      if(wave > 15){
+
+        victory = true;
+
+        playing = false;
+
+        sound(
+          440,
+          .15,
+          "sine",
+          .1
+        );
+
+        setTimeout(
+          () =>
+            sound(
+              660,
+              .2,
+              "sine",
+              .1
+            ),
+          150
+        );
+
+        return;
+
+      }
+
+
+      floor =
+        Math.floor(
+          (wave-1)/3
+        )+1;
+
+
+      waveKills = 0;
+
+
+      waveTarget =
+        10 +
+        wave*2;
+
+
+      bossSpawned = false;
+
+
+      /*
+        Red glowing floors
+      */
+
+      surge =
+        floor === 2 ||
+        floor === 4 ||
+        floor === 5;
+
+
+      spawnTimer = 0;
+
+    }
+
+  }
+
+
+  /*
+    PLAYER MOVEMENT
+  */
+
+  for(
+    let i=0;
+    i<2;
+    i++
+  ){
+
+    const p =
+      players[i];
+
+
+    if(p.hp <= 0)
+      continue;
+
+
+    let dx=0;
+    let dy=0;
+
+
+    if(keys[p.left])
+      dx--;
+
+    if(keys[p.right])
+      dx++;
+
+    if(keys[p.up])
+      dy--;
+
+    if(keys[p.down])
+      dy++;
+
+
+    if(dx || dy){
+
+      const length =
+        Math.hypot(
+          dx,
+          dy
+        );
+
+
+      p.x +=
+        dx/length*
+        p.speed*
+        dt;
+
+
+      p.y +=
+        dy/length*
+        p.speed*
+        dt;
+
+    }
+
+
+    p.x =
+      Math.max(
+        p.r,
+        Math.min(
+          canvas.width-p.r,
+          p.x
+        )
+      );
+
+
+    p.y =
+      Math.max(
+        p.r+45,
+        Math.min(
+          canvas.height-p.r,
+          p.y
+        )
+      );
+
+
+    p.cooldown =
+      Math.max(
+        0,
+        p.cooldown-dt
+      );
+
+
+    if(keys[p.shoot]){
+
+      shoot(
+        p,
+        i
+      );
+
+    }
+
+
+    /*
+      Regeneration
+    */
+
+    if(p.regen > 0){
+
+      p.regen -= dt;
+
+      p.hp =
+        Math.min(
+          p.maxHp,
+          p.hp + 14*dt
+        );
+
+    }
+
+
+    if(p.ammoPower > 0){
+
+      p.ammoPower -= dt;
+
+    }
+
+
+    /*
+      Weapon switching
+    */
+
+    const switchKey =
+      i===0 ? "1" : "2";
+
+
+    if(
+      keys[switchKey] &&
+      !p.switchHeld
+    ){
+
+      p.weapon =
+        (p.weapon+1)%3;
+
+      p.switchHeld = true;
+
+    }
+
+
+    if(!keys[switchKey]){
+
+      p.switchHeld = false;
+
+    }
+
+  }
+
+
+  /*
+    SPAWN ZOMBIES
+  */
+
+  if(waveBreak <= 0){
+
+    spawnTimer -= dt;
+
+
+    if(
+      spawnTimer <= 0 &&
+      waveKills < waveTarget
+    ){
+
+      spawnZombie();
+
+
+      if(
+        Math.random() <
+        Math.min(
+          .3+floor*.08,
+          .75
+        )
+      ){
+
+        spawnZombie();
+
+      }
+
+
+      /*
+        SURGE:
+        extra zombie
+      */
+
+      if(
+        surge &&
+        Math.random()<.75
+      ){
+
+        spawnZombie();
+
+      }
+
+
+      spawnTimer =
+        Math.max(
+          .12,
+          (surge?.40:.72) -
+          floor*.055
+        );
+
+    }
+
+
+    /*
+      Boss every 5 waves
+    */
+
+    if(
+      wave>=5 &&
+      wave%5===0 &&
+      !bossSpawned &&
+      waveKills >=
+        Math.floor(
+          waveTarget*.55
+        )
+    ){
+
+      spawnBoss();
+
+      bossSpawned = true;
+
+    }
+
+
+    /*
+      Wave cleared
+    */
+
+    if(
+      waveKills >= waveTarget &&
+      zombies.length === 0
+    ){
+
+      waveBreak = 3;
+
+    }
+
+  }
+
+
+  /*
+    RANDOM POWERUPS
+  */
+
+  if(
+    Math.random() <
+    dt/7 &&
+    powerUps.length<4
+  ){
+
+    spawnPowerUp();
+
+  }
+
+
+  /*
+    POWERUPS
+  */
+
+  for(
+    let i=powerUps.length-1;
+    i>=0;
+    i--
+  ){
+
+    const power =
+      powerUps[i];
+
+
+    power.time -= dt;
+
+
+    if(power.time <= 0){
+
+      powerUps.splice(
+        i,
+        1
+      );
+
+      continue;
+
+    }
+
+
+    for(
+      const p of players
+    ){
+
+      if(p.hp<=0)
+        continue;
+
+
+      if(
+        Math.hypot(
+          p.x-power.x,
+          p.y-power.y
+        ) <
+        p.r+power.r
+      ){
+
+        if(
+          power.type ===
+          "ammo"
+        ){
+
+          p.ammoPower=10;
+
+        }
+
+
+        if(
+          power.type ===
+          "regen"
+        ){
+
+          p.regen=10;
+
+        }
+
+
+        if(
+          power.type ===
+          "heal"
+        ){
+
+          p.hp =
+            Math.min(
+              p.maxHp,
+              p.hp+45
+            );
+
+        }
+
+
+        if(
+          power.type ===
+          "weapon"
+        ){
+
+          p.weapon =
+            (p.weapon+1)%3;
+
+        }
+
+
+        /*
+          5% NUKE
+        */
+
+        if(
+          power.type ===
+          "nuke"
+        ){
+
+          const count =
+            zombies.length;
+
+
+          for(
+            const z of zombies
+          ){
+
+            particlesAt(
+              z.x,
+              z.y,
+              8
+            );
+
+          }
+
+
+          zombies = [];
+
+          waveKills +=
+            count;
+
+
+          texts.push({
+
+            x:p.x,
+
+            y:p.y-45,
+
+            text:"☢ FLOOR CLEARED!",
+
+            life:1.6
+
+          });
+
+
+          sound(
+            80,
+            .3,
+            "sawtooth",
+            .15
+          );
+
+        }
+
+
+        powerUps.splice(
+          i,
+          1
+        );
+
+        break;
+
+      }
+
+    }
+
+  }
+
+
+  /*
+    BULLETS
+  */
+
+  for(
+    let i=bullets.length-1;
+    i>=0;
+    i--
+  ){
+
+    const b =
+      bullets[i];
+
+
+    b.x +=
+      b.vx*dt;
+
+    b.y +=
+      b.vy*dt;
+
+    b.life -= dt;
+
+
+    let remove =
+      b.life<=0 ||
+      b.x<0 ||
+      b.x>canvas.width ||
+      b.y<45 ||
+      b.y>canvas.height;
+
+
+    for(
+      let j=zombies.length-1;
+      j>=0 && !remove;
+      j--
+    ){
+
+      const z =
+        zombies[j];
+
+
+      if(
+        Math.hypot(
+          b.x-z.x,
+          b.y-z.y
+        ) <
+        z.r+5
+      ){
+
+        z.hp -=
+          b.damage;
+
+
+        remove=true;
+
+
+        if(z.hp<=0){
+
+          const p =
+            players[b.owner];
+
+
+          p.kills++;
+
+          waveKills++;
+
+
+          p.xp +=
+            z.type==="boss"
+              ? 10
+              : z.type==="tank"
+                ? 3
+                : 1;
+
+
+          if(
+            p.xp >=
+            p.level*8
+          ){
+
+            p.xp -=
+              p.level*8;
+
+            levelUp(p);
+
+          }
+
+
+          particlesAt(
+            z.x,
+            z.y,
+            10
+          );
+
+
+          zombies.splice(
+            j,
+            1
+          );
+
+        }
+
+      }
+
+    }
+
+
+    if(remove){
+
+      bullets.splice(
+        i,
+        1
+      );
+
+    }
+
+  }
+
+
+  /*
+    ZOMBIE AI
+  */
+
+  for(
+    const z of zombies
+  ){
+
+    z.anim +=
+      dt*8;
+
+
+    zombieNoise();
+
+
+    let target =
+      players[0];
+
+
+    const d0 =
+      Math.hypot(
+        z.x-players[0].x,
+        z.y-players[0].y
+      );
+
+
+    const d1 =
+      Math.hypot(
+        z.x-players[1].x,
+        z.y-players[1].y
+      );
+
+
+    if(
+      players[1].hp>0 &&
+      (
+        players[0].hp<=0 ||
+        d1<d0
+      )
+    ){
+
+      target =
+        players[1];
+
+    }
+
+
+    if(target.hp<=0)
+      continue;
+
+
+    const dx =
+      target.x-z.x;
+
+    const dy =
+      target.y-z.y;
+
+
+    const length =
+      Math.hypot(
+        dx,
+        dy
+      ) || 1;
+
+
+    z.x +=
+      dx/length*
+      z.speed*
+      dt;
+
+
+    z.y +=
+      dy/length*
+      z.speed*
+      dt;
+
+
+    if(
+      Math.hypot(
+        z.x-target.x,
+        z.y-target.y
+      ) <
+      z.r+target.r
+    ){
+
+      let damage=18;
+
+
+      if(z.type==="runner")
+        damage=15;
+
+      if(z.type==="tank")
+        damage=23;
+
+      if(z.type==="boss")
+        damage=30;
+
+
+      target.hp =
+        Math.max(
+          0,
+          target.hp-
+          damage*dt
+        );
+
+    }
+
+  }
+
+
+  /*
+    GAME OVER
+  */
+
+  if(mode==="single"){
+
+    if(players[0].hp<=0){
+
+      playing=false;
+
+    }
+
+  }
+
+  else{
+
+    if(
+      players[0].hp<=0 &&
+      players[1].hp<=0
+    ){
+
+      playing=false;
+
+    }
+
+  }
+
+
+  /*
+    PARTICLES
+  */
+
+  for(
+    let i=particles.length-1;
+    i>=0;
+    i--
+  ){
+
+    const p =
+      particles[i];
+
+
+    p.x +=
+      p.vx*dt;
+
+    p.y +=
+      p.vy*dt;
+
+    p.life -= dt;
+
+
+    if(p.life<=0){
+
+      particles.splice(
+        i,
+        1
+      );
+
+    }
+
+  }
+
+
+  /*
+    TEXT
+  */
+
+  for(
+    let i=texts.length-1;
+    i>=0;
+    i--
+  ){
+
+    const t =
+      texts[i];
+
+
+    t.y -=
+      25*dt;
+
+    t.life -= dt;
+
+
+    if(t.life<=0){
+
+      texts.splice(
+        i,
+        1
+      );
+
+    }
+
+  }
+
+}
+
+
+/* =====================================
+   DRAW
+===================================== */
+
+function draw(){
+
+  /*
+    Background
+  */
+
+  ctx.fillStyle =
+    surge
+      ? "#2a0d0d"
+      : "#182018";
+
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  /*
+    Red glow
+  */
+
+  if(surge){
+
+    const glow =
+      ctx.createRadialGradient(
+        450,
+        300,
+        50,
+        450,
+        300,
+        650
+      );
+
+
+    glow.addColorStop(
+      0,
+      "rgba(255,0,0,.02)"
+    );
+
+    glow.addColorStop(
+      .6,
+      "rgba(255,0,0,.12)"
+    );
+
+    glow.addColorStop(
+      1,
+      "rgba(255,0,0,.38)"
+    );
+
+
+    ctx.fillStyle =
+      glow;
+
+
+    ctx.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+  }
+
+
+  /*
+    Floor
+  */
+
+  ctx.strokeStyle =
+    surge
+      ? "#612222"
+      : "#263226";
+
+
+  for(
+    let x=0;
+    x<canvas.width;
+    x+=40
+  ){
+
+    ctx.beginPath();
+
+    ctx.moveTo(x,45);
+
+    ctx.lineTo(
+      x,
+      canvas.height
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  for(
+    let y=45;
+    y<canvas.height;
+    y+=40
+  ){
+
+    ctx.beginPath();
+
+    ctx.moveTo(0,y);
+
+    ctx.lineTo(
+      canvas.width,
+      y
+    );
+
+    ctx.stroke();
+
+  }
+
+
+  /*
+    Powerups
+  */
+
+  for(
+    const p of powerUps
+  ){
+
+    let color="#fff";
+
+    let icon="+";
+
+
+    if(p.type==="ammo"){
+
+      color="#f5df4d";
+
+      icon="∞";
+
+    }
+
+
+    if(p.type==="regen"){
+
+      color="#55ff77";
+
+      icon="♥";
+
+    }
+
+
+    if(p.type==="heal"){
+
+      color="#ff5555";
+
+      icon="+";
+
+    }
+
+
+    if(p.type==="weapon"){
+
+      color="#ff72d2";
+
+      icon="W";
+
+    }
+
+
+    if(p.type==="nuke"){
+
+      color="#ff8c00";
+
+      icon="☢";
+
+    }
+
+
+    const pulse =
+      Math.sin(
+        performance.now()/150
+      )*2;
+
+
+    ctx.fillStyle =
+      color;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x,
+      p.y,
+      p.r+pulse,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.fillStyle="#111";
+
+    ctx.font=
+      "bold 16px Arial";
+
+    ctx.textAlign="center";
+
+
+    ctx.fillText(
+      icon,
+      p.x,
+      p.y+5
+    );
+
+  }
+
+
+  /*
+    Bullets
+  */
+
+  for(
+    const b of bullets
+  ){
+
+    ctx.strokeStyle =
+      "#fff7a0";
+
+    ctx.lineWidth=3;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      b.x-b.vx*.018,
+      b.y-b.vy*.018
+    );
+
+    ctx.lineTo(
+      b.x,
+      b.y
+    );
+
+    ctx.stroke();
+
+
+    ctx.fillStyle =
+      "#fff36b";
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      b.x,
+      b.y,
+      4,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+  }
+
+
+  /*
+    Zombies
+  */
+
+  for(
+    const z of zombies
+  ){
+
+    let color =
+      "#6b9e45";
+
+
+    if(z.type==="runner")
+      color="#d4c449";
+
+
+    if(z.type==="tank")
+      color="#416c3c";
+
+
+    if(z.type==="boss")
+      color="#a83fa8";
+
+
+    const bob =
+      Math.sin(
+        z.anim
+      )*2;
+
+
+    ctx.save();
+
+
+    ctx.translate(
+      z.x,
+      z.y+bob
+    );
+
+
+    /*
+      Body
+    */
+
+    ctx.fillStyle =
+      color;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      0,
+      0,
+      z.r,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+      Animated arms
+    */
+
+    ctx.strokeStyle =
+      color;
+
+    ctx.lineWidth=6;
+
+
+    const arm =
+      Math.sin(
+        z.anim
+      )*5;
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      -z.r*.6,
+      0
+    );
+
+    ctx.lineTo(
+      -z.r*1.05+arm,
+      12
+    );
+
+    ctx.stroke();
+
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+      z.r*.6,
+      0
+    );
+
+    ctx.lineTo(
+      z.r*1.05-arm,
+      12
+    );
+
+    ctx.stroke();
+
+
+    /*
+      Eyes
+    */
+
+    ctx.fillStyle =
+      "#111";
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      -z.r*.3,
+      -z.r*.2,
+      3,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      z.r*.3,
+      -z.r*.2,
+      3,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+      Mouth
+    */
+
+    ctx.fillRect(
+      -z.r*.3,
+      z.r*.25,
+      z.r*.6,
+      4
+    );
+
+
+    ctx.restore();
+
+
+    /*
+      Zombie HP
+    */
+
+    if(z.maxHp>1){
+
+      ctx.fillStyle="#222";
+
+      ctx.fillRect(
+        z.x-z.r,
+        z.y-z.r-9,
+        z.r*2,
+        5
+      );
+
+
+      ctx.fillStyle =
+        z.type==="boss"
+          ? "#d25cff"
+          : "#f04";
+
+
+      ctx.fillRect(
+        z.x-z.r,
+        z.y-z.r-9,
+        z.r*2*
+        (z.hp/z.maxHp),
+        5
+      );
+
+    }
+
+  }
+
+
+  /*
+    Players
+  */
+
+  for(
+    let i=0;
+    i<2;
+    i++
+  ){
+
+    const p =
+      players[i];
+
+
+    if(
+      mode==="single" &&
+      i===1
+    ){
+
+      continue;
+
+    }
+
+
+    ctx.fillStyle =
+      p.color;
+
+
+    ctx.beginPath();
+
+    ctx.arc(
+      p.x,
+      p.y,
+      p.r,
+      0,
+      Math.PI*2
+    );
+
+    ctx.fill();
+
+
+    /*
+      Gun recoil
+    */
+
+    const recoil =
+      p.cooldown >
+      weapons[p.weapon].cooldown*.55
+        ?6
+        :0;
+
+
+    ctx.save();
+
+
+    ctx.translate(
+      p.x,
+      p.y
+    );
+
+
+    ctx.fillStyle =
+      "#ddd";
+
+
+    ctx.fillRect(
+      -4,
+      -23-recoil,
+      8,
+      12+recoil
+    );
+
+
+    ctx.fillStyle="#aaa";
+
+
+    ctx.fillRect(
+      -2,
+      -30-recoil,
+      4,
+      6
+    );
+
+
+    ctx.restore();
+
+
+    /*
+      HP
+    */
+
+    ctx.fillStyle="#222";
+
+    ctx.fillRect(
+      p.x-29,
+      p.y-35,
+      58,
+      6
+    );
+
+
+    ctx.fillStyle="#55e65b";
+
+    ctx.fillRect(
+      p.x-29,
+      p.y-35,
+      58*
+      (p.hp/p.maxHp),
+      6
+    );
+
+
+    ctx.fillStyle="#fff";
+
+    ctx.font=
+      "10px Arial";
+
+    ctx.textAlign="center";
+
+
+    ctx.fillText(
+      "LV "+
+      p.level+
+      " • "+
+      weapons[p.weapon].name,
+      p.x,
+      p.y+34
+    );
+
+
+    if(p.ammoPower>0){
+
+      ctx.fillStyle="#ffe54d";
+
+      ctx.fillText(
+        "∞ AMMO",
+        p.x,
+        p.y-43
+      );
+
+    }
+
+
+    if(p.regen>0){
+
+      ctx.fillStyle="#55ff77";
+
+      ctx.fillText(
+        "+ REGEN",
+        p.x,
+        p.y-53
+      );
+
+    }
+
+  }
+
+
+  /*
+    Particles
+  */
+
+  for(
+    const p of particles
+  ){
+
+    ctx.fillStyle =
+      "#a7e35d";
+
+
+    ctx.fillRect(
+      p.x,
+      p.y,
+      4,
+      4
+    );
+
+  }
+
+
+  /*
+    Floating messages
+  */
+
+  for(
+    const t of texts
+  ){
+
+    ctx.globalAlpha =
+      Math.max(
+        0,
+        t.life
+      );
+
+
+    ctx.fillStyle =
+      "#fff";
+
+
+    ctx.font=
+      "bold 17px Arial";
+
+
+    ctx.textAlign=
+      "center";
+
+
+    ctx.fillText(
+      t.text,
+      t.x,
+      t.y
+    );
+
+
+    ctx.globalAlpha=1;
+
+  }
+
+
+  /*
+    HUD
+  */
+
+  ctx.fillStyle =
+    "rgba(0,0,0,.8)";
+
+
+  ctx.fillRect(
+    0,
+    0,
+    canvas.width,
+    45
+  );
+
+
+  ctx.fillStyle="#fff";
+
+  ctx.font=
+    "bold 15px Arial";
+
+
+  ctx.textAlign="left";
+
+
+  ctx.fillText(
+    "P1 ♥ "+
+    Math.ceil(players[0].hp)+
+    "  ☠ "+
+    players[0].kills+
+    "  "+
+    weapons[players[0].weapon].name,
+    10,
+    27
+  );
+
+
+  ctx.textAlign="center";
+
+
+  ctx.font=
+    "bold 18px Arial";
+
+
+  ctx.fillText(
+    "WAVE "+
+    wave+
+    " / 15  •  FLOOR "+
+    floor+
+    (
+      surge
+        ? "  •  ☢ ZOMBIE SURGE"
+        : ""
+    ),
+    canvas.width/2,
+    18
+  );
+
+
+  ctx.font=
+    "bold 12px Arial";
+
+
+  ctx.fillText(
+    waveKills+
+    " / "+
+    waveTarget+
+    " zombies",
+    canvas.width/2,
+    36
+  );
+
+
+  if(mode==="multi"){
+
+    ctx.textAlign="right";
+
+    ctx.font=
+      "bold 15px Arial";
+
+
+    ctx.fillText(
+      weapons[players[1].weapon].name+
+      "  ☠ "+
+      players[1].kills+
+      "  ♥ "+
+      Math.ceil(
+        players[1].hp
+      )+
+      "  P2",
+      canvas.width-10,
+      27
+    );
+
+  }
+
+
+  /*
+    SURGE WARNING
+  */
+
+  if(
+    surge &&
+    playing
+  ){
+
+    ctx.fillStyle =
+      "rgba(255,0,0,.08)";
+
+
+    ctx.fillRect(
+      0,
+      45,
+      canvas.width,
+      canvas.height-45
+    );
+
+
+    ctx.fillStyle =
+      "#ff4949";
+
+
+    ctx.font=
+      "bold 19px Arial";
+
+
+    ctx.textAlign=
+      "center";
+
+
+    ctx.fillText(
+      "⚠ ZOMBIE SURGE — STRONGER & MORE NUMEROUS ⚠",
+      canvas.width/2,
+      canvas.height-18
+    );
+
+  }
+
+
+  /*
+    END SCREEN
+  */
+
+  if(!playing){
+
+    ctx.fillStyle =
+      "rgba(0,0,0,.88)";
+
+
+    ctx.fillRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+
+    ctx.textAlign=
+      "center";
+
+
+    if(victory){
+
+      ctx.fillStyle =
+        "#72ff72";
+
+
+      ctx.font=
+        "bold 42px Arial";
+
+
+      ctx.fillText(
+        "🏆 YOU SURVIVED!",
+        canvas.width/2,
+        245
+      );
+
+
+      ctx.fillStyle="#fff";
+
+      ctx.font=
+        "bold 21px Arial";
+
+
+      ctx.fillText(
+        "15 WAVES CLEARED!",
+        canvas.width/2,
+        285
+      );
+
+
+      ctx.font=
+        "17px Arial";
+
+
+      ctx.fillText(
+        "The zombies have been defeated.",
+        canvas.width/2,
+        320
+      );
+
+    }
+
+    else{
+
+      ctx.fillStyle =
+        "#ff5555";
+
+
+      ctx.font=
+        "bold 45px Arial";
+
+
+      ctx.fillText(
+        "GAME OVER",
+        canvas.width/2,
+        260
+      );
+
+
+      ctx.fillStyle="#fff";
+
+      ctx.font=
+        "18px Arial";
+
+
+      ctx.fillText(
+        "The zombies got you.",
+        canvas.width/2,
+        300
+      );
+
+    }
+
+
+    ctx.fillText(
+      "Press START / RESTART to play again.",
+      canvas.width/2,
+      345
+    );
+
+  }
+
+}
+
+
+/* =====================================
+   LOOP
+===================================== */
+
+function loop(time){
+
+  if(!playing){
+
+    draw();
+
+    return;
+
+  }
+
+
+  const dt =
+    Math.min(
+      (time-lastTime)/1000,
+      .033
+    );
+
+
+  lastTime=time;
+
+
+  update(dt);
+
+  draw();
+
+
+  requestAnimationFrame(
+    loop
+  );
+
+}
+
+
+/* =====================================
+   STARTUP
+===================================== */
+
+draw();
+
+</script>
+
+<script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>
+</html>
