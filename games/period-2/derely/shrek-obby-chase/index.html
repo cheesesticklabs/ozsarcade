@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><title>Shrek Obby Chase</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:dark;--fg:#fff;--gold:#ffd23f;--bg:#1a0000;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;font-family:"Trebuchet MS",Verdana,sans-serif;color:var(--fg)}
+canvas{display:block;position:fixed;inset:0}
+.h{position:fixed;top:0;height:100%;width:50%;pointer-events:none;text-align:center}
+#h0{left:0}#h1{right:0}
+.v{position:absolute;inset:0;background:radial-gradient(transparent 35%,#300 70%,#000 110%);opacity:0}
+.t{position:absolute;top:10px;width:100%;font-weight:800;font-size:clamp(13px,2vw,22px);text-shadow:0 2px 4px #000}
+.m{position:absolute;top:38%;width:100%;font-size:clamp(24px,5vw,56px);font-weight:900;color:var(--gold);text-shadow:0 3px 6px #000}
+#mid{position:fixed;left:50%;top:0;width:4px;height:100%;background:#000;margin-left:-2px}
+#sel,#over{position:fixed;inset:0;background:#1a0000f2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;z-index:5;padding:16px;overflow:auto}
+#over{display:none;font-size:clamp(28px,6vw,64px);font-weight:900;color:var(--gold)}
+h1{margin:0;font-size:clamp(28px,6vw,60px);color:#7bd13f;text-shadow:0 4px 0 #000}
+.cols{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
+.col{display:flex;flex-direction:column;gap:6px;min-width:150px}
+.col b{font-size:18px}.col small{opacity:.8}
+.col button,#go,#again{font:inherit;font-weight:800;border:3px solid #000;border-radius:10px;padding:8px 12px;cursor:pointer;color:#111;background:var(--c,var(--gold))}
+.col button.on{outline:4px solid #fff;transform:scale(1.06)}
+#go,#again{background:#7bd13f;font-size:22px;padding:12px 30px;margin-top:8px}
+.sc{position:absolute;inset:0;background:#000;display:none;overflow:hidden;z-index:3}
+.sc.on{display:block}
+.sc svg{width:100%;height:100%;display:block}
+.sc.on svg{animation:zoom .3s ease-out forwards,shk .06s infinite}
+@keyframes zoom{from{transform:scale(.4)}to{transform:scale(1.5)}}
+@keyframes shk{0%{translate:-8px 5px}50%{translate:8px -6px}100%{translate:-6px -4px}}
+@media (prefers-reduced-motion:reduce){.sc.on svg{animation:zoom .3s ease-out forwards}}
+</style></head><body>
+<div id="sel">
+<h1>Shrek Obby Chase</h1>
+<div>Beat all 10 levels. Do not let Shrek catch you. First to level 10 wins.</div>
+<div class="cols">
+<div class="col"><b>Player 1</b><small>W A S D to move, Space to jump</small><div id="c0" style="display:contents"></div></div>
+<div class="col"><b>Player 2</b><small>Arrow keys to move, Esc to jump</small><div id="c1" style="display:contents"></div></div>
+</div>
+<button id="go">Start game</button>
+</div>
+<div class="h" id="h0"><div class="v"></div><div class="t"></div><div class="m"></div></div>
+<div class="h" id="h1"><div class="v"></div><div class="t"></div><div class="m"></div></div>
+<div id="mid"></div>
+<div id="over"><div id="wt"></div><button id="again">Play again</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const FR=[["Apple",0xe02020],["Banana",0xffe135],["Orange",0xff8c00],["Grape",0x7b2cbf],["Watermelon",0x2e9e4a],["Strawberry",0xff3366]];
+const DIFF=["Very easy","Easy","Easy","Medium","Medium","Hard","Hard","Very hard","Insane","IMPOSSIBLE"];
+const pick=[0,1],K={};
+[0,1].forEach(i=>{const box=document.getElementById("c"+i);FR.forEach((f,k)=>{const b=document.createElement("button");b.textContent=f[0];b.style.setProperty("--c","#"+f[1].toString(16).padStart(6,"0"));if(k==pick[i])b.className="on";b.onclick=()=>{pick[i]=k;[...box.children].forEach(x=>x.classList.remove("on"));b.classList.add("on")};box.appendChild(b)})});
+addEventListener("keydown",e=>{K[e.code]=true;if(["Space","Escape","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault()});
+addEventListener("keyup",e=>{K[e.code]=false});
+addEventListener("blur",()=>{for(const k in K)K[k]=false});
+
+const renderer=new THREE.WebGLRenderer({antialias:true});
+document.body.prepend(renderer.domElement);
+const RED=0x9a0b0b;
+
+function rng(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
+function gen(L){
+ const r=rng(L*977+13),P=[{x:0,y:0,z:0,w:8,d:8,cp:1}],n=10+L*3,w0=Math.max(2,5.2-L*.3);
+ let p=P[0];
+ for(let i=1;i<=n;i++){
+  const gap=1+L*.15+r()*.4,w=w0+r()*.8,d=w0*.8+r()*.8,z=p.z-p.d/2-gap-d/2;
+  const x=(i%2?-1:1)*(.5+r()*1.2);
+  const y=p.y+.8+L*.1;
+  const q={x,y,z,w,d,cp:i%5==0};
+  if(L>=3&&i%3==0&&i%5){q.amp=1+L*.2;q.sp=.8+L*.08;q.ph=r()*6}
+  P.push(q);p=q}
+ P.push({x:0,y:p.y,z:p.z-p.d/2-7,w:10,d:10,fin:1});
+ return P}
+
+function mkFruit(c,name){
+ const g=new THREE.Group(),M=k=>new THREE.MeshLambertMaterial({color:k});
+ const add=(geo,col,x,y,z,p)=>{const m=new THREE.Mesh(geo,M(col));m.position.set(x,y,z);(p||g).add(m);return m};
+ add(new THREE.BoxGeometry(.7,.8,.4),c,0,1.35,0);
+ add(new THREE.SphereGeometry(.3,14,12),0xf1c27d,0,2,0);
+ add(new THREE.SphereGeometry(.32,14,8,0,Math.PI*2,0,1.3),0x3b2412,0,2.03,.03);
+ add(new THREE.SphereGeometry(.2,12,10),c,0,2.42,0);
+ add(new THREE.BoxGeometry(.3,.05,.15),0x2faa2f,.1,2.65,0).rotation.z=.4;
+ for(const s of[-1,1]){
+  add(new THREE.SphereGeometry(.05,6,6),0x000000,s*.11,2.03,-.28);
+  const l=new THREE.Group();l.position.set(s*.18,.95,0);g.add(l);add(new THREE.BoxGeometry(.3,.95,.32),0x2b3a67,0,-.475,0,l);g["l"+s]=l;
+  const a=new THREE.Group();a.position.set(s*.47,1.7,0);g.add(a);add(new THREE.BoxGeometry(.22,.75,.24),c,0,-.37,0,a);add(new THREE.SphereGeometry(.12,8,8),0xf1c27d,0,-.8,0,a);g["a"+s]=a}
+ return g}
+function mkFruitOld(c,name){
+ const g=new THREE.Group(),M=k=>new THREE.MeshLambertMaterial({color:k});
+ const b=new THREE.Mesh(new THREE.SphereGeometry(.55,20,16),M(c));
+ if(name=="Banana")b.scale.set(.6,1.3,.6);if(name=="Grape")b.scale.set(.8,.8,.8);
+ b.position.y=.6;g.add(b);
+ for(const s of[-1,1]){
+  const e=new THREE.Mesh(new THREE.SphereGeometry(.14,10,8),M(0xffffff));e.position.set(s*.2,.8,-.45);g.add(e);
+  const q=new THREE.Mesh(new THREE.SphereGeometry(.07,8,6),M(0));q.position.set(s*.2,.8,-.58);g.add(q)}
+ const l=new THREE.Mesh(new THREE.BoxGeometry(.35,.06,.18),M(0x2faa2f));l.position.set(.1,1.2,0);l.rotation.z=.4;g.add(l);
+ return g}
+
+function mkShrek(){
+ const g=new THREE.Group(),M=c=>new THREE.MeshLambertMaterial({color:c}),B=c=>new THREE.MeshBasicMaterial({color:c});
+ const add=(geo,mat,x,y,z,p)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);(p||g).add(m);return m};
+ add(new THREE.CylinderGeometry(1,1.2,2.2,12),M(0x6aa339),0,1.5,0);
+ add(new THREE.CylinderGeometry(1.05,1.25,1.1,12),M(0x5a3a1a),0,.9,0);
+ add(new THREE.SphereGeometry(.9,16,12),M(0x7bb83f),0,3.2,0);
+ for(const s of[-1,1]){
+  const e=add(new THREE.CylinderGeometry(.12,.35,.8,8),M(0x7bb83f),s*1.05,3.5,0);e.rotation.z=-s*1.2;
+  add(new THREE.SphereGeometry(.16,8,8),B(0xffee00),s*.3,3.3,-.8);
+  const a=new THREE.Group();a.position.set(s*1.3,2.4,0);g.add(a);
+  add(new THREE.BoxGeometry(.45,.45,1.7),M(0x6aa339),0,0,-.8,a);g["a"+s]=a}
+ g.scale.setScalar(1.2);return g}
+
+const FACE=`<svg viewBox="0 0 200 200" preserveAspectRatio="xMidYMid slice"><rect width="200" height="200" fill="#4a0000"/><ellipse cx="24" cy="92" rx="22" ry="11" fill="#6aa339" transform="rotate(-25 24 92)"/><ellipse cx="176" cy="92" rx="22" ry="11" fill="#6aa339" transform="rotate(25 176 92)"/><ellipse cx="100" cy="100" rx="70" ry="88" fill="#7bb83f"/><path d="M40 60 L92 80 M160 60 L108 80" stroke="#2c4512" stroke-width="9" stroke-linecap="round"/><ellipse cx="68" cy="92" rx="18" ry="14" fill="#fff"/><ellipse cx="132" cy="92" rx="18" ry="14" fill="#fff"/><circle cx="72" cy="94" r="7" fill="#e00"/><circle cx="128" cy="94" r="7" fill="#e00"/><circle cx="72" cy="94" r="3" fill="#000"/><circle cx="128" cy="94" r="3" fill="#000"/><ellipse cx="100" cy="120" rx="13" ry="10" fill="#679a30"/><path d="M50 138 Q100 210 150 138 Q100 124 50 138 Z" fill="#180000"/><path d="M64 138 L72 158 L82 140 Z M84 140 L92 164 L102 142 Z M104 142 L112 164 L120 140 Z M122 140 L130 158 L138 138 Z" fill="#f4efc0"/></svg>`;
+let AC;function scream(){try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();AC.resume();const t=AC.currentTime,o=AC.createOscillator(),g=AC.createGain();o.type="sawtooth";o.frequency.setValueAtTime(220,t);o.frequency.exponentialRampToValueAtTime(900,t+.25);o.frequency.exponentialRampToValueAtTime(300,t+1);g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.001,t+1.1);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+1.1)}catch(e){}}
+function mkPlayer(i,keys){
+ const o={i,keys,scene:new THREE.Scene(),cam:new THREE.PerspectiveCamera(72,1,.1,200),L:1,vx:0,vz:0,vy:0,fall:0,msgT:0};
+ const sc=o.scene;sc.background=new THREE.Color(RED);sc.fog=new THREE.Fog(RED,30,120);
+ sc.add(new THREE.AmbientLight(0xff9a9a,.85));
+ const d=new THREE.DirectionalLight(0xffffff,.6);d.position.set(5,10,6);sc.add(d);
+ o.lava=new THREE.Mesh(new THREE.PlaneGeometry(500,500),new THREE.MeshBasicMaterial({color:0xff3a00}));
+ o.lava.rotation.x=-Math.PI/2;o.lava.position.y=-22;sc.add(o.lava);
+ o.shrek=mkShrek();sc.add(o.shrek);
+ const h=document.getElementById("h"+i);o.vig=h.children[0];o.tx=h.children[1];o.mx=h.children[2];o.sc=document.createElement("div");o.sc.className="sc";o.sc.innerHTML=FACE;h.appendChild(o.sc);
+ return o}
+const players=[mkPlayer(0,{l:"KeyA",r:"KeyD",f:"KeyW",b:"KeyS",j:"Space"}),mkPlayer(1,{l:"ArrowLeft",r:"ArrowRight",f:"ArrowUp",b:"ArrowDown",j:"Escape"})];
+
+function say(o,t,s){o.mx.textContent=t;o.msgT=s||1.6}
+function load(o){
+ if(o.course)o.scene.remove(o.course);
+ const g=o.course=new THREE.Group();o.plats=gen(o.L);
+ o.plats.forEach((p,k)=>{
+  const c=p.fin?0xffd700:p.cp?0x33ff99:new THREE.Color().setHSL((k*.13+o.L*.07)%1,.85,.55);
+  const m=new THREE.Mesh(new THREE.BoxGeometry(p.w,.6,p.d),new THREE.MeshLambertMaterial({color:c}));
+  p.m=m;p.x0=p.x;p.dx=0;m.position.set(p.x,p.y-.3,p.z);g.add(m)});
+ o.scene.add(g);o.cp=o.plats[0];o.t=0;o.on=null;respawn(o,true)}
+function respawn(o,fresh){
+ const c=o.cp;o.x=c.x;o.y=c.y;o.z=c.z;o.vx=o.vz=o.vy=0;o.ground=true;
+ o.shrek.position.set(o.x,o.y,o.z+(fresh?10:11));if(!fresh)o.t=Math.min(o.t,2.5)}
+
+function update(o,dt){
+ if(o.scare>0){o.scare-=dt;if(o.scare<=0){o.sc.classList.remove("on");respawn(o,false);say(o,"Try again!",1.2)}return}
+ o.t+=dt;if(o.msgT>0){o.msgT-=dt;if(o.msgT<=0)o.mx.textContent=""}
+ for(const p of o.plats){const nx=p.amp?p.x0+p.amp*Math.sin(o.t*p.sp+p.ph):p.x0;p.dx=nx-p.x;p.x=nx;p.m.position.x=nx}
+ if(o.on)o.x+=o.on.dx;
+ const k=o.keys;let ix=(K[k.r]?1:0)-(K[k.l]?1:0),iz=(K[k.b]?1:0)-(K[k.f]?1:0);
+ const len=Math.hypot(ix,iz)||1,c=Math.min(1,dt*12);
+ o.vx+=(ix/len*7-o.vx)*c;o.vz+=(iz/len*7-o.vz)*c;
+ if(o.ground&&K[k.j]){o.vy=10.5;o.ground=false}
+ const py=o.y;o.vy-=26*dt;o.x+=o.vx*dt;o.z+=o.vz*dt;o.y+=o.vy*dt;
+ o.ground=false;o.on=null;
+ if(o.vy<=0)for(const p of o.plats){
+  if(Math.abs(o.x-p.x)<=p.w/2+.35&&Math.abs(o.z-p.z)<=p.d/2+.35&&py>=p.y-.15&&o.y<=p.y){
+   o.y=p.y;o.vy=0;o.ground=true;o.on=p;if(p.cp&&o.cp!==p){o.cp=p;say(o,"Checkpoint saved!",1.2)}
+   if(p.fin){if(o.L<10){o.L++;load(o);say(o,"LEVEL "+o.L+" - "+DIFF[o.L-1],2.2)}else win(o);return}
+   break}}
+ if(o.y<o.cp.y-14){o.fall++;respawn(o,false);say(o,"You fell!",1)}
+ const s=o.shrek,dz=o.z-s.position.z,dist=Math.hypot(o.x-s.position.x,dz);
+ if(o.t>4){
+  const sp=1.8+.35*o.L+Math.max(0,dist-9)*.6;
+  s.position.z+=Math.sign(dz)*Math.min(Math.abs(dz),sp*dt)}
+ s.position.x+=(o.x-s.position.x)*Math.min(1,dt*2);
+ s.position.y+=(o.y-s.position.y)*Math.min(1,dt*3);
+ const w=Math.sin(o.t*10);s.position.y+=Math.abs(w)*.15;
+ s.a1.rotation.x=-1.4+w*.3;s["a-1"].rotation.x=-1.4-w*.3;
+ if(dist<1.7&&Math.abs(o.y-s.position.y)<2.5&&o.t>4){o.scare=1.4;o.sc.classList.add("on");scream();return}
+ const f=o.fruit;f.position.set(o.x,o.y,o.z);
+ const sw=o.ground&&Math.abs(o.vx)+Math.abs(o.vz)>1?Math.sin(o.t*14)*.8:0;f.l1.rotation.x=sw;f["l-1"].rotation.x=-sw;f.a1.rotation.x=o.ground?-sw:-2.5;f["a-1"].rotation.x=o.ground?sw:-2.5;
+ const fear=Math.max(0,1-dist/12);o.vig.style.opacity=fear*.5;
+ const sh=fear*.1;
+ o.cam.position.set(o.x+(Math.random()-.5)*sh,o.y+7+(Math.random()-.5)*sh,o.z+14);
+ o.cam.lookAt(o.x,o.y+2.5,o.z-7);o.lava.position.z=o.z;o.lava.position.y+=(o.cp.y-16-o.lava.position.y)*Math.min(1,dt*2);
+ o.tx.textContent="Player "+(o.i+1)+" ("+FR[pick[o.i]][0]+")  |  Level "+o.L+"/10 "+DIFF[o.L-1]+"  |  Height "+Math.round(o.y)+"m  |  Falls "+o.fall;
+ if(o.t<4)o.mx.textContent=o.msgT>0?o.mx.textContent:"RUN!",o.msgT=Math.max(o.msgT,.1)}
+
+let over=false;
+function win(o){over=true;document.getElementById("wt").textContent="Player "+(o.i+1)+" ("+FR[pick[o.i]][0]+") beat all 10 levels and wins!";document.getElementById("over").style.display="flex"}
+document.getElementById("again").onclick=()=>location.reload();
+document.getElementById("go").onclick=()=>{
+ document.getElementById("sel").style.display="none";
+ players.forEach((o,i)=>{o.fruit=mkFruit(FR[pick[i]][1],FR[pick[i]][0]);o.scene.add(o.fruit);o.fall=0;load(o);say(o,"LEVEL 1 - Very easy",2)});
+ running=true};
+
+let running=false,last=performance.now();
+function size(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);players.forEach(o=>{o.cam.aspect=(w/2)/h;o.cam.updateProjectionMatrix()})}
+addEventListener("resize",size);size();
+function loop(now){
+ const dt=Math.min(.05,(now-last)/1000);last=now;
+ if(running&&!over)players.forEach(o=>update(o,dt));
+ const w=innerWidth,h=innerHeight;renderer.setScissorTest(true);
+ players.forEach((o,i)=>{renderer.setViewport(i*w/2,0,w/2,h);renderer.setScissor(i*w/2,0,w/2,h);renderer.render(o.scene,o.cam)});
+ requestAnimationFrame(loop)}
+players.forEach(o=>o.cam.position.set(0,6,12));
+requestAnimationFrame(loop);
+</script><script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>

@@ -26,7 +26,7 @@ canvas#gl{display:block;position:fixed;inset:0;width:100%;height:100%}
 #screen h1{margin:0 0 8px;font-weight:400;font-size:clamp(32px,7vw,64px);color:#ff7a1a}
 #screen p{margin:0;max-width:34em;line-height:1.5;font-size:clamp(15px,2.2vw,20px)}
 #screen .go{color:#ffd24a;font-size:clamp(20px,3vw,30px);margin-top:14px}
-#lobby{position:fixed;z-index:5;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(0,0,0,.78);border:1px solid rgba(233,226,200,.35);padding:10px 14px;text-align:center;font-size:clamp(13px,1.8vw,17px);max-width:92vw;cursor:default}
+#lobby{position:fixed;z-index:5;left:50%;top:max(12px,env(safe-area-inset-top));transform:translateX(-50%);background:rgba(0,0,0,.88);border:1px solid rgba(233,226,200,.35);padding:10px 14px;text-align:center;font-size:clamp(13px,1.8vw,17px);max-width:92vw;cursor:default}
 #lobby b{color:#ff6fae;font-weight:400;letter-spacing:2px}
 #lobby button,#lobby input{font:inherit;color:#e9e2c8;background:#241a12;border:1px solid #ff7a1a;padding:4px 10px;margin:2px;cursor:pointer}
 #lobby input{width:6.5em;text-transform:uppercase;user-select:text;-webkit-user-select:text;cursor:text;text-align:center}
@@ -49,12 +49,12 @@ canvas#gl{display:block;position:fixed;inset:0;width:100%;height:100%}
   <div id="cross"></div><div id="hurt"></div><canvas id="radar" width="120" height="120"></canvas>
 </div>
 <div id="screen"></div>
-<div id="p2banner"><b>PLAYER 1</b> — W/S MOVE · A/D TURN · SPACE SHOOTS · R RELOAD &nbsp; | &nbsp; <b>PLAYER 2</b> — ↑/↓ MOVE · ←/→ TURN · ENTER SHOOTS · 0 RELOADS</div><div id="splitDivider"></div><div id="p1label" class="splitLabel">PLAYER 1 · W/S MOVE · A/D TURN · SPACE SHOOT</div><div id="p2label" class="splitLabel">PLAYER 2 · ↑/↓ MOVE · ←/→ TURN · ENTER SHOOT</div><div id="p1cross" class="splitCross"></div><div id="p2cross" class="splitCross"></div><div id="p2hud">P2 ♥3 · CAPS 6</div>
-<div id="lobby"><b>LOCAL 2-PLAYER CO-OP</b><br><button id="local">Play Local Co-op</button><div id="ls">Split-screen on one computer · P1 W/S move, A/D turn, Space shoot · P2 arrows move/turn, Enter shoot</div></div>
+<div id="p2banner"><b>PLAYER 1</b> — W/S MOVE · A/D TURN · SPACE SHOOTS · R RELOAD &nbsp; | &nbsp; <b>PLAYER 2</b> — ↑/↓ MOVE · ←/→ TURN · ENTER SHOOTS · 0 RELOADS</div><div id="splitDivider"></div><div id="p1label" class="splitLabel">PLAYER 1 · W/S MOVE · A/D TURN · SPACE SHOOT</div><div id="p2label" class="splitLabel">PLAYER 2 · ↑/↓ MOVE · ←/→ TURN · ENTER SHOOT</div><div id="p1cross" class="splitCross"></div><div id="p2cross" class="splitCross"></div><div id="p2hud">P2 ♥3 · CAPS 24</div>
+<div id="lobby"><b>LOCAL 2-PLAYER CO-OP</b><br><button id="local">Play Local Co-op</button><div id="turnSetting" style="margin:10px auto 8px;max-width:320px;font:14px monospace;color:#e9e2c8"><label for="turnSpeed">Turn speed: <b id="turnSpeedValue">5</b>/10</label><br><input id="turnSpeed" type="range" min="1" max="10" step="1" value="5" style="width:min(280px,75vw);accent-color:#ff7a1a;cursor:pointer"><div style="font-size:12px;opacity:.8">1 = slow · 10 = fast</div></div><div id="ls">Split-screen on one computer · P1 W/S move, A/D turn, Space shoot · P2 arrows move/turn, Enter shoot</div></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 const $=id=>document.getElementById(id);
-const MAXAMMO=6,BOUND=110,MAXZ=30;
+const MAXAMMO=24,BOUND=110,MAXZ=12;
 let state='title',score=0,lives=3,ammo=MAXAMMO,reloadT=0,spawnT=0,time=0,best=0,kick=0,muzzle=0,hurt=0,msgT=0,noLock=false;
 try{best=+localStorage.getItem('capyard-best')||0}catch(e){}
 let down=false,shots=0,R=null,code='',zid=0,lastGo=0,pT=0,sT=0,lobbyErr='';const zmap={},ghosts={};
@@ -63,8 +63,8 @@ let localMode=false,p2=null,p2Down=false,p2Shots=0,p2Ammo=MAXAMMO,p2Reload=0,p2F
 const renderer=new THREE.WebGLRenderer({canvas:$('gl'),antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x03040a);
-scene.fog=new THREE.FogExp2(0x03040a,0.038);
+scene.background=new THREE.Color(0x090d1b);
+scene.fog=new THREE.FogExp2(0x101522,0.027);
 const cam=new THREE.PerspectiveCamera(75,1,0.05,260);
 cam.rotation.order='YXZ';cam.position.set(0,1.6,0);scene.add(cam);
 const p2Cam=new THREE.PerspectiveCamera(75,1,0.05,260);p2Cam.rotation.order='YXZ';
@@ -89,11 +89,14 @@ const MB=(c)=>new THREE.MeshBasicMaterial({color:c});
 const mDark=M(0x050303),mHair=M(0x1d1712),mShoe=M(0x15120f),mTooth=M(0xb9b08a),mMouth=M(0x2a0707),eyeMat=MB(0xf2e48a);
 
 // ---------- world ----------
-scene.add(new THREE.AmbientLight(0x2a3550,0.7));
-const moon=new THREE.DirectionalLight(0x6d7fb5,0.45);moon.position.set(-30,60,20);scene.add(moon);
-const gt=tex('#16190f',['#1e2415','#0f1109','#222418','#12100c'],220,2,10,0,256,140);
+scene.add(new THREE.HemisphereLight(0x7889b8,0x17130e,0.85));
+scene.add(new THREE.AmbientLight(0x3a4058,0.55));
+const moon=new THREE.DirectionalLight(0x9baedc,0.8);moon.position.set(-30,60,20);scene.add(moon);
+const rimLight=new THREE.DirectionalLight(0x284d68,0.38);rimLight.position.set(35,18,-35);scene.add(rimLight);
+const gt=tex('#25271f',['#333329','#171b18','#40372c','#111713','#504638'],520,1,8,65,256,140);
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshLambertMaterial({map:gt}));
 ground.rotation.x=-Math.PI/2;scene.add(ground);
+const groundEdge=new THREE.Mesh(new THREE.RingGeometry(BOUND-3,BOUND+2,96),new THREE.MeshStandardMaterial({color:0x171a1d,roughness:1,metalness:0}));groundEdge.rotation.x=-Math.PI/2;groundEdge.position.y=0.025;scene.add(groundEdge);
 // stars
 {const p=new Float32Array(900);for(let i=0;i<300;i++){const a=Math.random()*6.28,e=Math.random()*1.3+0.1,r=230;p[i*3]=Math.cos(a)*Math.cos(e)*r;p[i*3+1]=Math.sin(e)*r;p[i*3+2]=Math.sin(a)*Math.cos(e)*r}
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(p,3));
@@ -118,8 +121,70 @@ for(let i=0;i<26;i++){
   for(let k=0;k<4;k++){const br=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.1,2.2,5),woodMat);br.position.set(0,rnd(3,5),0);br.rotation.set(rnd(-0.9,0.9),k*1.6,rnd(0.7,1.1));br.translateY(1);g.add(br)}
   g.position.set(x,0,z);scene.add(g);addObs(x,z,0.45);
 }
-// iron fence posts ring near center for spooky landmark
-for(let i=0;i<14;i++){const a=i/14*6.28,x=Math.cos(a)*14,z=Math.sin(a)*14;const p=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1.7,5),M(0x15171a));p.position.set(x,0.85,z);scene.add(p);addObs(x,z,0.1)}
+// Iron fence posts ring near center for spooky landmark
+for(let i=0;i<14;i++){const a=i/14*6.28,x=Math.cos(a)*14,z=Math.sin(a)*14;const p=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1.7,5),M(0x252b32));p.position.set(x,0.85,z);scene.add(p);addObs(x,z,0.1)}
+
+// ---------- richer haunted graveyard scenery ----------
+const stoneRough=new THREE.MeshStandardMaterial({color:0x555b5a,roughness:0.96});
+const stoneOld=new THREE.MeshStandardMaterial({color:0x343b3c,roughness:1});
+const mossMat=new THREE.MeshStandardMaterial({color:0x303b2c,roughness:1});
+const deadWood=new THREE.MeshStandardMaterial({color:0x241c19,roughness:1});
+const warmGlow=new THREE.PointLight(0xff9a4b,1.2,9,2);
+// Tall, uneven gravestones around the playable area
+for(let i=0;i<42;i++){
+ const a=Math.random()*Math.PI*2,d=rnd(10,BOUND-7),x=Math.cos(a)*d,z=Math.sin(a)*d;
+ const w=rnd(.55,1.0),h=rnd(.65,1.55),depth=rnd(.16,.28);
+ const g=new THREE.Group();
+ const shape=Math.random();
+ let head;
+ if(shape<.55){head=new THREE.Mesh(new THREE.BoxGeometry(w,h,depth),Math.random()<.45?stoneRough:stoneOld);head.position.y=h/2;}
+ else {head=new THREE.Mesh(new THREE.BoxGeometry(w,h*.78,depth),stoneOld);head.position.y=h*.39;const arch=new THREE.Mesh(new THREE.CylinderGeometry(w/2,w/2,depth,10,1,false,0,Math.PI),stoneRough);arch.rotation.z=Math.PI/2;arch.scale.set(1,.72,1);arch.position.set(0,h*.78,0);head.add(arch);}
+ g.add(head);
+ const base=new THREE.Mesh(new THREE.BoxGeometry(w*1.25,.16,depth*1.5),stoneOld);base.position.y=.08;g.add(base);
+ if(i%3===0){const moss=new THREE.Mesh(new THREE.BoxGeometry(w*.72,.07,depth*1.08),mossMat);moss.position.set(0,rnd(.15,.55),depth*.12);g.add(moss)}
+ g.position.set(x,0,z);g.rotation.y=rnd(-.3,.3);scene.add(g);addObs(x,z,.55);
+}
+// Broken stone walls and collapsed masonry at the outer edges
+for(let i=0;i<16;i++){
+ const a=i/16*Math.PI*2,d=BOUND-5,x=Math.cos(a)*d,z=Math.sin(a)*d;
+ const g=new THREE.Group();
+ for(let j=0;j<5;j++){
+  if(Math.random()<.17)continue;
+  const bw=rnd(.8,1.5),bh=rnd(.45,1.25);
+  const b=new THREE.Mesh(new THREE.BoxGeometry(bw,bh,.42),j%2?stoneOld:stoneRough);
+  b.position.set((j-2)*1.15,bh/2+rnd(-.08,.08),rnd(-.12,.12));b.rotation.z=rnd(-.09,.09);g.add(b);
+ }
+ g.position.set(x,0,z);g.rotation.y=-a+rnd(-.25,.25);scene.add(g);
+}
+// Gnarled dead trees with forked branches
+for(let i=0;i<18;i++){
+ const a=Math.random()*Math.PI*2,d=rnd(18,BOUND-8),x=Math.cos(a)*d,z=Math.sin(a)*d;
+ const g=new THREE.Group();const height=rnd(4.5,7.5);
+ const trunk=new THREE.Mesh(new THREE.CylinderGeometry(.12,.42,height,7),deadWood);trunk.position.y=height/2;trunk.rotation.z=rnd(-.12,.12);g.add(trunk);
+ for(let j=0;j<5;j++){
+  const len=rnd(1.2,2.6),br=new THREE.Mesh(new THREE.CylinderGeometry(.025,.12,len,5),deadWood);
+  br.position.set(rnd(-.6,.6),height*rnd(.45,.9),0);br.rotation.z=rnd(-1.1,1.1);br.rotation.x=rnd(-.7,.7);g.add(br);
+ }
+ g.position.set(x,0,z);scene.add(g);addObs(x,z,.65);
+}
+// Small amber lanterns cast pools of light between the graves
+for(let i=0;i<10;i++){
+ const a=i/10*Math.PI*2,d=rnd(8,BOUND-10),x=Math.cos(a)*d,z=Math.sin(a)*d;
+ const pole=new THREE.Mesh(new THREE.CylinderGeometry(.045,.075,1.9,7),M(0x292b30));pole.position.set(x, .95,z);scene.add(pole);
+ const lamp=new THREE.Mesh(new THREE.BoxGeometry(.28,.32,.28),new THREE.MeshStandardMaterial({color:0xffb45c,emissive:0xff7b26,emissiveIntensity:2.2,roughness:.4}));lamp.position.set(x,2.0,z);scene.add(lamp);
+ const light=new THREE.PointLight(0xff8d42,1.15,10,2);light.position.set(x,2,z);scene.add(light);
+}
+// Pale moon and a soft halo in the sky
+const moonDisc=new THREE.Mesh(new THREE.SphereGeometry(5,24,18),new THREE.MeshBasicMaterial({color:0xe3e8f5}));moonDisc.position.set(-72,78,-145);scene.add(moonDisc);
+const moonHalo=new THREE.Mesh(new THREE.SphereGeometry(7.5,20,16),new THREE.MeshBasicMaterial({color:0x526b9c,transparent:true,opacity:.12,depthWrite:false}));moonHalo.position.copy(moonDisc.position);scene.add(moonHalo);
+// Low drifting ground mist and tiny floating embers
+const mistPos=new Float32Array(240*3),emberPos=new Float32Array(85*3);
+for(let i=0;i<240;i++){mistPos[i*3]=rnd(-BOUND,BOUND);mistPos[i*3+1]=rnd(.15,1.1);mistPos[i*3+2]=rnd(-BOUND,BOUND)}
+for(let i=0;i<85;i++){emberPos[i*3]=rnd(-BOUND,BOUND);emberPos[i*3+1]=rnd(.2,3.2);emberPos[i*3+2]=rnd(-BOUND,BOUND)}
+const mistGeo=new THREE.BufferGeometry();mistGeo.setAttribute('position',new THREE.BufferAttribute(mistPos,3));
+scene.add(new THREE.Points(mistGeo,new THREE.PointsMaterial({color:0x9eabc0,size:2.2,transparent:true,opacity:.12,depthWrite:false,sizeAttenuation:true})));
+const emberGeo=new THREE.BufferGeometry();emberGeo.setAttribute('position',new THREE.BufferAttribute(emberPos,3));
+scene.add(new THREE.Points(emberGeo,new THREE.PointsMaterial({color:0xffa65c,size:.09,transparent:true,opacity:.8,depthWrite:false})));
 
 Math.random=_mr;
 // flashlight
@@ -165,7 +230,18 @@ function makeZombie(){
     const ft=new THREE.Mesh(new THREE.BoxGeometry(0.09,0.06,0.21),mShoe);ft.position.set(0,-0.47,0.05);kn.add(ft);th.add(kn);body.add(th);u.legs.push(th);u.knees.push(kn)}
   const torso=new THREE.Group();torso.position.y=0.95;body.add(torso);u.torso=torso;
   const ch=new THREE.Mesh(geoCache.t||(geoCache.t=new THREE.CylinderGeometry(0.21,0.165,0.6,12).translate(0,0.3,0)),shirt);ch.scale.set(1.35,1,0.75);torso.add(ch);
+  // Uneven, torn fabric and layered grime make each shirt look worn rather than toy-like.
+  const ragMat=new THREE.MeshLambertMaterial({color:Math.random()<.5?0x171b1c:0x292421,side:THREE.DoubleSide});
+  for(let i=0;i<3;i++){
+    const patch=new THREE.Mesh(new THREE.ShapeGeometry((()=>{const sh=new THREE.Shape();sh.moveTo(0,0);sh.lineTo(.045+Math.random()*.035,-.025);sh.lineTo(.018,.065+Math.random()*.025);sh.lineTo(-.025,.025);sh.closePath();return sh})()),i===0?ragMat:mShoe);
+    patch.position.set((Math.random()-.5)*.25,.14+Math.random()*.38,.13+Math.random()*.015);patch.rotation.z=Math.random()*.9-.45;torso.add(patch);
+  }
+  // A few raised seams and folds catch the moonlight on the ragged clothing.
+  const seamMat=new THREE.MeshLambertMaterial({color:0x202422});
+  for(let i=0;i<2;i++){const seam=new THREE.Mesh(new THREE.BoxGeometry(.012,.24,.012),seamMat);seam.position.set((i?1:-1)*(.16+Math.random()*.035),.27,.128);seam.rotation.z=(Math.random()-.5)*.25;torso.add(seam)}
   const belt=new THREE.Mesh(new THREE.CylinderGeometry(0.17,0.17,0.06,10),mShoe);belt.scale.set(1.3,1,0.75);belt.position.y=0.02;torso.add(belt);
+  // Small uneven belt buckle.
+  const buckle=new THREE.Mesh(new THREE.BoxGeometry(.075,.055,.018),new THREE.MeshLambertMaterial({color:0x66604a,metalness:.15,roughness:.9}));buckle.position.set(.015,.025,.132);torso.add(buckle);
   for(const sx of[-1,1]){
     const sh=new THREE.Group();sh.position.set(sx*0.29,0.55,0);sh.rotation.set(-1.25-Math.random()*0.35,0,sx*0.12);
     sh.add(limb(0.3,0.055,0.045,shirt));
@@ -177,16 +253,31 @@ function makeZombie(){
   neck.add(limb(0.1,0.05,0.055,skin).translateY(0.04));
   const hm=new THREE.Mesh(headGeo,skin);hm.scale.set(0.115,0.15,0.14);hm.position.set(0,0.15,0.02);neck.add(hm);
   for(const sx of[-1,1]){
-    const so=sph(0.034,mDark,1,1,0.9);so.position.set(sx*0.053,0.17,0.13);neck.add(so);
-    const ey=sph(0.014,eyeMat);ey.position.set(sx*0.053,0.17,0.152);neck.add(ey);
-    const br=sph(0.03,skin,1.4,0.45,0.7);br.position.set(sx*0.055,0.21,0.135);neck.add(br)}
-  const nose=new THREE.Mesh(new THREE.ConeGeometry(0.02,0.05,5),skin);nose.rotation.x=1.9;nose.position.set(0,0.13,0.16);neck.add(nose);
+    // Deep sockets, differently sized cloudy eyes, and heavy brows break the perfect cartoon symmetry.
+    const socket=sph(0.039,mDark,1.08,1.15,.55);socket.position.set(sx*.053,.17,.125);neck.add(socket);
+    const so=sph(0.027,mDark,1,1,.9);so.position.set(sx*.053,.17,.132);neck.add(so);
+    const ey=sph(Math.random()<.35?.009:.014,eyeMat);ey.position.set(sx*.053+sx*(Math.random()*.004),.17,.15);neck.add(ey);
+    const br=sph(.03,skin,1.4,.45,.7);br.position.set(sx*.055,.21,.135);br.rotation.z=sx*.12;neck.add(br);
+    const ear=sph(.025,skin,.65,1.25,.7);ear.position.set(sx*.115,.145,.005);neck.add(ear);
+  }
+  // Subtle weathered scars and mottled marks on the face.
+  const scarMat=new THREE.MeshLambertMaterial({color:0x42483a});
+  for(let i=0;i<3;i++){const scar=new THREE.Mesh(new THREE.BoxGeometry(.008+Math.random()*.012,.025+Math.random()*.025,.006),scarMat);scar.position.set((Math.random()-.5)*.13,.105+Math.random()*.12,.145);scar.rotation.z=(Math.random()-.5)*.8;neck.add(scar)}
+  const nose=new THREE.Mesh(new THREE.ConeGeometry(0.022,0.06,5),skin);nose.rotation.x=1.9;nose.position.set(0,.13,.16);neck.add(nose);
   const cav=sph(0.045,mMouth,1,0.6,0.5);cav.position.set(0,0.065,0.125);neck.add(cav);
-  const jaw=new THREE.Group();jaw.position.set(0,0.08,0.05);jaw.rotation.x=0.45+Math.random()*0.25;
-  const jm=sph(0.06,skin,1,0.5,0.9);jm.position.set(0,-0.02,0.07);jaw.add(jm);
-  for(let k=-1;k<=1;k++){const t=new THREE.Mesh(new THREE.BoxGeometry(0.012,0.02,0.01),mTooth);t.position.set(k*0.022,0.0,0.14);jaw.add(t)}
+  const jaw=new THREE.Group();jaw.position.set(0,.08,.05);jaw.rotation.x=.45+Math.random()*.25;
+  const jm=sph(.06,skin,1,.5,.9);jm.position.set(0,-.02,.07);jaw.add(jm);
+  for(let k=-2;k<=2;k++){if(Math.random()<.22)continue;const t=new THREE.Mesh(new THREE.BoxGeometry(.009+Math.random()*.006,.012+Math.random()*.012,.01),mTooth);t.position.set(k*.018,(Math.random()-.5)*.012,.14);t.rotation.z=(Math.random()-.5)*.18;jaw.add(t)}
   neck.add(jaw);
+  // Dirty neck creases and a torn collar help connect the head naturally to the body.
+  const creaseMat=new THREE.MeshLambertMaterial({color:0x394238});
+  for(let i=0;i<2;i++){const cr=new THREE.Mesh(new THREE.TorusGeometry(.045+i*.008,.004,4,10),creaseMat);cr.position.set(0,-.005-i*.018,.035);cr.rotation.x=Math.PI/2;neck.add(cr)}
   if(Math.random()<0.6){const h=new THREE.Mesh(new THREE.SphereGeometry(1,10,8,0,6.283,0,1.25),mHair);h.scale.set(0.122,0.16,0.15);h.position.set(0,0.165,-0.005);h.rotation.x=-0.3;neck.add(h)}
+  // Individual proportions and a slight slouch make the crowd less copy-pasted.
+  body.rotation.z=(Math.random()-.5)*.12;body.rotation.x=(Math.random()-.5)*.1;
+  torso.rotation.z=(Math.random()-.5)*.16;torso.rotation.x=(Math.random()-.5)*.1;
+  if(Math.random()<.45){u.legs[0].rotation.z+=.12;u.arms[1].rotation.z-=.16}
+  if(Math.random()<.35){const tear=new THREE.Mesh(new THREE.ConeGeometry(.055,.12,5),ragMat);tear.position.set((Math.random()-.5)*.22,.06,.13);tear.rotation.z=Math.PI;torso.add(tear)}
   u.hm=hm;g.userData=u;g.traverse(o=>{o.userData.zom=g});
   return g;
 }
@@ -205,19 +296,20 @@ let ac=null;
 function snd(f,d,type,v,slide){try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();o.type=type;o.frequency.setValueAtTime(f,ac.currentTime);if(slide)o.frequency.exponentialRampToValueAtTime(Math.max(20,f*slide),ac.currentTime+d);g.gain.setValueAtTime(v,ac.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
 
 // ---------- input ----------
-const keys={};let yaw=0,pitch=0;
+const keys={};let yaw=0,yawTarget=0,pitch=0;let turnSpeed=5;const turnMultiplier=()=>turnSpeed/5;
+$('turnSpeed').addEventListener('input',e=>{turnSpeed=Number(e.target.value);$('turnSpeedValue').textContent=turnSpeed;});
 addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT')return;
   keys[e.code]=true;
-  if(localMode&&['KeyW','KeyS','KeyA','KeyD','Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','NumpadEnter','Numpad0','Digit0'].includes(e.code))e.preventDefault();
-  if(localMode&&e.code==='Space'&&!e.repeat){if(state==='play')shoot();}
+  if(localMode&&(['KeyW','KeyS','KeyA','KeyD','Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','NumpadEnter','Numpad0','Digit0'].includes(e.code)||e.key===' '))e.preventDefault();
+  if(localMode&&(e.code==='Space'||e.key===' ')&&!e.repeat){e.preventDefault();if(state==='play')shoot();}
   if(localMode&&(e.code==='Enter'||e.code==='NumpadEnter')&&!e.repeat){if(state==='play')p2Shoot();}
   if(localMode&&(e.code==='Numpad0'||e.code==='Digit0')&&!e.repeat){if(state==='play')reloadP2();}
   if(e.code==='KeyR'&&!e.repeat)reload();
   if(e.code==='Space'&&!localMode){e.preventDefault();state==='play'?shoot():startGame()}
 });
 addEventListener('keyup',e=>{keys[e.code]=false});
-addEventListener('mousemove',e=>{if(document.pointerLockElement){yaw-=e.movementX*0.0022;pitch=Math.max(-1.2,Math.min(1.2,pitch-e.movementY*0.0022))}});
+addEventListener('mousemove',e=>{if(document.pointerLockElement){yawTarget-=e.movementX*0.0022*turnMultiplier();pitch=Math.max(-1.2,Math.min(1.2,pitch-e.movementY*0.0022))}});
 document.addEventListener('pointerlockerror',()=>{noLock=true});
 document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&state==='play'&&!noLock){state='paused';showScreen()}});
 addEventListener('mousedown',e=>{if(e.button!==0||e.target.closest('#lobby')||localMode)return;state==='play'?shoot():startGame()});
@@ -225,7 +317,7 @@ function lock(){try{const r=$('gl').requestPointerLock();if(r&&r.catch)r.catch((
 function startGame(){
   if(state==='paused'){state='play';hideScreen();lock();return}
   const was=state;resetRound();
-  cam.position.set(R?(Math.random()<0.5?-1.5:1.5):0,1.6,0);yaw=0;pitch=0;state='play';hideScreen();lock();if(R&&was==='over'){lastGo=Date.now();R.emit('go',{})}
+  cam.position.set(R?(Math.random()<0.5?-1.5:1.5):0,1.6,0);yaw=0;yawTarget=0;pitch=0;state='play';hideScreen();lock();if(R&&was==='over'){lastGo=Date.now();R.emit('go',{})}
 }
 function say(t){const m=$('msg');m.textContent=t;m.style.opacity=1;msgT=1.3}
 const ray=new THREE.Raycaster();
@@ -247,9 +339,9 @@ function reload(){if(state==='play'&&reloadT<=0&&ammo<MAXAMMO){reloadT=0.9;say('
 // ---------- local 2-player ----------
 function startLocal(){
   localMode=true;R=null;code='';
-  p2={x:0.7,z:0,yaw:0,lv:3};
+  p2={x:0.7,z:0,yaw:0,yawTarget:0,lv:3};
   resetRound();p2Group.visible=true;
-  cam.position.set(-0.8,1.6,4);yaw=0;pitch=0;state='play';resize();hideScreen();
+  cam.position.set(-0.8,1.6,4);yaw=0;yawTarget=0;pitch=0;state='play';resize();hideScreen();
 }
 function reloadP2(){if(!localMode||p2Down||p2Reload>0||p2Ammo>=MAXAMMO)return;p2Reload=0.9}
 function p2Shoot(){
@@ -454,10 +546,11 @@ function loop(){
   requestAnimationFrame(loop);
   const dt=Math.min(0.05,clock.getDelta());time+=dt;
   if(state==='play'){
-    if(!localMode){if(keys.ArrowLeft)yaw+=2*dt;if(keys.ArrowRight)yaw-=2*dt;
+    if(!localMode){if(keys.ArrowLeft)yawTarget+=1.65*turnMultiplier()*dt;if(keys.ArrowRight)yawTarget-=1.65*turnMultiplier()*dt;
       if(keys.ArrowUp)pitch=Math.min(1.2,pitch+1.5*dt);if(keys.ArrowDown)pitch=Math.max(-1.2,pitch-1.5*dt)}
-    if(localMode){if(keys.KeyA)yaw+=2.2*dt;if(keys.KeyD)yaw-=2.2*dt}
-    else {if(keys.ArrowLeft)yaw+=2*dt;if(keys.ArrowRight)yaw-=2*dt}
+    if(localMode){if(keys.KeyA)yawTarget+=1.65*turnMultiplier()*dt;if(keys.KeyD)yawTarget-=1.65*turnMultiplier()*dt}
+    else {if(keys.ArrowLeft)yawTarget+=1.65*turnMultiplier()*dt;if(keys.ArrowRight)yawTarget-=1.65*turnMultiplier()*dt}
+    let yawDiff=Math.atan2(Math.sin(yawTarget-yaw),Math.cos(yawTarget-yaw));yaw+=yawDiff*(1-Math.exp(-dt*12));
     const f=down?0:(keys.KeyW?1:0)-(keys.KeyS?1:0);
     if(f){const sp=((keys.ShiftLeft||keys.ShiftRight)?8.5:5.2)*dt*f;
       cam.position.x-=Math.sin(yaw)*sp;cam.position.z-=Math.cos(yaw)*sp;
@@ -465,7 +558,8 @@ function loop(){
     pushOut(cam.position,0.35);
     const pr=Math.hypot(cam.position.x,cam.position.z);if(pr>BOUND){cam.position.x*=BOUND/pr;cam.position.z*=BOUND/pr}
     if(localMode&&p2){
-      if(keys.ArrowLeft)p2.yaw+=2.2*dt;if(keys.ArrowRight)p2.yaw-=2.2*dt;
+      if(keys.ArrowLeft)p2.yawTarget+=1.65*turnMultiplier()*dt;if(keys.ArrowRight)p2.yawTarget-=1.65*turnMultiplier()*dt;
+      let p2YawDiff=Math.atan2(Math.sin(p2.yawTarget-p2.yaw),Math.cos(p2.yawTarget-p2.yaw));p2.yaw+=p2YawDiff*(1-Math.exp(-dt*12));
       const pf=(keys.ArrowUp?1:0)-(keys.ArrowDown?1:0);
       if(!p2Down&&pf){const sp=5.2*dt*pf;p2.x-=Math.sin(p2.yaw)*sp;p2.z-=Math.cos(p2.yaw)*sp;pushOut(p2,0.35);const rr=Math.hypot(p2.x,p2.z);if(rr>BOUND){p2.x*=BOUND/rr;p2.z*=BOUND/rr}}
       if(p2Reload>0){p2Reload-=dt;if(p2Reload<=0){p2Ammo=MAXAMMO;snd(500,0.07,'triangle',0.1)}}
@@ -475,7 +569,7 @@ function loop(){
     if(reloadT>0){reloadT-=dt;if(reloadT<=0){ammo=MAXAMMO;snd(500,0.08,'triangle',0.15);say('Reloaded');updateHud()}}
     if(msgT>0){msgT-=dt;if(msgT<=0)$('msg').style.opacity=0}
     spawnT-=dt;
-    if(spawnT<=0&&(localMode||amHost())){spawn();spawnT=Math.max(0.4,1.5-score*0.04)*(0.6+Math.random()*0.8)*(R&&R.peers().length>1?0.7:1)}
+    if(spawnT<=0&&(localMode||amHost())){spawn();spawnT=Math.max(1.8,3.2-score*0.015)*(0.75+Math.random()*0.7)*(R&&R.peers().length>1?1.15:1)}
     for(const z of zombies){
       const u=z.userData;
       if(u.dead){u.dead+=dt;continue}

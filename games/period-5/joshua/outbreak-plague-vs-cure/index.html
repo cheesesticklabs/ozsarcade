@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Outbreak: Plague vs Cure</title>
+<style>
+:root{--bg:#f4f1ea;--fg:#1c1c1c;--card:#fff;--bd:#d6d0c2;--dis:#b3261e;--cure:#1a6fb5;--ok:#3a9d5d;--dead:#555;color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#16181c;--fg:#eee;--card:#22252b;--bd:#3a3f47;--dis:#ff6b60;--cure:#5eb0f0;--ok:#5cc47f;--dead:#999}}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px system-ui,sans-serif}
+main{max-width:760px;margin:0 auto;padding:12px}
+h1{font-size:22px;margin:4px 0}h2{font-size:17px;margin:16px 0 6px}
+.banner{padding:12px;border-radius:10px;color:#fff;font-weight:600;margin:8px 0}
+.D{background:var(--dis)}.C{background:var(--cure)}
+.stats{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.stats div{flex:1;min-width:100px;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;text-align:center}
+.map{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
+.reg{background:var(--card);border:2px solid var(--bd);border-radius:10px;padding:10px;text-align:left;color:var(--fg);font:inherit;cursor:pointer}
+.reg.sel{border-color:var(--fg)}.reg small{display:block;margin-top:4px}
+.bar{display:flex;height:10px;background:var(--bd);border-radius:5px;margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+button.a{flex:1;min-width:150px;padding:12px;border:0;border-radius:8px;color:#fff;font:600 15px system-ui;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+.end{background:#555}
+#log{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px;font-size:14px;max-height:140px;overflow:auto}
+.pick{display:flex;gap:8px;flex-wrap:wrap}
+</style></head><body><main>
+<h1>Outbreak: Plague vs Cure</h1>
+<div id="app"></div>
+</main>
+<script>
+const N=['North America','Central America','South America','Europe','Africa','Asia','Australia','Antarctica'];
+const ADJ=[[1,3,5],[0,2],[1,4,7],[0,4,5],[2,3,5],[0,3,4,6],[5,7],[2,6]];
+const POP=[510,51,440,745,1500,4800,46,0.005];
+const fmt=n=>n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(1)+'K':Math.round(n);
+const COST={infect:1,boost:5,research:3,treat:6},INCOME=8,CAP=12;
+let s;
+function init(){s={mode:null,side:null,turn:'D',round:1,ap:{D:INCOME,C:0},reg:N.map(()=>({h:100,i:0,c:0,d:0})),level:1,vax:0,sel:null,log:[],over:null,hand:false}}
+function say(t){s.log.unshift(t)}
+const dep=r=>r.h+r.i+r.c===0;
+const tot=k=>s.reg.reduce((a,r,i)=>a+r[k]*POP[i]*1e4,0);
+const depCount=()=>s.reg.filter(dep).length;
+function who(t){return s.side===t?'Player 1':(s.mode==='1'?'The computer':'Player 2')}
+function check(){if(depCount()===N.length)s.over='D';else if(s.vax>=100)s.over='C'}
+function sick(r,amt){const x=Math.min(amt,r.h),y=Math.min(amt-x,r.c);r.h-=x;r.c-=y;r.i+=x+y;return x+y}
+function act(k){
+  const t=s.turn,c=COST[k];if(s.over||s.ap[t]<c)return;
+  const r=s.reg[s.sel];
+  if(k==='infect'){if(!r||r.i>0||r.h+r.c<1)return;const x=sick(r,10);say('Disease seeds '+N[s.sel]+' ('+x+' infected).')}
+  if(k==='boost'){if(s.level>=5)return;s.level++;say('Infectivity rises to '+s.level+'.')}
+  if(k==='research'){s.vax=Math.min(100,s.vax+8);say('Vaccine research: '+s.vax+'%.')}
+  if(k==='treat'){if(!r||r.i<1)return;const x=Math.min(40,r.i);r.i-=x;r.c+=x;say('Treated '+x+' people in '+N[s.sel]+'; they are cured.')}
+  s.ap[t]-=c;check();draw()
+}
+const ACT=[
+{D:['Airport Hub Outbreak|2|hit|15','Media Panic|3|kill|10','Border Leak|2|link|0'],C:['CDC Response|3|cure|20','Tech Lab Funding|3|vax|6','Emergency Shots|4|ward|15']},
+{D:['Jungle Reservoir|2|hit|12','Rainy Season|3|kill|8','Port Contamination|2|link|0'],C:['Rural Clinics|2|cure|12','Mosquito Control|3|ward|12','Aid Convoy|3|vax|5']},
+{D:['Amazon Spread|2|hit|15','Crowded Cities|3|kill|10','River Trade|2|link|0'],C:['Field Hospitals|3|cure|18','Rainforest Compounds|3|vax|6','School Vaccination|4|ward|15']},
+{D:['Rail Network|2|hit|15','Aging Population|3|kill|12','Tourist Season|2|link|0'],C:['Hospital Surge|3|cure|20','Research Alliance|3|vax|7','Mass Vaccination|4|ward|18']},
+{D:['Market Outbreak|2|hit|15','Weak Supply Lines|3|kill|12','Caravan Routes|2|link|0'],C:['Mobile Clinics|2|cure|15','Aid Airlift|3|vax|6','Village Immunization|4|ward|15']},
+{D:['Megacity Cluster|2|hit|18','Wet Market|3|kill|12','Trade Hub|2|link|0'],C:['Contact Tracing|3|cure|20','Biotech Labs|3|vax|8','Mass Testing|4|ward|18']},
+{D:['Cruise Ship|2|hit|12','Outback Isolation|3|kill|8','Harbor Entry|2|link|0'],C:['Coastal Hospitals|3|cure|15','Quarantine Zone|3|ward|12','Research Station|3|vax|5']},
+{D:['Supply Ship Outbreak|2|hit|20','Harsh Winter|3|kill|15','Station Link|2|link|0'],C:['Station Medics|2|cure|20','Cold Storage Labs|3|vax|4','Station Immunization|3|ward|20']}
+];
+const DESC={hit:'infects',kill:'kills',link:'seeds neighbors',cure:'cures',vax:'vaccine +',ward:'immunizes'};
+function rok(k,r){if(k==='hit')return r.i>0&&r.h+r.c>0;if(k==='kill')return r.i>0||r.c>0;if(k==='cure')return r.i>0;if(k==='link')return r.i>0&&ADJ[s.sel].some(j=>s.reg[j].h+s.reg[j].c>0);if(k==='vax')return s.vax<100;return r.h>0}
+function ract(k){
+  const t=s.turn,r=s.reg[s.sel];if(s.over||!r)return;
+  const [n,c,kd,m]=ACT[s.sel][t][k].split('|'),amt=+m;
+  if(s.ap[t]<+c||!rok(kd,r))return;
+  if(kd==='hit')sick(r,amt);
+  if(kd==='kill'){const x=Math.min(amt,r.i),y=Math.min(amt-x,r.c);r.i-=x;r.c-=y;r.d+=x+y}
+  if(kd==='cure'){const x=Math.min(amt,r.i);r.i-=x;r.c+=x}
+  if(kd==='ward'){const x=Math.min(amt,r.h);r.h-=x;r.c+=x}
+  if(kd==='vax')s.vax=Math.min(100,s.vax+amt);
+  if(kd==='link')ADJ[s.sel].forEach(j=>{const q=s.reg[j];if(q.h+q.c>0)sick(q,5)});
+  say(N[s.sel]+': '+n+'.');s.ap[t]-=+c;check();draw()
+}
+function aiPlay(){
+  const t=s.turn;if(s.over||s.mode!=='1'||t===s.side)return;
+  for(let n=0;n<14&&s.ap[t]>0&&!s.over;n++){
+    const a=s.ap[t],o=[],add=(sc,c,f)=>{if(c<=a)o.push([sc+Math.random()*.4,f])},nInf=s.reg.filter(r=>r.i>0).length;
+    if(t==='D'&&s.level<4)add(2.2,COST.boost,()=>act('boost'));
+    if(t==='C'&&s.vax<100)add(1.8+s.level*.2,COST.research,()=>act('research'));
+    s.reg.forEach((r,i)=>{
+      s.sel=i;const lg=Math.log10(1+POP[i]*r.h);
+      if(t==='D'&&r.i===0&&r.h+r.c>0)add((nInf<3?2.5:1)+lg/3,COST.infect,()=>{s.sel=i;act('infect')});
+      if(t==='C'&&r.i>0)add(1+r.i/45+lg/6,COST.treat,()=>{s.sel=i;act('treat')});
+      ACT[i][t].forEach((x,k)=>{const [nm,c,kd]=x.split('|');if(!rok(kd,r))return;
+        const sc={hit:1.5+lg/3,kill:.8,link:1.3,cure:1.2+r.i/40+lg/6,ward:r.i>0?1+r.h/150:.4,vax:2}[kd];
+        add(sc,+c,()=>{s.sel=i;ract(k)})})
+    });
+    if(!o.length)break;
+    o.sort((x,y)=>y[0]-x[0]);o[0][1]()
+  }
+  if(!s.over)end()
+}
+function tick(){
+  const L=s.level,snap=s.reg.map(r=>({...r}));let ninf=0,ndead=0;
+  s.reg.forEach(r=>{if(r.i>0){const ni=Math.min(r.h,Math.ceil(r.i*(.15+.1*L))),dd=Math.min(r.i,Math.ceil(r.i*(.1+.04*L)));r.h-=ni;r.i+=ni-dd;r.d+=dd;ninf+=ni;ndead+=dd}});
+  const hit=new Set();
+  snap.forEach((r,i)=>{if(r.i>=20)ADJ[i].forEach(j=>{if(snap[j].i===0&&snap[j].h+snap[j].c>0&&!hit.has(j)&&Math.random()<.35+.1*L){hit.add(j);const x=sick(s.reg[j],5);ninf+=x;say('Disease spreads to '+N[j]+'.')}})});
+  say('Round '+s.round+' ends: '+ninf+' new infections, '+ndead+' deaths.'+(ninf+ndead===0?' (Nothing was infected, so nothing spread.)':''))
+}
+function end(){
+  if(s.over)return;
+  if(s.turn==='D'){s.turn='C';s.ap.C=Math.min(CAP,s.ap.C+INCOME)}
+  else{tick();s.round++;s.turn='D';s.ap.D=Math.min(CAP,s.ap.D+INCOME);check()}
+  s.sel=null;s.hand=!s.over&&s.mode==='2';draw();if(s.mode==='1'&&!s.over&&s.turn!==s.side)setTimeout(aiPlay,900)
+}
+function setMode(m){s.mode=m;draw()}
+function pick(side){s.side=side;draw();if(s.mode==='1'&&side==='C')setTimeout(aiPlay,700)}
+function sel(i){s.sel=i;draw()}
+function ready(){s.hand=false;draw()}
+function draw(){
+  const a=document.getElementById('app');
+  if(!s.mode){a.innerHTML='<p>How many players?</p><div class="pick"><button class="a end" onclick="setMode(\'1\')">One player (vs computer)</button><button class="a end" onclick="setMode(\'2\')">Two players (same screen)</button></div>';return}
+  if(!s.side){a.innerHTML='<p>'+(s.mode==='1'?'Choose your side. The computer takes the other.':'Player 1, choose your side. Player 2 takes the other.')+'</p><div class="pick"><button class="a D" onclick="pick(\'D\')">Spread the disease</button><button class="a C" onclick="pick(\'C\')">Cure humanity</button></div><p>Take turns on one screen. Spend action points (AP) each turn; unspent AP is saved (up to '+CAP+'). The disease wins only when every region is depopulated. The cure wins at 100% vaccine.</p>';return}
+  const t=s.turn,me=s.ap[t],isD=t==='D';
+  if(s.hand&&!s.over){a.innerHTML='<div class="banner '+t+'">Pass the Chromebook to '+who(t)+' ('+(isD?'Disease':'Cure')+')</div><button class="a '+t+'" onclick="ready()">I\u2019m ready</button>';return}
+  let h='';
+  if(s.over)h+='<div class="banner '+s.over+'">'+(s.over==='D'?'Every region is depopulated. The disease wins and the cure side loses. ':'The vaccine is complete. Humanity is saved! ')+who(s.over)+' wins.</div><button class="a end" onclick="init();draw()">Play again</button>';
+  else h+='<div class="banner '+t+'">'+who(t)+' \u2013 '+(isD?'Disease':'Cure')+' turn (round '+s.round+')</div>';
+  h+='<div class="stats"><div>AP<br><b>'+me+'</b></div><div>Infectivity<br><b>'+s.level+'/5</b></div><div>Regions depopulated<br><b>'+depCount()+'/'+N.length+'</b></div><div>Vaccine<br><b>'+s.vax+'%</b></div></div><div class="map">';
+  s.reg.forEach((r,i)=>{const seg=(v,c)=>'<i style="width:'+v+'%;background:var(--'+c+')"></i>';
+    h+='<button class="reg'+(s.sel===i?' sel':'')+'" onclick="sel('+i+')"><b>'+N[i]+(dep(r)?' \u2013 DEPOPULATED':'')+'</b><div class="bar">'+seg(r.h,'ok')+seg(r.i,'dis')+seg(r.c,'cure')+seg(r.d,'dead')+'</div><small>Population '+fmt(POP[i]*1e6)+'<br>Healthy '+fmt(r.h*POP[i]*1e4)+' \u00b7 Infected '+fmt(r.i*POP[i]*1e4)+' \u00b7 Cured '+fmt(r.c*POP[i]*1e4)+' \u00b7 Dead '+fmt(r.d*POP[i]*1e4)+'</small></button>'});
+  h+='</div>';
+  if(!s.over&&!(s.mode==='1'&&t!==s.side)){
+    const r=s.reg[s.sel],d=(k,ok)=>(s.ap[t]<COST[k]||!ok)?' disabled':'';
+    h+='<div class="acts">';
+    if(isD)h+='<button class="a D"'+d('infect',r&&r.i===0&&r.h+r.c>0)+' onclick="act(\'infect\')">Infect selected region ('+COST.infect+' AP)</button><button class="a D"'+d('boost',s.level<5)+' onclick="act(\'boost\')">Increase infectivity ('+COST.boost+' AP)</button>';
+    else h+='<button class="a C"'+d('research',s.vax<100)+' onclick="act(\'research\')">Research vaccine ('+COST.research+' AP)</button><button class="a C"'+d('treat',r&&r.i>0)+' onclick="act(\'treat\')">Treat selected region ('+COST.treat+' AP)</button>';
+    h+='<button class="a end" onclick="end()">End turn (save '+me+' AP)</button></div>';
+    if(r)h+='<h2>'+N[s.sel]+' actions</h2><div class="acts">'+ACT[s.sel][t].map((x,k)=>{const [n,c,kd,m]=x.split('|');return '<button class="a '+t+'"'+(s.ap[t]<+c||!rok(kd,r)?' disabled':'')+' onclick="ract('+k+')">'+n+' ('+c+' AP)<br><small>'+DESC[kd]+(+m>0?' '+m:'')+'</small></button>'}).join('')+'</div>';
+    else h+='<p>Select a region to see its three special actions.</p>'
+  }
+  if(!s.over&&s.mode==='1'&&t!==s.side)h+='<p>The computer is taking its turn...</p>';h+='<div id="log">'+(s.log.slice(0,30).join('<br>')||'Select a region, then choose an action. Nobody is infected until the disease player infects a region.')+'</div>';
+  h+='<h2>World population</h2><div class="stats"><div>Healthy<br><b>'+fmt(tot('h'))+'</b></div><div>Infected<br><b>'+fmt(tot('i'))+'</b></div><div>Cured<br><b>'+fmt(tot('c'))+'</b></div><div>Depopulated (dead)<br><b>'+fmt(tot('d'))+'</b></div></div>';
+  a.innerHTML=h
+}
+init();draw();
+</script><script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>

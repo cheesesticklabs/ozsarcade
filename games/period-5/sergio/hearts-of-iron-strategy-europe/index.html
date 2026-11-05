@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hearts of Iron: Strategy Europe</title>
+    <!-- Tailwind CSS for UI layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+        body {
+            font-family: 'Chakra Petch', sans-serif;
+            background-color: #0b0f19;
+            color: #d1d5db;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #111827;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #374151;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #4b5563;
+        }
+
+        /* Map styling */
+        .country-path {
+            stroke: #1f2937;
+            stroke-width: 1.5;
+            transition: fill 0.2s, stroke 0.2s, filter 0.2s;
+            cursor: pointer;
+        }
+        .country-path:hover {
+            filter: brightness(1.25);
+            stroke: #60a5fa;
+            stroke-width: 2;
+        }
+        .country-path.selected {
+            stroke: #f59e0b;
+            stroke-width: 2.5;
+            filter: brightness(1.15);
+        }
+        .country-path.at-war {
+            animation: pulse-war 2s infinite alternate;
+        }
+
+        @keyframes pulse-war {
+            0% { stroke-opacity: 0.6; }
+            100% { stroke-opacity: 1; stroke: #ef4444; }
+        }
+
+        /* Military Unit Token Styling */
+        .army-token {
+            transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.8));
+            cursor: pointer;
+        }
+        .army-token:hover {
+            transform: scale(1.3) !important;
+            z-index: 50;
+        }
+
+        .battle-effect {
+            animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes ping {
+            75%, 100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        /* Scanline military effect */
+        .scanlines {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.25) 50%
+            ), linear-gradient(
+                90deg,
+                rgba(255, 0, 0, 0.03),
+                rgba(0, 255, 0, 0.01),
+                rgba(0, 0, 255, 0.03)
+            );
+            background-size: 100% 3px, 6px 100%;
+            pointer-events: none;
+        }
+
+        .tab-btn.active {
+            border-bottom: 2px solid #f59e0b;
+            color: #f59e0b;
+            background-color: rgba(245, 158, 11, 0.1);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col justify-between relative bg-gray-950 text-gray-100 overflow-hidden">
+
+    <!-- Scanline overlay for tactical filter -->
+    <div class="scanlines absolute inset-0 z-30 pointer-events-none"></div>
+
+    <!-- MAIN TOP BAR - HOI4 STYLE -->
+    <header class="h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 z-20 shadow-lg select-none">
+        <!-- Left Section: Country Flag, Name & Stats -->
+        <div class="flex items-center space-x-6">
+            <div id="player-flag-container" class="flex items-center space-x-3 cursor-pointer" onclick="openTab('diplomacy')">
+                <div id="player-flag" class="w-8 h-8 rounded-full border-2 border-amber-500 shadow flex items-center justify-center font-bold text-xs bg-gray-800">
+                    GER
+                </div>
+                <div>
+                    <div id="player-country-name" class="font-bold text-amber-500 text-sm leading-none">Germany</div>
+                    <div id="player-ideology" class="text-xs text-gray-400">Fascist</div>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center space-x-5 text-xs">
+                <!-- Political Power -->
+                <div class="flex items-center space-x-1.5" title="Political Power">
+                    <i class="fa-solid fa-scale-balanced text-blue-400"></i>
+                    <span id="stat-pp" class="font-semibold text-gray-200">120</span>
+                    <span class="text-green-400 text-[10px]">(+1.2)</span>
+                </div>
+                <!-- Manpower -->
+                <div class="flex items-center space-x-1.5" title="Available Manpower">
+                    <i class="fa-solid fa-person-rifle text-amber-400"></i>
+                    <span id="stat-manpower" class="font-semibold text-gray-200">1.25M</span>
+                </div>
+                <!-- Civilian Factories -->
+                <div class="flex items-center space-x-1.5" title="Civilian Factories (Used/Total)">
+                    <i class="fa-solid fa-industry text-yellow-500"></i>
+                    <span id="stat-civ-factories" class="font-semibold text-gray-200">24/30</span>
+                </div>
+                <!-- Military Factories -->
+                <div class="flex items-center space-x-1.5" title="Military Factories">
+                    <i class="fa-solid fa-gears text-red-400"></i>
+                    <span id="stat-mil-factories" class="font-semibold text-gray-200">18</span>
+                </div>
+                <!-- Army Divisions -->
+                <div class="flex items-center space-x-1.5" title="Active Divisions">
+                    <i class="fa-solid fa-shield-halved text-green-400"></i>
+                    <span id="stat-army-count" class="font-semibold text-gray-200">32 Divs</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Center: World Tension Indicator -->
+        <div class="flex items-center space-x-2 bg-gray-950/80 px-3 py-1 rounded border border-gray-800">
+            <i class="fa-solid fa-globe text-red-500 animate-pulse"></i>
+            <span class="text-xs text-gray-400">World Tension:</span>
+            <span id="world-tension" class="text-sm font-bold text-red-500">15%</span>
+        </div>
+
+        <!-- Right Section: Date & Speed Controls -->
+        <div class="flex items-center space-x-4">
+            <div class="text-right">
+                <div id="game-date" class="text-sm font-bold text-amber-400 tracking-wider">1 JAN 1936</div>
+                <div class="text-[10px] text-gray-500">SCENARIO: ROAD TO WAR</div>
+            </div>
+            
+            <!-- Speed Ticker Controls -->
+            <div class="flex items-center space-x-1 bg-gray-950 p-1 rounded border border-gray-800">
+                <button id="btn-pause" onclick="togglePause()" class="w-7 h-7 rounded flex items-center justify-center bg-amber-600 hover:bg-amber-500 text-gray-950 font-bold transition">
+                    <i id="pause-icon" class="fa-solid fa-pause"></i>
+                </button>
+                <div class="flex space-x-1 px-1">
+                    <button onclick="setSpeed(1)" class="speed-btn w-5 h-6 text-xs rounded bg-gray-800 hover:bg-gray-700 font-bold text-gray-300">1</button>
+                    <button onclick="setSpeed(2)" class="speed-btn w-5 h-6 text-xs rounded bg-gray-800 hover:bg-gray-700 font-bold text-gray-300">2</button>
+                    <button onclick="setSpeed(3)" class="speed-btn w-5 h-6 text-xs rounded bg-gray-800 hover:bg-gray-700 font-bold text-gray-300">3</button>
+                    <button onclick="setSpeed(5)" class="speed-btn w-5 h-6 text-xs rounded bg-amber-600 text-gray-950 font-bold">5</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CENTER AREA: MAP AND FLOATING SIDE PANELS -->
+    <div class="relative flex-1 bg-slate-950 overflow-hidden flex">
+        
+        <!-- MAP SVG DISPLAY CANVAS -->
+        <div id="map-container" class="w-full h-full relative cursor-grab active:cursor-grabbing">
+            <svg id="europe-map" class="w-full h-full" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet">
+                <!-- Water Background -->
+                <rect width="1000" height="700" fill="#0d1b2a"/>
+                <g id="map-grid" opacity="0.15">
+                    <!-- Tactical Grid Lines -->
+                    <path d="M 0,100 L 1000,100 M 0,200 L 1000,200 M 0,300 L 1000,300 M 0,400 L 1000,400 M 0,500 L 1000,500 M 0,600 L 1000,600" stroke="#60a5fa" stroke-width="1"/>
+                    <path d="M 100,0 L 100,700 M 200,0 L 200,700 M 300,0 L 300,700 M 400,0 L 400,700 M 500,0 L 500,700 M 600,0 L 600,700 M 700,0 L 700,700 M 800,0 L 800,700 M 900,0 L 900,700" stroke="#60a5fa" stroke-width="1"/>
+                </g>
+
+                <!-- Country Paths -->
+                <g id="countries-group"></g>
+
+                <!-- Frontlines & Deployments SVG Layer -->
+                <g id="frontlines-layer" pointer-events="none"></g>
+
+                <!-- Army Visual Units Layer -->
+                <g id="armies-layer"></g>
+
+                <!-- Battle Effects Overlay -->
+                <g id="battles-layer" pointer-events="none"></g>
+            </svg>
+
+            <!-- Map Overlay Controls -->
+            <div class="absolute bottom-4 right-4 flex flex-col space-y-2 z-10">
+                <button onclick="zoomMap(1.2)" class="w-8 h-8 bg-gray-900 border border-gray-700 hover:border-amber-500 text-amber-500 rounded flex items-center justify-center font-bold shadow">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+                <button onclick="zoomMap(0.8)" class="w-8 h-8 bg-gray-900 border border-gray-700 hover:border-amber-500 text-amber-500 rounded flex items-center justify-center font-bold shadow">
+                    <i class="fa-solid fa-minus"></i>
+                </button>
+                <button onclick="resetMapZoom()" class="w-8 h-8 bg-gray-900 border border-gray-700 hover:border-amber-500 text-amber-500 rounded flex items-center justify-center text-xs text-gray-300 shadow" title="Reset View">
+                    <i class="fa-solid fa-crosshairs"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- LEFT TABBED MANAGEMENT PANEL (HOI4 SUB-PANEL) -->
+        <div id="side-panel" class="absolute top-4 left-4 bottom-4 w-96 bg-gray-900/95 border border-gray-800 backdrop-blur-md rounded-lg shadow-2xl z-20 flex flex-col overflow-hidden transition-all duration-300">
+            <!-- Navigation Tabs -->
+            <div class="flex border-b border-gray-800 bg-gray-950">
+                <button onclick="openTab('diplomacy')" id="tab-btn-diplomacy" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-handshake block text-base mb-1"></i> Diplomacy
+                </button>
+                <button onclick="openTab('armies')" id="tab-btn-armies" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-shield-cat block text-base mb-1"></i> Armies
+                </button>
+                <button onclick="openTab('production')" id="tab-btn-production" class="tab-btn flex-1 py-3 text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-amber-500 transition">
+                    <i class="fa-solid fa-hammer block text-base mb-1"></i> Build & Rec
+                </button>
+            </div>
+
+            <!-- Tab 1: DIPLOMACY & NATION INSPECTION -->
+            <div id="tab-content-diplomacy" class="tab-content p-4 flex-1 overflow-y-auto space-y-4">
+                <!-- Selected Target Country Header -->
+                <div class="flex items-center space-x-3 bg-gray-950 p-3 rounded-lg border border-gray-800">
+                    <div id="inspect-flag" class="w-12 h-12 rounded-full border-2 border-amber-500 flex items-center justify-center font-bold text-sm bg-gray-800">
+                        SOV
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start">
+                            <h2 id="inspect-name" class="font-bold text-amber-500 text-lg">Soviet Union</h2>
+                            <span id="inspect-status" class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-900/50 text-green-400 border border-green-800">PEACE</span>
+                        </div>
+                        <p id="inspect-leader" class="text-xs text-gray-400">Leader: Joseph Stalin</p>
+                    </div>
+                </div>
+
+                <!-- Country Stats Overview -->
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-gray-950/60 p-2.5 rounded border border-gray-800">
+                        <span class="text-gray-500 block">Total Population</span>
+                        <span id="inspect-pop" class="font-bold text-gray-200">168.0 M</span>
+                    </div>
+                    <div class="bg-gray-950/60 p-2.5 rounded border border-gray-800">
+                        <span class="text-gray-500 block">Manpower Reserve</span>
+                        <span id="inspect-mp" class="font-bold text-amber-400">2.40 M</span>
+                    </div>
+                    <div class="bg-gray-950/60 p-2.5 rounded border border-gray-800">
+                        <span class="text-gray-500 block">Civ Factories</span>
+                        <span id="inspect-civ" class="font-bold text-yellow-500">42</span>
+                    </div>
+                    <div class="bg-gray-950/60 p-2.5 rounded border border-gray-800">
+                        <span class="text-gray-500 block">Mil Factories</span>
+                        <span id="inspect-mil" class="font-bold text-red-400">35</span>
+                    </div>
+                </div>
+
+                <!-- Upkeep & Factory Efficiency -->
+                <div class="bg-gray-950/60 p-3 rounded border border-gray-800 text-xs space-y-1.5">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Army Upkeep Demand:</span>
+                        <span id="inspect-upkeep-demand" class="font-bold text-gray-200">14 Mil Factories</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Supply Efficiency:</span>
+                        <span id="inspect-supply-eff" class="font-bold text-green-400">100%</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                        <div id="inspect-supply-bar" class="bg-green-500 h-full w-full"></div>
+                    </div>
+                </div>
+
+                <!-- Diplomatic Actions -->
+                <div id="diplomacy-actions" class="space-y-2 pt-2 border-t border-gray-800">
+                    <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider">Diplomatic Actions</h3>
+                    
+                    <button id="btn-declare-war" onclick="declareWar()" class="w-full py-2.5 bg-red-900/80 hover:bg-red-800 text-red-200 font-bold text-xs rounded border border-red-700 shadow flex items-center justify-center space-x-2 transition">
+                        <i class="fa-solid fa-crosshairs"></i>
+                        <span>DECLARE WAR</span>
+                    </button>
+
+                    <button id="btn-offer-peace" onclick="offerPeace()" class="w-full py-2 bg-blue-900/50 hover:bg-blue-800 text-blue-200 font-bold text-xs rounded border border-blue-700 shadow flex items-center justify-center space-x-2 transition">
+                        <i class="fa-solid fa-dove"></i>
+                        <span>OFFER PEACE TREATY</span>
+                    </button>
+                    
+                    <button id="btn-pact" onclick="offerPact()" class="w-full py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold text-xs rounded border border-gray-700 flex items-center justify-center space-x-2 transition">
+                        <i class="fa-solid fa-file-contract text-amber-500"></i>
+                        <span>NON-AGGRESSION PACT</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 2: ARMY GROUPS & DIVISION DEPLOYMENT -->
+            <div id="tab-content-armies" class="tab-content p-4 flex-1 overflow-y-auto space-y-4 hidden">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider">Army Groups (Max 24 Divs/Group)</h3>
+                    <button onclick="createNewArmyGroup()" class="px-2 py-1 bg-amber-600 hover:bg-amber-500 text-gray-950 font-bold text-xs rounded flex items-center space-x-1">
+                        <i class="fa-solid fa-plus"></i><span>New Group</span>
+                    </button>
+                </div>
+
+                <!-- Army Groups Container -->
+                <div id="army-groups-list" class="space-y-3">
+                    <!-- Dynamically Populated Army Groups -->
+                </div>
+            </div>
+
+            <!-- Tab 3: PRODUCTION & RECRUITMENT -->
+            <div id="tab-content-production" class="tab-content p-4 flex-1 overflow-y-auto space-y-4 hidden">
+                <!-- Factory Construction Section -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2">Construction Queue</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="buildFactory('civ')" class="p-3 bg-gray-950 hover:bg-gray-800 border border-gray-800 rounded text-left transition space-y-1">
+                            <i class="fa-solid fa-industry text-yellow-500 text-lg"></i>
+                            <div class="text-xs font-bold text-gray-200">Civilian Factory</div>
+                            <div class="text-[10px] text-gray-400">Cost: 108 PP</div>
+                        </button>
+                        <button onclick="buildFactory('mil')" class="p-3 bg-gray-950 hover:bg-gray-800 border border-gray-800 rounded text-left transition space-y-1">
+                            <i class="fa-solid fa-gears text-red-400 text-lg"></i>
+                            <div class="text-xs font-bold text-gray-200">Military Factory</div>
+                            <div class="text-[10px] text-gray-400">Cost: 72 PP</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Division Recruitment Section -->
+                <div class="pt-2 border-t border-gray-800">
+                    <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2">Recruit & Deploy Divisions</h3>
+                    <div class="space-y-2">
+                        <!-- Infantry Division -->
+                        <div class="p-3 bg-gray-950 border border-gray-800 rounded flex justify-between items-center">
+                            <div>
+                                <div class="text-xs font-bold text-amber-400 flex items-center space-x-1">
+                                    <i class="fa-solid fa-person-rifle"></i>
+                                    <span>Infantry Division</span>
+                                </div>
+                                <div class="text-[10px] text-gray-400">Cost: 15K Manpower | Upkeep: 1 Mil Fac</div>
+                            </div>
+                            <button onclick="recruitDivision('infantry')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-gray-950 font-bold text-xs rounded transition">
+                                Recruit
+                            </button>
+                        </div>
+
+                        <!-- Armored Division -->
+                        <div class="p-3 bg-gray-950 border border-gray-800 rounded flex justify-between items-center">
+                            <div>
+                                <div class="text-xs font-bold text-amber-400 flex items-center space-x-1">
+                                    <i class="fa-solid fa-shield"></i>
+                                    <span>Armored Division</span>
+                                </div>
+                                <div class="text-[10px] text-gray-400">Cost: 25K MP | Upkeep: 2 Mil Fac</div>
+                            </div>
+                            <button onclick="recruitDivision('armored')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-gray-950 font-bold text-xs rounded transition">
+                                Recruit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recruitment Queue View -->
+                <div class="pt-2 border-t border-gray-800">
+                    <h3 class="text-xs font-bold uppercase text-gray-400 tracking-wider mb-2">Active Training Queue</h3>
+                    <div id="training-queue-list" class="space-y-2 text-xs">
+                        <div class="text-gray-500 text-center py-2 italic">No divisions currently in training</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT TACTICAL LOG & NOTIFICATIONS PANEL -->
+        <div class="absolute bottom-4 right-16 w-80 bg-gray-900/90 border border-gray-800 backdrop-blur-md rounded-lg shadow-xl z-10 flex flex-col max-h-48">
+            <div class="px-3 py-1.5 border-b border-gray-800 text-[11px] font-bold uppercase text-gray-400 flex justify-between items-center bg-gray-950">
+                <span><i class="fa-solid fa-list-check text-amber-500 mr-1"></i> Theater Combat Log</span>
+                <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            </div>
+            <div id="combat-log-container" class="p-2 overflow-y-auto space-y-1 font-mono text-[11px] flex-1">
+                <div class="text-gray-400">[01 JAN 1936] Situation room initialized. Select a country to review intelligence.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- GAME OVER / VICTORY MODAL OVERLAY -->
+    <div id="end-screen-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden">
+        <div class="bg-gray-900 border-2 border-amber-500 p-8 rounded-xl max-w-md text-center shadow-2xl space-y-4">
+            <div id="end-title-icon" class="text-5xl text-amber-500 mb-2"><i class="fa-solid fa-trophy"></i></div>
+            <h1 id="end-title-text" class="text-2xl font-bold text-amber-400 uppercase tracking-widest">VICTORY ACHIEVED!</h1>
+            <p id="end-desc-text" class="text-sm text-gray-300">Your armed forces have successfully unified all European territories under one high command!</p>
+            <button onclick="location.reload()" class="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-gray-950 font-bold text-sm rounded shadow transition uppercase">
+                Restart Campaign
+            </button>
+        </div>
+    </div>
+
+    <!-- AUDIO ENGINE (Web Audio API Synthesizer) -->
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            playClick() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.05);
+                gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.05);
+            }
+
+            playWarSiren() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(600, this.ctx.currentTime + 0.5);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.6);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.6);
+            }
+
+            playBattle() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const bufferSize = this.ctx.sampleRate * 0.1;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const output = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                const whiteNoise = this.ctx.createBufferSource();
+                whiteNoise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 400;
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                whiteNoise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                whiteNoise.start();
+            }
+        }
+        const audio = new SoundEngine();
+    </script>
+
+    <!-- CORE GAME LOGIC SCRIPTS -->
+    <script>
+        // NATION & MAP DATABASE
+        const NATIONS = {
+            GER: { id: "GER", name: "Germany", tag: "GER", color: "#4b5563", flagColor: "#111827", leader: "Adolf Hitler", pop: 68.0, mp: 1250000, civ: 30, mil: 22, x: 480, y: 350, path: "M 440,320 L 510,310 L 520,380 L 460,400 Z" },
+            FRA: { id: "FRA", name: "France", tag: "FRA", color: "#2563eb", flagColor: "#1d4ed8", leader: "Albert Lebrun", pop: 41.5, mp: 850000, civ: 24, mil: 16, x: 380, y: 400, path: "M 340,360 L 430,360 L 440,440 L 360,460 Z" },
+            SOV: { id: "SOV", name: "Soviet Union", tag: "SOV", color: "#dc2626", flagColor: "#991b1b", leader: "Joseph Stalin", pop: 168.0, mp: 3200000, civ: 45, mil: 38, x: 750, y: 280, path: "M 650,150 L 920,150 L 900,450 L 630,400 Z" },
+            UK:  { id: "UK",  name: "United Kingdom", tag: "UK", color: "#0284c7", flagColor: "#0369a1", leader: "Winston Churchill", pop: 47.0, mp: 900000, civ: 32, mil: 18, x: 320, y: 280, path: "M 290,240 L 350,230 L 340,310 L 280,300 Z" },
+            ITA: { id: "ITA", name: "Italy", tag: "ITA", color: "#16a34a", flagColor: "#15803d", leader: "Benito Mussolini", pop: 43.0, mp: 750000, civ: 18, mil: 14, x: 500, y: 480, path: "M 470,440 L 530,430 L 540,530 L 490,520 Z" },
+            POL: { id: "POL", name: "Poland", tag: "POL", color: "#e11d48", flagColor: "#be123c", leader: "Ignacy Mościcki", pop: 35.0, mp: 600000, civ: 14, mil: 10, x: 570, y: 330, path: "M 525,305 L 610,310 L 610,370 L 530,365 Z" },
+            SPA: { id: "SPA", name: "Spain", tag: "SPA", color: "#d97706", flagColor: "#b45309", leader: "Francisco Franco", pop: 25.0, mp: 400000, civ: 12, mil: 8, x: 260, y: 490, path: "M 200,440 L 310,430 L 300,530 L 210,520 Z" },
+            ROM: { id: "ROM", name: "Romania", tag: "ROM", color: "#ca8a04", flagColor: "#a16207", leader: "Carol II", pop: 19.0, mp: 350000, civ: 10, mil: 6, x: 630, y: 420, path: "M 600,400 L 670,400 L 660,460 L 590,440 Z" },
+            SWE: { id: "SWE", name: "Sweden", tag: "SWE", color: "#0891b2", flagColor: "#0e7490", leader: "Per Albin Hansson", pop: 6.2, mp: 150000, civ: 12, mil: 5, x: 510, y: 170, path: "M 480,100 L 530,100 L 520,240 L 480,230 Z" },
+            TUR: { id: "TUR", name: "Turkey", tag: "TUR", color: "#9333ea", flagColor: "#7e22ce", leader: "Mustafa Kemal Atatürk", pop: 16.0, mp: 300000, civ: 10, mil: 5, x: 730, y: 510, path: "M 670,480 L 800,480 L 780,560 L 660,540 Z" }
+        };
+
+        // Neighbor Map for Frontiers/Borders
+        const BORDERS = {
+            GER: ["FRA", "POL", "ITA"],
+            FRA: ["GER", "SPA", "ITA"],
+            SOV: ["POL", "ROM", "TUR"],
+            UK:  ["FRA", "GER"],
+            ITA: ["FRA", "GER"],
+            POL: ["GER", "SOV", "ROM"],
+            SPA: ["FRA"],
+            ROM: ["POL", "SOV"],
+            SWE: ["GER"],
+            TUR: ["SOV", "ROM"]
+        };
+
+        // GAME STATE
+        let gameState = {
+            playerTag: "GER",
+            selectedTargetTag: "SOV",
+            date: new Date(1936, 0, 1),
+            speed: 1,
+            isPaused: false,
+            worldTension: 15,
+            politicalPower: 120,
+            wars: [], // Array of pairs e.g. [["GER", "POL"]]
+            armies: [], // Units/Divisions
+            armyGroups: [], // Max 24 divs per group
+            trainingQueue: []
+        };
+
+        // INITIALIZATION
+        window.onload = function() {
+            initMap();
+            initPlayerArmies();
+            updateUI();
+            startTicker();
+        };
+
+        // SVG MAP GENERATOR
+        function initMap() {
+            const svgGroup = document.getElementById("countries-group");
+            svgGroup.innerHTML = "";
+
+            Object.values(NATIONS).forEach(country => {
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", country.path);
+                path.setAttribute("id", `country-${country.id}`);
+                path.setAttribute("class", "country-path");
+                path.setAttribute("fill", country.color);
+                
+                path.onclick = () => selectTargetCountry(country.id);
+                svgGroup.appendChild(path);
+
+                // Add Country Label Text
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", country.x);
+                text.setAttribute("y", country.y);
+                text.setAttribute("fill", "#ffffff");
+                text.setAttribute("font-size", "11");
+                text.setAttribute("font-weight", "bold");
+                text.setAttribute("text-anchor", "middle");
+                text.setAttribute("pointer-events", "none");
+                text.textContent = country.tag;
+                svgGroup.appendChild(text);
+            });
+
+            selectTargetCountry("SOV");
+        }
+
+        // INITIALIZE DEFAULT ARMY GROUPS & UNITS
+        function initPlayerArmies() {
+            // Create default Army Group 1 for player
+            gameState.armyGroups.push({
+                id: 1,
+                name: "1st Army Group",
+                general: "Gen. Rommel",
+                borderTarget: "POL",
+                maxDivisions: 24
+            });
+
+            // Create initial divisions for Nations
+            Object.keys(NATIONS).forEach(tag => {
+                const isPlayer = (tag === gameState.playerTag);
+                const count = isPlayer ? 12 : 8;
+
+                for (let i = 0; i < count; i++) {
+                    gameState.armies.push({
+                        id: Math.random().toString(36).substr(2, 9),
+                        owner: tag,
+                        type: i % 3 === 0 ? "armored" : "infantry",
+                        groupId: isPlayer ? 1 : null,
+                        x: NATIONS[tag].x + (Math.random() * 20 - 10),
+                        y: NATIONS[tag].y + (Math.random() * 20 - 10),
+                        targetX: NATIONS[tag].x,
+                        targetY: NATIONS[tag].y,
+                        org: 100
+                    });
+                }
+            });
+
+            renderArmyTokens();
+        }
+
+        // SELECTION & INTERACTION
+        function selectTargetCountry(tag) {
+            audio.playClick();
+            gameState.selectedTargetTag = tag;
+
+            // Highlight in SVG
+            document.querySelectorAll(".country-path").forEach(el => el.classList.remove("selected"));
+            const targetEl = document.getElementById(`country-${tag}`);
+            if (targetEl) targetEl.classList.add("selected");
+
+            // Update Side Panel Info
+            const target = NATIONS[tag];
+            document.getElementById("inspect-flag").textContent = target.tag;
+            document.getElementById("inspect-flag").style.backgroundColor = target.color;
+            document.getElementById("inspect-name").textContent = target.name;
+            document.getElementById("inspect-leader").textContent = `Leader: ${target.leader}`;
+            document.getElementById("inspect-pop").textContent = `${target.pop.toFixed(1)} M`;
+            document.getElementById("inspect-mp").textContent = `${(target.mp / 1000000).toFixed(2)} M`;
+            document.getElementById("inspect-civ").textContent = target.civ;
+            document.getElementById("inspect-mil").textContent = target.mil;
+
+            // Check War Status
+            const isAtWar = isWarBetween(gameState.playerTag, tag);
+            const statusEl = document.getElementById("inspect-status");
+            if (isAtWar) {
+                statusEl.textContent = "AT WAR";
+                statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-red-900/50 text-red-400 border border-red-800";
+            } else {
+                statusEl.textContent = "PEACE";
+                statusEl.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-green-900/50 text-green-400 border border-green-800";
+            }
+
+            // Upkeep calculations
+            const totalUnits = gameState.armies.filter(u => u.owner === tag).length;
+            const requiredMil = totalUnits * 1; // 1 Mil Factory per division upkeep
+            const eff = target.mil >= requiredMil ? 100 : Math.round((target.mil / Math.max(1, requiredMil)) * 100);
+
+            document.getElementById("inspect-upkeep-demand").textContent = `${requiredMil} Mil Factories`;
+            document.getElementById("inspect-supply-eff").textContent = `${eff}%`;
+            document.getElementById("inspect-supply-bar").style.width = `${eff}%`;
+
+            // Toggle Diplomacy Action Buttons
+            const btnWar = document.getElementById("btn-declare-war");
+            const btnPeace = document.getElementById("btn-offer-peace");
+            if (tag === gameState.playerTag) {
+                btnWar.classList.add("hidden");
+                btnPeace.classList.add("hidden");
+            } else {
+                btnWar.classList.toggle("hidden", isAtWar);
+                btnPeace.classList.toggle("hidden", !isAtWar);
+            }
+        }
+
+        // TABS SWITCHING
+        function openTab(tabName) {
+            audio.playClick();
+            document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+            document.querySelectorAll(".tab-btn").forEach(el => el.classList.remove("active"));
+
+            document.getElementById(`tab-content-${tabName}`).classList.remove("hidden");
+            document.getElementById(`tab-btn-${tabName}`).classList.add("active");
+
+            if (tabName === "armies") updateArmyGroupsUI();
+        }
+
+        // DIPLOMACY ACTIONS
+        function declareWar() {
+            const playerTag = gameState.playerTag;
+            const targetTag = gameState.selectedTargetTag;
+
+            if (playerTag === targetTag) return;
+            if (isWarBetween(playerTag, targetTag)) return;
+
+            audio.playWarSiren();
+            gameState.wars.push([playerTag, targetTag]);
+            gameState.worldTension = Math.min(100, gameState.worldTension + 12);
+
+            logCombat(`[DIPLOMACY] ${NATIONS[playerTag].name} declared WAR on ${NATIONS[targetTag].name}!`);
+            selectTargetCountry(targetTag);
+            updateUI();
+        }
+
+        function offerPeace() {
+            const playerTag = gameState.playerTag;
+            const targetTag = gameState.selectedTargetTag;
+
+            if (!isWarBetween(playerTag, targetTag)) return;
+
+            audio.playClick();
+            gameState.wars = gameState.wars.filter(w => !(w.includes(playerTag) && w.includes(targetTag)));
+            logCombat(`[PEACE] Peace treaty signed between ${NATIONS[playerTag].name} and ${NATIONS[targetTag].name}.`);
+            selectTargetCountry(targetTag);
+            updateUI();
+        }
+
+        function offerPact() {
+            audio.playClick();
+            logCombat(`[DIPLOMACY] Non-Aggression Pact offered to ${NATIONS[gameState.selectedTargetTag].name}.`);
+        }
+
+        function isWarBetween(tagA, tagB) {
+            return gameState.wars.some(w => (w[0] === tagA && w[1] === tagB) || (w[0] === tagB && w[1] === tagA));
+        }
+
+        // ARMY & DIVISION GROUP MANAGEMENT (MAX 24 UNITS)
+        function createNewArmyGroup() {
+            audio.playClick();
+            const newId = gameState.armyGroups.length + 1;
+            gameState.armyGroups.push({
+                id: newId,
+                name: `${newId}th Army Group`,
+                general: "General Command",
+                borderTarget: "POL",
+                maxDivisions: 24
+            });
+            updateArmyGroupsUI();
+        }
+
+        function updateArmyGroupsUI() {
+            const container = document.getElementById("army-groups-list");
+            container.innerHTML = "";
+
+            gameState.armyGroups.forEach(group => {
+                const assignedDivs = gameState.armies.filter(u => u.owner === gameState.playerTag && u.groupId === group.id);
+                
+                const card = document.createElement("div");
+                card.className = "p-3 bg-gray-950 border border-gray-800 rounded space-y-2";
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-xs text-amber-500">${group.name} (${group.general})</span>
+                        <span class="text-[11px] ${assignedDivs.length >= 24 ? 'text-red-400 font-bold' : 'text-gray-400'}">${assignedDivs.length}/24 Divs</span>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs">
+                        <span class="text-gray-500">Border Deploy:</span>
+                        <select onchange="changeBorderTarget(${group.id}, this.value)" class="bg-gray-900 border border-gray-700 text-gray-200 rounded px-2 py-1 text-xs">
+                            ${BORDERS[gameState.playerTag].map(bTag => `<option value="${bTag}" ${group.borderTarget === bTag ? 'selected' : ''}>${NATIONS[bTag].name}</option>`).join('')}
+                        </select>
+                    </div>
+                    <button onclick="deployGroupToBorder(${group.id})" class="w-full py-1 bg-amber-600/80 hover:bg-amber-500 text-gray-950 font-bold text-[11px] rounded transition">
+                        ORDER BORDER DEPLOYMENT
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function changeBorderTarget(groupId, targetTag) {
+            const group = gameState.armyGroups.find(g => g.id === groupId);
+            if (group) group.borderTarget = targetTag;
+        }
+
+        function deployGroupToBorder(groupId) {
+            audio.playClick();
+            const group = gameState.armyGroups.find(g => g.id === groupId);
+            if (!group) return;
+
+            const targetTag = group.borderTarget;
+            const sourcePos = NATIONS[gameState.playerTag];
+            const targetPos = NATIONS[targetTag];
+
+            // Border position interpolation
+            const borderX = sourcePos.x + (targetPos.x - sourcePos.x) * 0.45;
+            const borderY = sourcePos.y + (targetPos.y - sourcePos.y) * 0.45;
+
+            // Move assigned armies
+            const groupUnits = gameState.armies.filter(u => u.owner === gameState.playerTag && u.groupId === group.id);
+            groupUnits.forEach((u, idx) => {
+                u.targetX = borderX + (Math.random() * 16 - 8);
+                u.targetY = borderY + (Math.random() * 16 - 8);
+            });
+
+            logCombat(`[ORDERS] ${group.name} deployed to border with ${NATIONS[targetTag].name}.`);
+        }
+
+        // PRODUCTION & RECRUITMENT SYSTEM
+        function buildFactory(type) {
+            const cost = type === 'civ' ? 108 : 72;
+            if (gameState.politicalPower < cost) {
+                logCombat(`[CONSTRUCTION] Insufficient Political Power (${cost} PP needed).`);
+                return;
+            }
+
+            audio.playClick();
+            gameState.politicalPower -= cost;
+            if (type === 'civ') NATIONS[gameState.playerTag].civ += 1;
+            else NATIONS[gameState.playerTag].mil += 1;
+
+            logCombat(`[CONSTRUCTION] Built 1 ${type === 'civ' ? 'Civilian' : 'Military'} Factory.`);
+            updateUI();
+        }
+
+        function recruitDivision(type) {
+            const player = NATIONS[gameState.playerTag];
+            const mpCost = type === 'infantry' ? 15000 : 25000;
+
+            if (player.mp < mpCost) {
+                logCombat(`[RECRUITMENT] Insufficient Manpower reserves.`);
+                return;
+            }
+
+            audio.playClick();
+            player.mp -= mpCost;
+
+            gameState.trainingQueue.push({
+                type: type,
+                progress: 0,
+                targetGroup: 1
+            });
+
+            logCombat(`[RECRUITMENT] Started training new ${type.toUpperCase()} division.`);
+            renderTrainingQueue();
+            updateUI();
+        }
+
+        function renderTrainingQueue() {
+            const container = document.getElementById("training-queue-list");
+            container.innerHTML = "";
+
+            if (gameState.trainingQueue.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-2 italic">No divisions currently in training</div>';
+                return;
+            }
+
+            gameState.trainingQueue.forEach((q, i) => {
+                const item = document.createElement("div");
+                item.className = "p-2 bg-gray-950 border border-gray-800 rounded space-y-1";
+                item.innerHTML = `
+                    <div class="flex justify-between text-xs">
+                        <span class="font-bold text-amber-500 uppercase">${q.type} Div</span>
+                        <span class="text-gray-400">${Math.round(q.progress)}%</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1 rounded overflow-hidden">
+                        <div class="bg-amber-500 h-full" style="width: ${q.progress}%"></div>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // VISUAL MAP UNITS (SOLDIER BALL TOKENS WITH FLAG COLORS)
+        function renderArmyTokens() {
+            const layer = document.getElementById("armies-layer");
+            layer.innerHTML = "";
+
+            gameState.armies.forEach(unit => {
+                const nation = NATIONS[unit.owner];
+                const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", "army-token");
+                g.setAttribute("transform", `translate(${unit.x}, ${unit.y})`);
+
+                // Outer Ring Ball Flag Color
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("r", "7");
+                circle.setAttribute("fill", nation.color);
+                circle.setAttribute("stroke", "#ffffff");
+                circle.setAttribute("stroke-width", "1.5");
+
+                // Icon Inside Token
+                const iconText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                iconText.setAttribute("font-family", "FontAwesome");
+                iconText.setAttribute("font-size", "7");
+                iconText.setAttribute("fill", "#ffffff");
+                iconText.setAttribute("text-anchor", "middle");
+                iconText.setAttribute("dy", "2.5");
+                iconText.textContent = unit.type === "armored" ? "\uf13d" : "\uf06d"; // Shield or Gun icon
+
+                g.appendChild(circle);
+                g.appendChild(iconText);
+                layer.appendChild(g);
+            });
+        }
+
+        // TICKER & REAL-TIME GAME SIMULATION LOOP
+        function startTicker() {
+            setInterval(() => {
+                if (gameState.isPaused) return;
+
+                // Advance Calendar Date
+                gameState.date.setDate(gameState.date.getDate() + 1);
+                updateDateDisplay();
+
+                // Political Power Increment
+                gameState.politicalPower += 0.2 * gameState.speed;
+
+                // Process Training Progress
+                gameState.trainingQueue.forEach((q, index) => {
+                    q.progress += 4 * gameState.speed;
+                    if (q.progress >= 100) {
+                        // Deploy Completed Division
+                        const group = gameState.armyGroups.find(g => g.id === q.targetGroup);
+                        const assignedCount = gameState.armies.filter(u => u.owner === gameState.playerTag && u.groupId === q.targetGroup).length;
+                        
+                        const groupId = (assignedCount < 24) ? q.targetGroup : null;
+
+                        gameState.armies.push({
+                            id: Math.random().toString(36).substr(2, 9),
+                            owner: gameState.playerTag,
+                            type: q.type,
+                            groupId: groupId,
+                            x: NATIONS[gameState.playerTag].x + (Math.random() * 10 - 5),
+                            y: NATIONS[gameState.playerTag].y + (Math.random() * 10 - 5),
+                            targetX: NATIONS[gameState.playerTag].x,
+                            targetY: NATIONS[gameState.playerTag].y,
+                            org: 100
+                        });
+
+                        logCombat(`[TRAINING] New ${q.type.toUpperCase()} division deployed to main force!`);
+                        gameState.trainingQueue.splice(index, 1);
+                        renderTrainingQueue();
+                    }
+                });
+
+                // Unit Position Movement & Interpolation
+                gameState.armies.forEach(u => {
+                    u.x += (u.targetX - u.x) * 0.1;
+                    u.y += (u.targetY - u.y) * 0.1;
+                });
+
+                // Run Combat & AI Decision Logic
+                processCombatLogic();
+                processAILogic();
+
+                // UI & Render Refresh
+                renderArmyTokens();
+                updateUI();
+
+            }, 1000 / gameState.speed);
+        }
+
+        // COMBAT & BATTLE ENGINE
+        function processCombatLogic() {
+            gameState.wars.forEach(([tagA, tagB]) => {
+                const armiesA = gameState.armies.filter(u => u.owner === tagA);
+                const armiesB = gameState.armies.filter(u => u.owner === tagB);
+
+                if (armiesA.length === 0 || armiesB.length === 0) return;
+
+                // Auto-advance frontline towards target country center
+                armiesA.forEach(u => {
+                    u.targetX = NATIONS[tagB].x + (Math.random() * 20 - 10);
+                    u.targetY = NATIONS[tagB].y + (Math.random() * 20 - 10);
+                });
+                armiesB.forEach(u => {
+                    u.targetX = NATIONS[tagA].x + (Math.random() * 20 - 10);
+                    u.targetY = NATIONS[tagA].y + (Math.random() * 20 - 10);
+                });
+
+                // Trigger combat sound & resolution when armies meet
+                if (Math.random() < 0.3) {
+                    audio.playBattle();
+
+                    // Casualties logic
+                    const victimList = Math.random() < 0.5 ? armiesA : armiesB;
+                    const destroyedUnit = victimList.pop();
+                    
+                    if (destroyedUnit) {
+                        gameState.armies = gameState.armies.filter(u => u.id !== destroyedUnit.id);
+                        logCombat(`[BATTLE] Conflict near ${NATIONS[tagB].name} border! 1 division destroyed.`);
+                    }
+
+                    // Conquest Victory / Capitulation Check
+                    checkCapitulation(tagA, tagB);
+                }
+            });
+        }
+
+        function checkCapitulation(tagA, tagB) {
+            const countA = gameState.armies.filter(u => u.owner === tagA).length;
+            const countB = gameState.armies.filter(u => u.owner === tagB).length;
+
+            if (countB === 0) {
+                logCombat(`[CAPITULATION] ${NATIONS[tagB].name} has surrendered to ${NATIONS[tagA].name}!`);
+                gameState.wars = gameState.wars.filter(w => !(w.includes(tagA) && w.includes(tagB)));
+                
+                // Transfer color map territory visually
+                const path = document.getElementById(`country-${tagB}`);
+                if (path) path.setAttribute("fill", NATIONS[tagA].color);
+
+                // Win/Loss Condition Checks
+                if (tagB === gameState.playerTag) {
+                    showEndModal(false, `${NATIONS[tagA].name} has conquered your homeland.`);
+                } else if (tagA === gameState.playerTag) {
+                    const remainingEnemies = Object.keys(NATIONS).filter(t => t !== gameState.playerTag && document.getElementById(`country-${t}`).getAttribute("fill") !== NATIONS[gameState.playerTag].color);
+                    if (remainingEnemies.length === 0) {
+                        showEndModal(true, "All European nations have capitulated to your glorious empire!");
+                    }
+                }
+            }
+        }
+
+        // DYNAMIC AI ENGINE
+        function processAILogic() {
+            if (Math.random() > 0.05) return; // Tick frequency filter
+
+            Object.keys(NATIONS).forEach(tag => {
+                if (tag === gameState.playerTag) return; // Skip player nation
+
+                const country = NATIONS[tag];
+                const myArmies = gameState.armies.filter(u => u.owner === tag);
+
+                // AI Recruit Armies if factories/manpower exist
+                if (myArmies.length < 15 && country.mp > 20000) {
+                    country.mp -= 15000;
+                    gameState.armies.push({
+                        id: Math.random().toString(36).substr(2, 9),
+                        owner: tag,
+                        type: "infantry",
+                        groupId: null,
+                        x: country.x + (Math.random() * 10 - 5),
+                        y: country.y + (Math.random() * 10 - 5),
+                        targetX: country.x,
+                        targetY: country.y,
+                        org: 100
+                    });
+                }
+
+                // AI Aggression & War Declaration Logic
+                if (gameState.worldTension > 25 && gameState.wars.length === 0) {
+                    const neighbors = BORDERS[tag];
+                    const targetTag = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    
+                    if (targetTag && !isWarBetween(tag, targetTag)) {
+                        gameState.wars.push([tag, targetTag]);
+                        logCombat(`[AI WAR] ${country.name} declared war on ${NATIONS[targetTag].name}!`);
+                        audio.playWarSiren();
+                    }
+                }
+            });
+        }
+
+        // TIME & SPEED CONTROLS
+        function togglePause() {
+            audio.playClick();
+            gameState.isPaused = !gameState.isPaused;
+            const icon = document.getElementById("pause-icon");
+            icon.className = gameState.isPaused ? "fa-solid fa-play" : "fa-solid fa-pause";
+        }
+
+        function setSpeed(sp) {
+            audio.playClick();
+            gameState.speed = sp;
+            document.querySelectorAll(".speed-btn").forEach(btn => {
+                btn.className = "speed-btn w-5 h-6 text-xs rounded bg-gray-800 text-gray-300 font-bold";
+            });
+        }
+
+        function updateDateDisplay() {
+            const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+            const d = gameState.date;
+            document.getElementById("game-date").textContent = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        // UI UPDATES
+        function updateUI() {
+            const player = NATIONS[gameState.playerTag];
+            const playerDivs = gameState.armies.filter(u => u.owner === gameState.playerTag).length;
+
+            document.getElementById("player-flag").textContent = player.tag;
+            document.getElementById("player-country-name").textContent = player.name;
+            document.getElementById("stat-pp").textContent = Math.floor(gameState.politicalPower);
+            document.getElementById("stat-manpower").textContent = `${(player.mp / 1000000).toFixed(2)}M`;
+            document.getElementById("stat-civ-factories").textContent = `${player.civ}`;
+            document.getElementById("stat-mil-factories").textContent = `${player.mil}`;
+            document.getElementById("stat-army-count").textContent = `${playerDivs} Divs`;
+            document.getElementById("world-tension").textContent = `${gameState.worldTension}%`;
+        }
+
+        function logCombat(text) {
+            const container = document.getElementById("combat-log-container");
+            const entry = document.createElement("div");
+            entry.className = "text-amber-400/90";
+            entry.textContent = text;
+            container.prepend(entry);
+        }
+
+        // END SCREEN MODAL
+        function showEndModal(isVictory, desc) {
+            gameState.isPaused = true;
+            const modal = document.getElementById("end-screen-modal");
+            document.getElementById("end-title-text").textContent = isVictory ? "VICTORY ACHIEVED!" : "CAPITULATION";
+            document.getElementById("end-title-text").className = isVictory ? "text-2xl font-bold text-amber-400" : "text-2xl font-bold text-red-500";
+            document.getElementById("end-desc-text").textContent = desc;
+            modal.classList.remove("hidden");
+        }
+
+        // ZOOM CONTROLS
+        let zoomLevel = 1;
+        function zoomMap(factor) {
+            audio.playClick();
+            zoomLevel *= factor;
+            zoomLevel = Math.max(0.8, Math.min(2.5, zoomLevel));
+            document.getElementById("europe-map").style.transform = `scale(${zoomLevel})`;
+            document.getElementById("europe-map").style.transformOrigin = "center center";
+        }
+
+        function resetMapZoom() {
+            audio.playClick();
+            zoomLevel = 1;
+            document.getElementById("europe-map").style.transform = `scale(1)`;
+        }
+    </script>
+<script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>
+</html>

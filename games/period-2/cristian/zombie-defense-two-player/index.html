@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zombie Defense — 2 Player</title>
+<style>
+:root{--bg:#101821;--panel:#172330;--line:#39516a;--blue:#39b9ff;--red:#ff5555;--gold:#ffd34f}
+*{box-sizing:border-box}body{margin:0;background:#080e14;color:#edf5ff;font-family:system-ui,Arial,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;background:#101a25;border-bottom:2px solid #30475c;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(20px,3vw,30px);letter-spacing:1px;color:#f5f7fb;text-shadow:2px 2px #b42b2b}.subtitle{color:#a8bdcf;font-size:12px}
+.hud{display:flex;gap:8px;flex-wrap:wrap}.stat{background:#0a1119;border:1px solid #31485d;border-radius:7px;padding:7px 10px;font-weight:800;white-space:nowrap}
+.p1{color:var(--blue)}.p2{color:var(--red)}.gold{color:var(--gold)}main{max-width:1200px;margin:auto;padding:12px}
+.arena-wrap{border:2px solid #354c61;border-radius:10px;overflow:hidden;background:#1b2b27;position:relative}
+canvas{display:block;width:100%;height:auto;image-rendering:pixelated;cursor:crosshair}
+.below{display:grid;grid-template-columns:1.25fr .75fr;gap:12px;margin-top:12px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px}
+.panel h2{margin:0 0 9px;font-size:18px}.shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+button{color:#f4f8ff;background:#24384b;border:1px solid #4a6984;border-radius:7px;padding:9px;font:inherit;font-weight:750;cursor:pointer}
+button:hover{filter:brightness(1.2)}button:disabled{opacity:.42;cursor:not-allowed}.shop-item{text-align:left;min-height:90px;background:#101b27}
+.shop-item strong{display:block;font-size:14px}.shop-item span{display:block;color:var(--gold);margin:3px 0}.shop-item small{display:block;color:#adc1d2;line-height:1.25;font-weight:500}
+.shop-item.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}.actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.primary{background:#1266a5;border-color:#3bb7ff}.help{color:#b7c8d8;font-size:13px;line-height:1.55}#message{min-height:22px;margin:8px 0 0;color:#ffe18a;font-weight:700}
+.overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#07101ddd;padding:20px;text-align:center}.overlay.hidden{display:none}
+.modal{width:min(500px,100%);padding:24px;border:2px solid #526a80;border-radius:12px;background:#101c28;box-shadow:0 12px 50px #0009}
+.modal h2{font-size:clamp(25px,5vw,42px);margin:0 0 8px}.modal p{color:#c3d2df;line-height:1.5}.modal button{margin:4px}
+@media(max-width:750px){.below{grid-template-columns:1fr}.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+</head>
+<body>
+<header>
+<div><h1>🧟 ZOMBIE DEFENSE</h1><div class="subtitle">PIXEL SURVIVAL • TWO PLAYERS • SURVIVE 20 ROUNDS</div></div>
+<div class="hud">
+<div class="stat p1">P1 ❤ <span id="hp1">100</span> · <span class="gold">$<span id="money1">100</span></span></div>
+<div class="stat p2">P2 ❤ <span id="hp2">100</span> · <span class="gold">$<span id="money2">100</span></span></div>
+<div class="stat">ROUND <span id="round">1</span>/20</div>
+</div></header>
+<main>
+<div class="arena-wrap">
+<canvas id="game" width="960" height="520" aria-label="Zombie Defense game arena"></canvas>
+<div class="overlay" id="overlay"><div class="modal">
+<h2 id="overlayTitle">ZOMBIE DEFENSE</h2><p id="overlayText">Team up, shoot zombies, collect coins, and build defenses. Can you survive all 20 rounds?</p>
+<button class="primary" id="startBtn">START GAME</button>
+<p class="help"><b>Player 1:</b> WASD to move, F to shoot, G to place selected defense.<br><b>Player 2:</b> Arrow keys to move, Enter to shoot, Right Shift to place defense.<br>Press <b>Space</b> to pause/resume.</p>
+</div></div></div>
+<div class="below">
+<section class="panel"><h2>🛒 Defense Shop <span class="gold" style="font-size:13px">— buy with coins</span></h2><div class="shop-grid" id="shop"></div>
+<div class="actions"><button id="buyBtn" class="primary">BUY SELECTED</button><button id="reloadBtn">Reload Game</button></div>
+<div id="message" role="status">Pick an item, buy it, then press G (P1) or Right Shift (P2) near your base to place it.</div></section>
+<section class="panel"><h2>🎮 How to Play</h2><div class="help">
+<b class="p1">Player 1</b> — Move: WASD · Shoot: F · Place defense: G<br>
+<b class="p2">Player 2</b> — Move: Arrow keys · Shoot: Enter · Place defense: Right Shift<br>
+<b>Mouse:</b> Move the mouse over the arena to aim P1; press F to fire.<br><br>
+• Zombies chase the players and get tougher each round.<br>• Each zombie drops coins when defeated. Walk over them to collect them.<br>
+• Buy walls to block zombies, electric gates to damage them, and turrets to help shoot.<br>
+• Both players must survive to reach Round 20. If either player is down, the game ends.
+</div></section></div></main>
+<script>
+(()=> {
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d'),W=canvas.width,H=canvas.height,$=id=>document.getElementById(id);
+const shopItems=[
+{id:'wall',name:'Wood Wall',price:35,desc:'Blocks zombies. 3 health.',emoji:'🪵'},
+{id:'gate',name:'Electric Gate',price:70,desc:'Zaps nearby zombies.',emoji:'⚡'},
+{id:'turret',name:'Auto Turret',price:100,desc:'Shoots nearby zombies.',emoji:'🔫'},
+{id:'medkit',name:'Health Pack',price:45,desc:'Heal yourself by 35 HP.',emoji:'✚'},
+{id:'ammo',name:'Ammo Upgrade',price:55,desc:'Your shots hit harder.',emoji:'▣'},
+{id:'armor',name:'Armor',price:65,desc:'Reduce zombie damage.',emoji:'🛡'}];
+let selected='wall',running=false,paused=false,gameOver=false,round=1,roundTimer=0,spawnTimer=0,kills=0;
+let players=[],zombies=[],bullets=[],coins=[],defenses=[],keys={},mouse={x:W/2,y:H/2,moved:false},last=0,idCounter=0;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+function say(t){$('message').textContent=t}
+function init(){
+players=[
+{id:1,x:W*.40,y:H*.55,r:13,hp:100,money:100,speed:2.5,damage:1,armor:0,fire:0,color:'#39b9ff',angle:0},
+{id:2,x:W*.60,y:H*.55,r:13,hp:100,money:100,speed:2.5,damage:1,armor:0,fire:0,color:'#ff5555',angle:Math.PI}];
+zombies=[];bullets=[];coins=[];defenses=[];keys={};round=1;roundTimer=0;spawnTimer=0;kills=0;gameOver=false;paused=false;running=false;updateHUD();draw();showOverlay('ZOMBIE DEFENSE','Team up, shoot zombies, collect coins, and build defenses. Can you survive all 20 rounds?','START GAME')}
+function showOverlay(t,msg,btn='PLAY AGAIN'){$('overlayTitle').textContent=t;$('overlayText').textContent=msg;$('startBtn').textContent=btn;$('overlay').classList.remove('hidden')}
+function hideOverlay(){$('overlay').classList.add('hidden')}
+function start(){if(gameOver)init();running=true;paused=false;gameOver=false;hideOverlay();last=performance.now();requestAnimationFrame(loop)}
+function updateHUD(){players.forEach(p=>{$('hp'+p.id).textContent=Math.max(0,Math.ceil(p.hp));$('money'+p.id).textContent=p.money});$('round').textContent=round;$('buyBtn').textContent='BUY SELECTED ($'+(shopItems.find(i=>i.id===selected)?.price||0)+')';$('shop').querySelectorAll('button').forEach(b=>b.classList.toggle('active',b.dataset.id===selected))}
+function buildShop(){$('shop').innerHTML='';shopItems.forEach(it=>{const b=document.createElement('button');b.className='shop-item';b.dataset.id=it.id;b.innerHTML=`<strong>${it.emoji} ${it.name}</strong><span>🪙 $${it.price}</span><small>${it.desc}</small>`;b.onclick=()=>{selected=it.id;updateHUD();say(it.name+' selected. Press BUY SELECTED.')};$('shop').appendChild(b)})}
+function buy(){const it=shopItems.find(i=>i.id===selected),p=players[0];if(!it||!p)return;if(p.money<it.price){say('Player 1 needs more coins to buy '+it.name+'.');return}p.money-=it.price;
+if(it.id==='medkit'){p.hp=Math.min(100,p.hp+35);say('Player 1 used a Health Pack.')}
+else if(it.id==='ammo'){p.damage=Math.min(4,p.damage+1);say('Player 1 weapon upgraded!')}
+else if(it.id==='armor'){p.armor=Math.min(3,p.armor+1);say('Player 1 armor upgraded!')}
+else{p.pending=it.id;say('Player 1 bought '+it.name+'. Press G to place it.')}updateHUD()}
+function place(p){if(!p.pending){say('Buy a wall, gate, or turret first.');return}const type=p.pending;defenses.push({id:++idCounter,type,x:clamp(p.x+Math.cos(p.angle)*48,30,W-30),y:clamp(p.y+Math.sin(p.angle)*48,30,H-30),hp:type==='wall'?3:8,cool:0});p.pending=null;say('Defense placed!')}
+function spawnZombie(){let side=Math.floor(Math.random()*4),x,y;if(side===0){x=Math.random()*W;y=-18}else if(side===1){x=W+18;y=Math.random()*H}else if(side===2){x=Math.random()*W;y=H+18}else{x=-18;y=Math.random()*H}zombies.push({x,y,r:12,hp:1+Math.floor((round-1)/4),speed:.48+Math.random()*.22+round*.035,hit:0,attack:0,value:5+Math.floor(round/3),id:++idCounter})}
+function fire(p){if(p.fire>0)return;p.fire=16;let target;if(p.id===1&&mouse.moved)target={x:mouse.x,y:mouse.y};else target=zombies.reduce((best,z)=>!best||dist(z,p)<dist(best,p)?z:best,null)||{x:p.x+Math.cos(p.angle)*100,y:p.y+Math.sin(p.angle)*100};let a=Math.atan2(target.y-p.y,target.x-p.x);p.angle=a;bullets.push({x:p.x+Math.cos(a)*15,y:p.y+Math.sin(a)*15,vx:Math.cos(a)*7.5,vy:Math.sin(a)*7.5,owner:p.id,damage:p.damage,life:70})}
+function update(dt){const f=dt/16.67;if(!running||paused||gameOver)return;roundTimer+=dt;spawnTimer-=dt;
+if(spawnTimer<=0){spawnZombie();spawnTimer=Math.max(230,950-round*30);if(zombies.length<4+round*2&&Math.random()<.35)spawnZombie()}
+if(roundTimer>18000&&zombies.length===0){if(round>=20){win();return}round++;roundTimer=0;spawnTimer=0;say('Round '+round+'! More zombies are coming.');updateHUD()}
+players.forEach(p=>{if(p.hp<=0)return;let dx=0,dy=0;if(p.id===1){dx=(keys.d?1:0)-(keys.a?1:0);dy=(keys.s?1:0)-(keys.w?1:0)}else{dx=(keys.ArrowRight?1:0)-(keys.ArrowLeft?1:0);dy=(keys.ArrowDown?1:0)-(keys.ArrowUp?1:0)}if(dx&&dy){dx*=.707;dy*=.707}p.x=clamp(p.x+dx*p.speed*f,p.r,W-p.r);p.y=clamp(p.y+dy*p.speed*f,p.r,H-p.r);if(p.fire>0)p.fire-=f;if(p.id===1&&keys.f)fire(p);if(p.id===2&&keys.Enter)fire(p)});
+bullets.forEach(b=>{b.x+=b.vx*f;b.y+=b.vy*f;b.life-=f});bullets=bullets.filter(b=>b.life>0&&b.x>-10&&b.x<W+10&&b.y>-10&&b.y<H+10);
+zombies.forEach(z=>{if(z.hit>0)z.hit-=f;const target=players.filter(p=>p.hp>0).reduce((best,p)=>!best||dist(z,p)<dist(z,best)?p:best,null);if(target){let a=Math.atan2(target.y-z.y,target.x-z.x),blocked=false;defenses.forEach(d=>{if(d.type==='wall'&&dist({x:z.x+Math.cos(a)*z.speed,y:z.y+Math.sin(a)*z.speed},d)<24)blocked=true});if(!blocked){z.x+=Math.cos(a)*z.speed*f;z.y+=Math.sin(a)*z.speed*f}if(dist(z,target)<z.r+target.r+1){z.attack=(z.attack||0)-dt;if(z.attack<=0){target.hp-=Math.max(3,7-target.armor*2);z.attack=650;if(target.hp<=0){target.hp=0;endGame()}}}}defenses.forEach(d=>{if(d.type==='gate'&&dist(z,d)<45)z.hp-=.012*f})});
+bullets.forEach(b=>{for(const z of zombies){if(z.hp>0&&dist(b,z)<z.r+4){z.hp-=b.damage;z.hit=5;b.life=0;if(z.hp<=0){coins.push({x:z.x,y:z.y,r:6,value:z.value});kills++}break}}});
+defenses.forEach(d=>{if(d.type==='turret'){d.cool-=dt;if(d.cool<=0){let z=zombies.reduce((best,q)=>!best||dist(q,d)<dist(best,d)?q:best,null);if(z&&dist(z,d)<210){let a=Math.atan2(z.y-d.y,z.x-d.x);bullets.push({x:d.x,y:d.y,vx:Math.cos(a)*6,vy:Math.sin(a)*6,owner:0,damage:1,life:55});d.cool=650}}}});
+zombies=zombies.filter(z=>z.hp>0);defenses=defenses.filter(d=>d.hp>0);
+coins.forEach(c=>players.forEach(p=>{if(p.hp>0&&dist(c,p)<p.r+c.r+5){p.money+=c.value;c.got=true}}));coins=coins.filter(c=>!c.got);updateHUD()}
+function endGame(){if(gameOver)return;gameOver=true;running=false;showOverlay('GAME OVER','A player was overrun by the zombies. You survived to round '+round+'.','TRY AGAIN')}
+function win(){gameOver=true;running=false;showOverlay('YOU SURVIVED!','Both players made it through all 20 rounds. Zombies defeated: '+kills+'.','PLAY AGAIN')}
+function drawPerson(x,y,color,angle){ctx.save();ctx.translate(x,y);ctx.fillStyle='#0a0c0d';ctx.fillRect(-9,-7,18,18);ctx.fillStyle=color;ctx.fillRect(-7,-8,14,14);ctx.fillStyle='#f3c9a0';ctx.fillRect(-5,-14,10,8);ctx.fillStyle='#20242a';ctx.fillRect(-6,-15,12,4);ctx.fillStyle='#fff';ctx.fillRect(1,-12,2,2);ctx.rotate(angle);ctx.fillStyle='#252c33';ctx.fillRect(3,-3,15,6);ctx.fillStyle='#b8c7d2';ctx.fillRect(13,-2,7,4);ctx.restore()}
+function drawZombie(z){ctx.save();ctx.translate(Math.round(z.x),Math.round(z.y));ctx.fillStyle='#10110f';ctx.fillRect(-10,-8,20,20);ctx.fillStyle=z.hit>0?'#fff':'#60834a';ctx.fillRect(-8,-10,16,17);ctx.fillStyle='#9ab85b';ctx.fillRect(-6,-14,12,7);ctx.fillStyle='#1b2119';ctx.fillRect(-5,-8,3,3);ctx.fillRect(3,-8,3,3);ctx.fillStyle='#d7e3b3';ctx.fillRect(-4,-2,8,2);ctx.fillStyle='#415d39';ctx.fillRect(-13,0,5,12);ctx.fillRect(8,0,5,12);ctx.fillStyle='#384232';ctx.fillRect(-6,7,5,8);ctx.fillRect(2,7,5,8);ctx.restore()}
+function draw(){ctx.clearRect(0,0,W,H);ctx.fillStyle='#26352d';ctx.fillRect(0,0,W,H);
+for(let y=0;y<H;y+=32)for(let x=0;x<W;x+=32){let n=(Math.floor(x/32)*7+Math.floor(y/32)*13)%5;ctx.fillStyle=['#29392f','#2b3b31','#25352c','#304032','#27372e'][n];ctx.fillRect(x,y,30,30);ctx.fillStyle='#3c4938';ctx.fillRect(x+5,y+7,3,3);if((x+y)%96===0){ctx.fillStyle='#1b2822';ctx.fillRect(x+18,y+20,8,4)}}
+ctx.fillStyle='#343a36';ctx.fillRect(0,235,W,48);ctx.fillRect(455,0,45,H);ctx.strokeStyle='#454b43';ctx.lineWidth=2;ctx.setLineDash([12,12]);ctx.beginPath();ctx.moveTo(0,259);ctx.lineTo(W,259);ctx.moveTo(478,0);ctx.lineTo(478,H);ctx.stroke();ctx.setLineDash([]);
+ctx.fillStyle='#172820';ctx.fillRect(20,20,150,95);ctx.strokeStyle='#73815d';ctx.lineWidth=3;ctx.strokeRect(20,20,150,95);ctx.fillStyle='#9eaa8b';ctx.font='bold 13px monospace';ctx.fillText('SAFE ZONE',37,43);for(let i=0;i<5;i++){ctx.fillStyle='#5d6258';ctx.fillRect(31+i*25,55,17,38);ctx.fillStyle='#85877b';ctx.fillRect(34+i*25,58,11,4)}
+defenses.forEach(d=>{if(d.type==='wall'){ctx.fillStyle='#815a35';ctx.fillRect(d.x-17,d.y-13,34,26);ctx.strokeStyle='#c18a4d';ctx.strokeRect(d.x-17,d.y-13,34,26);ctx.beginPath();ctx.moveTo(d.x-15,d.y-2);ctx.lineTo(d.x+15,d.y-2);ctx.stroke()}if(d.type==='gate'){ctx.fillStyle='#414f5b';ctx.fillRect(d.x-18,d.y-16,36,32);ctx.strokeStyle='#3ddcff';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(d.x-13,d.y-10);ctx.lineTo(d.x+13,d.y+10);ctx.moveTo(d.x+13,d.y-10);ctx.lineTo(d.x-13,d.y+10);ctx.stroke();ctx.lineWidth=1}if(d.type==='turret'){ctx.fillStyle='#4b6572';ctx.fillRect(d.x-12,d.y-12,24,24);ctx.fillStyle='#b8d0d8';ctx.fillRect(d.x-3,d.y-18,6,20)}});
+coins.forEach(c=>{ctx.fillStyle='#e9aa25';ctx.beginPath();ctx.arc(c.x,c.y,7,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#ffe879';ctx.stroke();ctx.fillStyle='#704813';ctx.font='bold 9px monospace';ctx.fillText('$',c.x-3,c.y+3)});
+zombies.forEach(drawZombie);bullets.forEach(b=>{ctx.fillStyle='#ffdc71';ctx.fillRect(b.x-3,b.y-2,7,4);ctx.fillStyle='#fff6bd';ctx.fillRect(b.x,b.y-1,3,2)});
+players.forEach(p=>{if(p.hp<=0)return;drawPerson(p.x,p.y,p.color,p.angle);ctx.fillStyle='#0b1117';ctx.fillRect(p.x-17,p.y-27,34,5);ctx.fillStyle=p.color;ctx.fillRect(p.x-17,p.y-27,34*(p.hp/100),5);ctx.fillStyle=p.color;ctx.font='bold 12px monospace';ctx.fillText('P'+p.id,p.x-7,p.y-32);if(p.pending){ctx.strokeStyle='#ffe06b';ctx.strokeRect(p.x+19,p.y-8,20,20)}});
+ctx.fillStyle='#09131ccc';ctx.fillRect(W-170,12,155,33);ctx.strokeStyle='#64788a';ctx.strokeRect(W-170,12,155,33);ctx.fillStyle='#f4f7fa';ctx.font='bold 17px monospace';ctx.fillText('ROUND '+round+' / 20',W-158,34);ctx.fillStyle='#e2e9ee';ctx.font='12px monospace';ctx.fillText('ZOMBIES: '+zombies.length+'   KILLS: '+kills,18,H-16);
+if(paused&&running){ctx.fillStyle='#050a10aa';ctx.fillRect(0,0,W,H);ctx.fillStyle='white';ctx.font='bold 38px monospace';ctx.fillText('PAUSED',W/2-85,H/2)}}
+function loop(now){if(!running)return;const dt=Math.min(35,now-last);last=now;update(dt);draw();if(running&&!paused)requestAnimationFrame(loop)}
+canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mouse.x=(e.clientX-r.left)*W/r.width;mouse.y=(e.clientY-r.top)*H/r.height;mouse.moved=true});
+canvas.addEventListener('click',e=>{const r=canvas.getBoundingClientRect();mouse.x=(e.clientX-r.left)*W/r.width;mouse.y=(e.clientY-r.top)*H/r.height;mouse.moved=true});
+window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' ','Enter','Shift'].includes(e.key))e.preventDefault();keys[e.key===' '?'Space':e.key]=true;if(e.repeat)return;
+if(e.key===' '&&running){paused=!paused;if(!paused){last=performance.now();requestAnimationFrame(loop)}draw();say(paused?'Paused. Press Space to continue.':'Back in the fight!')}
+if(e.key.toLowerCase()==='g'&&players[0]){place(players[0]);keys.g=false}if(e.key==='Shift'&&players[1]){place(players[1]);keys.Shift=false}});
+window.addEventListener('keyup',e=>{keys[e.key===' '?'Space':e.key]=false});
+$('startBtn').addEventListener('click',start);$('buyBtn').addEventListener('click',buy);$('reloadBtn').addEventListener('click',()=>{init();say('Fresh game ready. Press START GAME.')});buildShop();init();
+})();
+</script>
+<script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>
+</html>

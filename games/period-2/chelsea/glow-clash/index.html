@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Glow Clash</title>
+<style>
+:root{--bg:#f3f1ff;--fg:#1d1b3a;--muted:#5d5a85;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e0d1f;--fg:#f1efff;--muted:#a9a6d6}}
+:root[data-theme="dark"]{--bg:#0e0d1f;--fg:#f1efff;--muted:#a9a6d6}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:12px}
+h1{margin:0;font-size:1.6rem;letter-spacing:.5px}
+canvas{width:100%;max-width:900px;aspect-ratio:8/5;border-radius:14px;box-shadow:0 8px 40px rgba(120,80,255,.35);background:#12102b}
+.keys{display:flex;gap:24px;flex-wrap:wrap;justify-content:center;color:var(--muted);font-size:.9rem;text-align:center}
+.keys b{color:var(--fg)}
+</style>
+</head>
+<body>
+<h1>⚡ Glow Clash ⚡</h1>
+<canvas id="c" width="800" height="500"></canvas>
+<div class="keys">
+<div><b style="color:#ff5c8a">P1</b> 🟥 Move <b>W A S D</b> · Dash <b>Space</b></div>
+<div><b style="color:#38d9ff">P2</b> 🟦 Move <b>Arrow keys</b> · Dash <b>Enter</b></div>
+</div>
+<script>
+const cv=document.getElementById("c"),g=cv.getContext("2d"),W=800,H=500,S=22,GOAL=5;
+const LEVELS=[
+{name:"Open Arena",walls:[],haz:0,ice:false,mov:false},
+{name:"Maze Blocks",walls:[[370,200,60,100],[150,100,20,120],[630,280,20,120]],haz:0,ice:false,mov:false},
+{name:"Lava Orbs",walls:[[200,230,40,40],[560,230,40,40]],haz:3,ice:false,mov:false},
+{name:"Ice Rink",walls:[[300,120,200,20],[300,360,200,20],[390,200,20,100]],haz:0,ice:true,mov:false},
+{name:"Total Chaos",walls:[[150,150,20,200],[630,150,20,200],[300,240,200,20]],haz:4,ice:true,mov:true}
+];
+const keys={};let state="menu",lv=0,wins=[0,0],ready=0,msg="",star,starT=0,hz=[],t=0,P=[];
+function mk(x,c,k){return{x,y:250,vx:0,vy:0,sc:0,stun:0,inv:0,dash:0,cd:0,c,k,fx:1,fy:0,hit:false}}
+function hitW(x,y,r){for(const w of LEVELS[lv].walls)if(x+r>w[0]&&x-r<w[0]+w[2]&&y+r>w[1]&&y-r<w[1]+w[3])return w;return null}
+function newStar(){for(let i=0;i<60;i++){const x=40+Math.random()*(W-80),y=40+Math.random()*(H-80);if(!hitW(x,y,20)){star={x,y};break}}starT=3.5}
+function startLevel(){const L=LEVELS[lv];P=[mk(60,"#ff5c8a",{u:"w",d:"s",l:"a",r:"d",a:" "}),mk(740,"#38d9ff",{u:"ArrowUp",d:"ArrowDown",l:"ArrowLeft",r:"ArrowRight",a:"Enter"})];
+hz=[];for(let i=0;i<L.haz;i++){let x,y;do{x=250+Math.random()*300;y=40+Math.random()*420}while(hitW(x,y,16));const a=Math.random()*6.28;hz.push({x,y,vx:Math.cos(a)*2.4,vy:Math.sin(a)*2.4})}
+newStar();ready=2;state="play"}
+function dashTry(p){if(p.cd<=0&&p.stun<=0){p.dash=.18;p.cd=1.4;p.hit=false;p.vx=p.fx*13;p.vy=p.fy*13}}
+addEventListener("keydown",e=>{if([" ","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Enter"].includes(e.key))e.preventDefault();if(e.repeat)return;keys[e.key.length>1?e.key:e.key.toLowerCase()]=1;
+if(state==="play"&&ready<=0){P.forEach(p=>{if(e.key===p.k.a)dashTry(p)})}
+else if((e.key===" "||e.key==="Enter")&&state!=="play")adv()});
+addEventListener("keyup",e=>{keys[e.key.length>1?e.key:e.key.toLowerCase()]=0});
+cv.addEventListener("pointerdown",()=>{if(state!=="play")adv()});
+function adv(){if(state==="menu"||state==="end"){lv=0;wins=[0,0];startLevel()}else if(state==="between"){lv++;startLevel()}}
+function moveP(p,f){const L=LEVELS[lv];if(p.stun>0)p.stun-=f/60;if(p.inv>0)p.inv-=f/60;if(p.cd>0)p.cd-=f/60;
+let ix=0,iy=0;if(p.stun<=0&&p.dash<=0){ix=(keys[p.k.r]?1:0)-(keys[p.k.l]?1:0);iy=(keys[p.k.d]?1:0)-(keys[p.k.u]?1:0)}
+if(ix||iy){const m=Math.hypot(ix,iy);p.fx=ix/m;p.fy=iy/m;const a=L.ice?.22:.9;p.vx+=p.fx*a*f;p.vy+=p.fy*a*f}
+if(p.dash>0)p.dash-=f/60;else{const fr=Math.pow(L.ice?.975:.85,f);p.vx*=fr;p.vy*=fr}
+const h=S/2;p.x+=p.vx*f;let w=hitW(p.x,p.y,h);if(w){p.x=p.vx>0?w[0]-h:w[0]+w[2]+h;p.vx=0}
+p.y+=p.vy*f;w=hitW(p.x,p.y,h);if(w){p.y=p.vy>0?w[1]-h:w[1]+w[3]+h;p.vy=0}
+p.x=Math.max(h,Math.min(W-h,p.x));p.y=Math.max(h,Math.min(H-h,p.y))}
+function endLevel(wn){wins[wn]++;state=lv>=LEVELS.length-1?"end":"between";msg="P"+(wn+1)+" takes "+LEVELS[lv].name+"!"}
+function update(dt){const f=dt*60;t+=dt;if(ready>0){ready-=dt;return}
+P.forEach(p=>moveP(p,f));
+P.forEach((p,i)=>{const o=P[1-i];if(p.dash>0&&!p.hit&&o.stun<=0&&Math.abs(p.x-o.x)<S&&Math.abs(p.y-o.y)<S){p.hit=true;o.stun=1;o.vx=p.vx*.6;o.vy=p.vy*.6;if(o.sc>0){o.sc--;p.sc++}}
+if(Math.hypot(p.x-star.x,p.y-star.y)<S/2+10){p.sc++;newStar()}});
+for(let i=0;i<2;i++)if(P[i].sc>=GOAL){endLevel(i);return}
+if(LEVELS[lv].mov){starT-=dt;if(starT<=0)newStar()}
+for(const z of hz){z.x+=z.vx*f;if(hitW(z.x,z.y,12)||z.x<12||z.x>W-12){z.x-=z.vx*f;z.vx*=-1}
+z.y+=z.vy*f;if(hitW(z.x,z.y,12)||z.y<12||z.y>H-12){z.y-=z.vy*f;z.vy*=-1}
+for(const p of P)if(p.stun<=0&&p.inv<=0&&Math.hypot(p.x-z.x,p.y-z.y)<S/2+12){p.stun=.9;p.inv=2.4;p.vx=(p.x-z.x)*.4;p.vy=(p.y-z.y)*.4}}}
+function txt(s,x,y,sz,c){g.fillStyle=c||"#fff";g.font="bold "+sz+"px system-ui,sans-serif";g.textAlign="center";g.fillText(s,x,y)}
+function draw(){const L=LEVELS[Math.min(lv,4)];g.clearRect(0,0,W,H);g.fillStyle=L.ice&&state!=="menu"?"#16294d":"#12102b";g.fillRect(0,0,W,H);
+g.strokeStyle="rgba(255,255,255,.05)";for(let x=0;x<W;x+=40){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke()}for(let y=0;y<H;y+=40){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+if(state==="menu"){txt("⚡ GLOW CLASH ⚡",W/2,170,52,"#c9b8ff");txt("Grab 5 stars before your rival. Dash to stun and steal!",W/2,230,20);txt("5 levels · best of the match wins 🏆",W/2,262,18,"#a9a6d6");txt("Press Space or Enter (or tap) to start",W/2,340,24,"#ffd54a");return}
+g.fillStyle="#6f5bff";g.shadowColor="#6f5bff";g.shadowBlur=12;for(const w of L.walls)g.fillRect(w[0],w[1],w[2],w[3]);
+g.shadowBlur=18;g.shadowColor="#f06";g.fillStyle="#ff6a00";for(const z of hz){g.beginPath();g.arc(z.x,z.y,12,0,6.28);g.fill()}
+if(star){g.shadowColor="#ffd54a";g.fillStyle="#ffd54a";const r=11+Math.sin(t*6)*2;g.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,rr=i%2?r*.45:r;g.lineTo(star.x+Math.cos(a)*rr,star.y+Math.sin(a)*rr)}g.fill()}
+for(const p of P){g.shadowColor=p.c;g.shadowBlur=p.dash>0?30:16;g.globalAlpha=p.inv>0&&Math.floor(t*12)%2?.4:1;g.fillStyle=p.stun>0?"#888":p.c;g.fillRect(p.x-S/2,p.y-S/2,S,S);g.globalAlpha=1;g.shadowBlur=0;
+g.fillStyle="rgba(255,255,255,.25)";g.fillRect(p.x-S/2,p.y+S/2+4,S*Math.max(0,1-p.cd/1.4),3);if(p.stun>0)txt("💫",p.x,p.y-S,16)}
+g.shadowBlur=0;txt("P1  "+P[0].sc+"/"+GOAL,90,28,20,"#ff5c8a");txt("P2  "+P[1].sc+"/"+GOAL,W-90,28,20,"#38d9ff");
+txt("Level "+(lv+1)+": "+L.name,W/2,28,18,"#c9b8ff");txt("Match "+wins[0]+" – "+wins[1],W/2,50,14,"#a9a6d6");
+if(state==="play"&&ready>0)txt(L.name+" – get ready! "+Math.ceil(ready),W/2,H/2,34,"#ffd54a");
+if(state==="between"||state==="end"){g.fillStyle="rgba(10,8,30,.8)";g.fillRect(0,0,W,H);txt(msg,W/2,200,36,"#ffd54a");txt("Match "+wins[0]+" – "+wins[1],W/2,250,24);
+if(state==="end"){const w=wins[0]===wins[1]?"It’s a tie! 🤝":wins[0]>wins[1]?"🏆 Player 1 wins the match! 🏆":"🏆 Player 2 wins the match! 🏆";txt(w,W/2,310,32,"#c9b8ff");txt("Space / Enter to play again",W/2,370,20)}
+else txt("Next: "+LEVELS[lv+1].name+" – press Space / Enter",W/2,330,22,"#c9b8ff")}}
+let last=performance.now();function loop(n){const dt=Math.min(.05,(n-last)/1000);last=n;if(state==="play")update(dt);draw();requestAnimationFrame(loop)}
+requestAnimationFrame(loop);
+</script>
+<script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>
+</html>

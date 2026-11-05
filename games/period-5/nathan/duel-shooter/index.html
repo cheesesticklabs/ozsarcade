@@ -21,6 +21,9 @@
   .fill { height:100%; width:100%; transition:width .12s; }
   #hp1 { background:var(--cyan); } #hp2 { background:var(--pink); }
   .stats { font-size:.88rem; color:#c2cce0; margin-top:4px; }
+  .scoreboard { display:flex; justify-content:center; align-items:center; gap:18px; flex-wrap:wrap; background:#151c2a; border:1px solid var(--line); border-radius:10px; padding:9px 12px; margin:0 0 10px; text-align:center; }
+  .scoreboard strong { color:var(--gold); letter-spacing:.08em; }
+  .score { font-size:1.1rem; font-weight:850; }
   canvas { display:block; width:100%; aspect-ratio:16/9; background:#0b1220; border:1px solid #34415a; border-radius:14px; box-shadow:0 16px 40px #0006; touch-action:manipulation; }
   .controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; }
   .card { background:#151c2a; border:1px solid var(--line); border-radius:12px; padding:12px; color:#c4cee2; font-size:.92rem; }
@@ -42,17 +45,18 @@
     <div class="player p1"><div class="name">PLAYER 1</div><div class="health"><div class="fill" id="hp1"></div></div><div class="stats" id="stats1">Health 100 · Sidearm</div></div>
     <div class="player p2"><div class="name">PLAYER 2</div><div class="health"><div class="fill" id="hp2"></div></div><div class="stats" id="stats2">Health 100 · Sidearm</div></div>
   </section>
+  <section class="scoreboard" aria-live="polite"><strong id="roundLabel">ROUND 1 OF 3</strong><span class="p1c">P1 <span class="score" id="score1">0</span></span><span>—</span><span class="p2c">P2 <span class="score" id="score2">0</span></span><span id="scoreMessage">Play all 3 rounds to decide the match!</span></section>
   <canvas id="game" width="960" height="540" aria-label="Two player shooter game"></canvas>
   <div class="actions">
-    <button class="primary" id="start">Start / Restart Match</button>
+    <button class="primary" id="start">Start Match</button>
     <button id="upgrade1">P1 Upgrade: Rapid Fire (3)</button>
     <button id="upgrade2">P2 Upgrade: Rapid Fire (3)</button>
   </div>
   <section class="controls">
-    <div class="card p1c"><strong>PLAYER 1 — CYAN</strong>Move: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd><br>Aim: mouse · Shoot: click or <kbd>F</kbd> · Reload: <kbd>R</kbd> · Shift+mouse/right-click controls P2 aim/shoot</div>
-    <div class="card p2c"><strong>PLAYER 2 — PINK</strong>Move: <kbd>↑</kbd> <kbd>←</kbd> <kbd>↓</kbd> <kbd>→</kbd><br>Shoot: <kbd>Enter</kbd> · Reload: <kbd>Shift</kbd> · Upgrade: click P2 upgrade button</div>
+    <div class="card p1c"><strong>PLAYER 1 — CYAN</strong>Move: <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd><br>Aim: mouse · Shoot: left-click or <kbd>F</kbd> · Reload: <kbd>R</kbd></div>
+    <div class="card p2c"><strong>PLAYER 2 — PINK</strong>Move: <kbd>↑</kbd> <kbd>←</kbd> <kbd>↓</kbd> <kbd>→</kbd><br>Aim: <kbd>I</kbd> <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> · Shoot: <kbd>Enter</kbd> · Reload: <kbd>Shift</kbd></div>
   </section>
-  <p class="note">Soldiers now have tactical gear, helmets, boots, vests, backpacks, and rifles. Tip: Player 1 aims toward the mouse and can shoot by clicking or pressing F. Player 2 moves with the arrow keys; hold Shift while moving the mouse to aim P2, or right-click to aim and shoot P2. Use Enter to shoot in P2's current aim direction. Press R to reload Player 1 or Shift to reload Player 2. Each magazine holds 12 shots; reloading takes about one second. Spend 3 upgrade points per player to unlock Rapid Fire.</p>
+  <p class="note">Player 1 aims with the mouse. Player 2 aims smoothly with I/J/K/L (up/left/down/right); combine keys for diagonal aim. Player 2 shoots with Enter and reloads with Shift. Player 1 shoots with left-click or F and reloads with R. Each magazine holds 12 shots; reloading takes about one second. Spend 3 upgrade points per player to unlock Rapid Fire.</p>
 </main>
 <script>
 (() => {
@@ -64,18 +68,30 @@
     {x:280,y:235,w:55,h:70},{x:625,y:235,w:55,h:70}
   ];
   const players = [
-    {x:115,y:270,r:17,color:'#54e6ff',hp:100,dir:{x:1,y:0},speed:3.25,cool:0,rapid:false,points:3,shot:0,ammo:12,maxAmmo:12,reload:0,aim:{x:1,y:0}},
-    {x:845,y:270,r:17,color:'#ff5f9e',hp:100,dir:{x:-1,y:0},speed:3.25,cool:0,rapid:false,points:3,shot:0,ammo:12,maxAmmo:12,reload:0,aim:{x:-1,y:0}}
+    {x:115,y:270,r:17,color:'#54e6ff',hp:100,dir:{x:1,y:0},speed:3.25,cool:0,rapid:false,points:3,shot:0,ammo:12,maxAmmo:12,reload:0,aim:{x:1,y:0},aimTarget:{x:1,y:0}},
+    {x:845,y:270,r:17,color:'#ff5f9e',hp:100,dir:{x:-1,y:0},speed:3.25,cool:0,rapid:false,points:3,shot:0,ammo:12,maxAmmo:12,reload:0,aim:{x:-1,y:0},aimTarget:{x:-1,y:0}}
   ];
-  let bullets=[], running=false, winner='', frame=0;
+  let bullets=[], running=false, winner='', frame=0, round=1, wins=[0,0], matchStarted=false, matchOver=false;
   let mousePos={x:480,y:270};
   const hpEls=[document.getElementById('hp1'),document.getElementById('hp2')];
   const statEls=[document.getElementById('stats1'),document.getElementById('stats2')];
   const startBtn=document.getElementById('start');
+  function updateScoreboard(message='Play all 3 rounds to decide the match!') {
+    document.getElementById('roundLabel').textContent=matchOver?'MATCH OVER':`ROUND ${Math.min(round,3)} OF 3`;
+    document.getElementById('score1').textContent=wins[0];
+    document.getElementById('score2').textContent=wins[1];
+    document.getElementById('scoreMessage').textContent=message;
+    startBtn.textContent=matchOver?'Play Again':(!running&&matchStarted?'Next Round':'Start Match');
+  }
   function reset() {
-    players[0].x=115; players[0].y=270; players[0].hp=100; players[0].dir={x:1,y:0}; players[0].aim={x:1,y:0}; players[0].cool=0; players[0].rapid=false; players[0].points=3; players[0].ammo=12; players[0].reload=0;
-    players[1].x=845; players[1].y=270; players[1].hp=100; players[1].dir={x:-1,y:0}; players[1].aim={x:-1,y:0}; players[1].cool=0; players[1].rapid=false; players[1].points=3; players[1].ammo=12; players[1].reload=0;
-    bullets=[]; winner=''; running=true; frame=0; updateHud();
+    players[0].x=115; players[0].y=270; players[0].hp=100; players[0].dir={x:1,y:0}; players[0].aim={x:1,y:0}; players[0].aimTarget={x:1,y:0}; players[0].cool=0; players[0].rapid=false; players[0].points=3; players[0].ammo=12; players[0].reload=0;
+    players[1].x=845; players[1].y=270; players[1].hp=100; players[1].dir={x:-1,y:0}; players[1].aim={x:-1,y:0}; players[1].aimTarget={x:-1,y:0}; players[1].cool=0; players[1].rapid=false; players[1].points=3; players[1].ammo=12; players[1].reload=0;
+    bullets=[]; winner=''; running=true; frame=0; round=1; wins=[0,0]; matchStarted=true; matchOver=false; updateHud(); updateScoreboard();
+  }
+  function startNextRound() {
+    players[0].x=115; players[0].y=270; players[0].hp=100; players[0].dir={x:1,y:0}; players[0].aim={x:1,y:0}; players[0].aimTarget={x:1,y:0}; players[0].cool=0; players[0].rapid=false; players[0].points=3; players[0].ammo=12; players[0].reload=0;
+    players[1].x=845; players[1].y=270; players[1].hp=100; players[1].dir={x:-1,y:0}; players[1].aim={x:-1,y:0}; players[1].aimTarget={x:-1,y:0}; players[1].cool=0; players[1].rapid=false; players[1].points=3; players[1].ammo=12; players[1].reload=0;
+    bullets=[]; winner=''; running=true; frame=0; keys.clear(); updateHud(); updateScoreboard();
   }
   function updateHud() {
     players.forEach((p,i)=> {
@@ -90,12 +106,14 @@
   }
   document.getElementById('upgrade1').addEventListener('click',()=>upgrade(0));
   document.getElementById('upgrade2').addEventListener('click',()=>upgrade(1));
-  startBtn.addEventListener('click',reset);
+  startBtn.addEventListener('click',()=>{
+    if(!matchStarted||matchOver) reset();
+    else if(!running&&round<3) { round++; startNextRound(); }
+  });
   window.addEventListener('keydown',e=>{
     const k=e.key.toLowerCase();
     if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(k)) e.preventDefault();
     keys.add(k);
-    if(!running && (k==='enter'||k===' ')) reset();
   });
   window.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));
   window.addEventListener('blur',()=>keys.clear());
@@ -127,18 +145,13 @@
     const dx=mousePos.x-p.x,dy=mousePos.y-p.y,len=Math.hypot(dx,dy);
     if(len>0) p.aim={x:dx/len,y:dy/len};
   }
-  canvas.addEventListener('mousemove', e=>{
-    aimPlayerAtMouse(e,0);
-    // Hold Shift to steer Player 2's aim with the same mouse.
-    if(e.shiftKey) aimPlayerAtMouse(e,1);
-  });
+  canvas.addEventListener('mousemove', e=>aimPlayerAtMouse(e,0));
   canvas.addEventListener('click', e=>{
-    aimPlayerAtMouse(e, e.shiftKey ? 1 : 0);
-    if(running) shoot(players[e.shiftKey ? 1 : 0],e.shiftKey ? 1 : 0);
+    aimPlayerAtMouse(e,0);
+    if(running) shoot(players[0],0);
   });
   canvas.addEventListener('contextmenu', e=>{
     e.preventDefault();
-    aimPlayerAtMouse(e,1);
     if(running) shoot(players[1],1);
   });
   function circleRect(b,w) {
@@ -158,6 +171,15 @@
           if(keys.has('r'))reloadPlayer(p);
         } else {
           dx=(keys.has('arrowright')?1:0)-(keys.has('arrowleft')?1:0); dy=(keys.has('arrowdown')?1:0)-(keys.has('arrowup')?1:0);
+          // Player 2 aims independently with I/J/K/L; the target direction is smoothed each frame.
+          let ax=(keys.has('l')?1:0)-(keys.has('j')?1:0);
+          let ay=(keys.has('k')?1:0)-(keys.has('i')?1:0);
+          if(ax||ay){const al=Math.hypot(ax,ay);p.aimTarget={x:ax/al,y:ay/al};}
+          const smooth=0.18;
+          const sx=p.aim.x+(p.aimTarget.x-p.aim.x)*smooth;
+          const sy=p.aim.y+(p.aimTarget.y-p.aim.y)*smooth;
+          const sl=Math.hypot(sx,sy)||1;
+          p.aim={x:sx/sl,y:sy/sl};
           if(keys.has('enter'))shoot(p,i);
           if(keys.has('shift'))reloadPlayer(p);
         }
@@ -172,7 +194,10 @@
         const target=players[1-b.owner];
         if(Math.hypot(b.x-target.x,b.y-target.y)<b.r+target.r) {
           target.hp=Math.max(0,target.hp-b.damage);
-          if(target.hp<=0){running=false;winner=`PLAYER ${b.owner+1} WINS!`;keys.clear();}
+          if(target.hp<=0){running=false;wins[b.owner]++;winner=`PLAYER ${b.owner+1} WINS ROUND ${round}!`;keys.clear();
+            if(round>=3){matchOver=true;winner=wins[0]===wins[1]?'MATCH TIED!':`PLAYER ${wins[0]>wins[1]?1:2} WINS THE MATCH!`;updateScoreboard(winner);}
+            else updateScoreboard(`Player ${b.owner+1} wins round ${round} — get ready for round ${round+1}!`);
+          }
           updateHud(); return false;
         }
         return true;
@@ -240,6 +265,11 @@
       ctx.fillStyle='#0b1015';ctx.fillRect(35,-1.5,8,3);
       ctx.fillRect(24,2,3,5);
       ctx.shadowBlur=0;ctx.restore();
+      // Visible aim guide helps both players see their current rifle direction.
+      ctx.save();
+      ctx.strokeStyle=p.color;ctx.globalAlpha=0.42;ctx.lineWidth=2;ctx.setLineDash([5,6]);
+      ctx.beginPath();ctx.moveTo(p.x+p.aim.x*27,p.y+p.aim.y*27);ctx.lineTo(p.x+p.aim.x*105,p.y+p.aim.y*105);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+      ctx.beginPath();ctx.arc(p.x+p.aim.x*105,p.y+p.aim.y*105,5,0,Math.PI*2);ctx.stroke();ctx.restore();
       // Team ring and label make players easy to distinguish from the arena.
       ctx.strokeStyle=p.color;ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(p.x,p.y+8,21,10,0,0,Math.PI*2);ctx.stroke();
       ctx.fillStyle=p.color;ctx.fillRect(p.x-15,p.y-34,30,15);
@@ -250,10 +280,10 @@
       ctx.textAlign='center';ctx.fillStyle=winner?'#ffd166':'#f4f7ff';ctx.font='800 42px system-ui';
       ctx.fillText(winner||'READY TO DUEL?',W/2,H/2-10);
       ctx.fillStyle='#d1daeb';ctx.font='20px system-ui';
-      ctx.fillText(winner?'Click Start / Restart Match to play again':'Click Start / Restart Match to begin',W/2,H/2+32);
+      ctx.fillText(matchOver?'Click Play Again for a new match':(matchStarted?'Click Next Round to continue':'Click Start Match to begin'),W/2,H/2+32);
     }
   }
-  running=false; updateHud(); draw(); requestAnimationFrame(tick);
+  running=false; updateHud(); updateScoreboard(); draw(); requestAnimationFrame(tick);
 })();
 </script>
 <script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>

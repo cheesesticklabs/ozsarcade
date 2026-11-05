@@ -581,4 +581,4 @@ function go(n){cur=Math.max(0,Math.min(SC.length-1,n));SC.forEach((s,i)=>s.hidde
 function updNav(){$("bk").disabled=cur===0||cur===5;$("nx").disabled=cur===SC.length-1||(cur===1&&sel.size<2);$("nx").style.display=(cur===4||cur===5)?"none":"";$("stp").textContent=`${cur+1} / ${SC.length}`}
 $("bk").onclick=()=>go(cur===6?4:cur-1);$("nx").onclick=()=>go(cur+1);
 go(0);
-</script><script>document.addEventListener("keydown",function(event){if(event.key==="Escape"){event.preventDefault();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>
+</script><script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gift Day: 2 Player</title>
+<style>
+:root{--bg:#fdeff4;--fg:#3a2a33;--card:#fff;--ac:#e8608f;--mut:#8a7480;--bd:#f2c9d8;--on:#ffe3ee;--p1:#e8608f;--p2:#4a90e2;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#201a1e;--fg:#f3e8ee;--card:#2d242a;--ac:#f07aa4;--mut:#b49aa8;--bd:#4a3a43;--on:#4a2c3a;color-scheme:dark}}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+#g{position:fixed;inset:0}canvas{display:block}
+#top{position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);left:6px;right:6px;display:flex;gap:6px;justify-content:space-between;align-items:flex-start}
+.chip{background:var(--card);border:2px solid var(--bd);border-radius:14px;padding:4px 10px;font-weight:700;font-size:.8rem;line-height:1.35}
+#c0{border-color:var(--p1)}#c1{border-color:var(--p2);text-align:right}
+#mid{text-align:center}
+#top button{background:var(--card);color:var(--fg);border:2px solid var(--bd);border-radius:12px;font:inherit;font-size:.75rem;padding:3px 8px;cursor:pointer;margin-top:3px}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 84px);transform:translateX(-50%);background:var(--card);border:2px solid var(--ac);border-radius:20px;padding:6px 14px;font-weight:600;font-size:.9rem;display:none;text-align:center;max-width:90%}
+#ov{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:10px}
+#box{background:var(--card);border-radius:16px;padding:14px;width:100%;max-width:560px;max-height:92%;overflow:auto;border:3px solid var(--bd)}
+h1{font-size:1.15rem;text-align:center;margin:2px 0}p{margin:6px 0;line-height:1.4}.mut{color:var(--mut);font-size:.85rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin:10px 0}
+.it{border:2px solid var(--bd);border-radius:12px;padding:8px 4px;text-align:center;cursor:pointer;background:var(--card);color:var(--fg);font:inherit;font-size:.8rem}
+.it .e{font-size:1.7rem;display:block}.it small{display:block;color:var(--mut)}.it.on{background:var(--on);border-color:var(--ac)}.it.off{opacity:.4}
+.hint{background:var(--on);border-radius:10px;padding:6px 10px;margin:5px 0;font-size:.88rem}
+.go{display:block;width:100%;background:var(--ac);color:#fff;border:0;border-radius:12px;padding:10px;font-size:1rem;font-weight:700;cursor:pointer;margin-top:6px}
+.go.alt{background:var(--card);color:var(--fg);border:2px solid var(--bd)}
+.pad{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:grid;grid-template-columns:repeat(3,48px);grid-template-rows:repeat(2,48px);gap:5px;touch-action:none}
+#pad0{left:10px}#pad1{right:10px}
+.pad button{border-radius:12px;font-size:1.1rem;opacity:.85;touch-action:none;user-select:none;background:var(--card);color:var(--fg);border:2px solid var(--p1)}
+#pad1 button{border-color:var(--p2)}
+@media (hover:hover) and (pointer:fine){.pad{display:none}}
+</style></head><body>
+<div id="g"></div>
+<div id="top"><div class="chip" id="c0"></div><div id="mid"><div class="chip" id="rd"></div><button onclick="hints(0)">📱 P1 hints</button> <button onclick="hints(1)">📱 P2 hints</button></div><div class="chip" id="c1"></div></div>
+<div id="toast"></div><div id="ov"><div id="box"></div></div>
+<div class="pad" id="pad0"><span></span><button data-p="0" data-d="u">▲</button><span></span><button data-p="0" data-d="l">◀</button><button data-p="0" data-d="d">▼</button><button data-p="0" data-d="r">▶</button></div>
+<div class="pad" id="pad1"><span></span><button data-p="1" data-d="u">▲</button><span></span><button data-p="1" data-d="l">◀</button><button data-p="1" data-d="d">▼</button><button data-p="1" data-d="r">▶</button></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=i=>document.getElementById(i);
+const ST={plush:['🧸','Plushie Store',0xff8fb1],clothes:['👗','Clothing Store',0x6fa8dc],snacks:['🍪','Snack Store',0xf6b26b],boba:['🧋','Boba Shop',0xc9a3e8],jewelry:['💍','Jewelry Store',0xf4d35e],acc:['🎀','Accessories',0x76d7c4],blind:['🎁','Blind Boxes',0xe57373],party:['🏠','Gift Party House',0xb6d7a8]};
+const IT=`plush|🐰|Bunny|14;plush|🐻|Teddy|16;plush|🦫|Capybara|20;plush|🦄|Unicorn|24;plush|🐧|Penguin|18;plush|🐙|Octopus|15;clothes|👗|Sundress|42;clothes|🧥|Hoodie|48;clothes|👚|Crop top|28;clothes|🧣|Scarf|26;clothes|👖|Jeans|44;clothes|🩳|Shorts|30;snacks|🍫|Chocolate|6;snacks|🍪|Cookies|5;snacks|🍡|Mochi|8;snacks|🍿|Popcorn|5;snacks|🍬|Gummies|6;snacks|🍓|Pocky|7;boba|🧋|Milk tea|6;boba|🍵|Strawberry matcha|7;boba|🥭|Mango pomelo|7;boba|🍑|Peach oolong|6;boba|🤎|Brown sugar|8;boba|🫐|Taro latte|7;jewelry|💍|Pearl studs|40;jewelry|📿|Charm bracelet|45;jewelry|✨|Star necklace|52;jewelry|🌸|Flower ring|35;jewelry|💎|Heart pendant|60;jewelry|🦋|Butterfly earrings|42;acc|🎀|Hair bow|12;acc|👜|Mini bag|30;acc|🕶️|Sunglasses|22;acc|🧢|Cap|18;acc|💄|Lip gloss|10;acc|🌀|Scrunchie|8;blind|🎁|Figurine box|12;blind|🌈|Rainbow box|15;blind|🌙|Moon series box|18;blind|🍄|Mushroom box|14;blind|🐱|Kitty box|16;blind|⭐|Star series box|20;plush|🐢|Turtle|17;plush|🦊|Fox|19;plush|🐼|Panda|22;plush|🐥|Chick|12;clothes|🧦|Socks|12;clothes|👕|Graphic tee|25;clothes|🩱|Swimsuit|35;clothes|🧥|Denim jacket|55;snacks|🍩|Donut|6;snacks|🥨|Pretzels|5;snacks|🍦|Ice cream|7;snacks|🧁|Cupcake|8;boba|🍉|Watermelon fizz|7;boba|🍫|Choco milk tea|7;boba|🥥|Coconut jelly|7;boba|🍈|Lychee green|6;jewelry|🌙|Moon earrings|38;jewelry|🔗|Silver chain|48;jewelry|🐚|Shell anklet|30;jewelry|🌟|Gold hoops|44;acc|🪞|Pocket mirror|14;acc|🎒|Tote bag|24;acc|👓|Heart glasses|20;acc|📎|Hair clips|9;blind|🦄|Unicorn box|16;blind|🐰|Bunny box|15;blind|🍓|Berry box|14;blind|🌸|Blossom box|17`.split(';').map(s=>{const a=s.split('|');return{s:a[0],e:a[1],n:a[2],p:+a[3]}});
+// name, hair, dress, accent, hairstyle(0 pony,1 pigtails,2 bun), trait, likes
+const GIRLS=[['Mia',0x5b3a29,0xff6fa5,0xffffff,0,'obsessed with anything cute and fluffy',['Capybara','Strawberry matcha','Hair bow','Kitty box','Charm bracelet']],
+['Zoe',0x222222,0x6fa8dc,0xffe066,1,'always cold and always sweet-toothed',['Hoodie','Brown sugar','Sunglasses','Mochi','Moon series box']],
+['Lily',0xf4d35e,0xb6a1e8,0xff9fc4,2,'a total flower and pastel girl',['Flower ring','Bunny','Taro latte','Scrunchie','Sundress']],
+['Ava',0xa0522d,0xf6b26b,0x7ed6a8,0,'loves movie nights and quirky things',['Penguin','Popcorn','Cap','Rainbow box','Mango pomelo']],
+['Nina',0x1b1b3a,0x76d7c4,0xffffff,1,'a butterfly-and-sparkles kind of girl',['Butterfly earrings','Chocolate','Mini bag','Octopus','Peach oolong']],
+['Ruby',0xc0392b,0xe57373,0xffd6e0,2,'dreams of sparkles and unicorns',['Unicorn','Gummies','Lip gloss','Crop top','Star necklace']],
+['Cleo',0x888888,0xffd966,0xff6fa5,0,'loves cozy and heartfelt gifts',['Teddy','Milk tea','Scarf','Mushroom box','Heart pendant']],
+['Hana',0x2c1810,0xff9fc4,0x8be0ff,1,'adores tiny sweet treats and pearls',['Mochi','Pearl studs','Bunny','Taro latte','Figurine box']],
+['Ivy',0x3d6b3d,0x9ad07a,0xffffff,2,'effortlessly cool with a snack habit',['Jeans','Sunglasses','Cookies','Star series box','Mango pomelo']],
+['Skye',0x6a4c93,0x8be0ff,0xffe066,0,'sporty, sunny and always snacking',['Shorts','Pocky','Cap','Brown sugar','Star necklace']]];
+const find=n=>IT.findIndex(x=>x.n===n);
+const VOICE={
+Mia:[`OMG have u seen {0}?? it’s literally the cutest thing alive 🥹💕`,`pls pls pls {1} 🥺 I’d be soooo happy`,`Mia once hugged {2} at the mall for like five whole minutes.`,`Mia’s room already has a special spot picked out for {3}.`],
+Zoe:[`ngl {0} would carry my whole week`,`so tired today. {1} fixes everything tbh`,`Zoe wore {2} basically every day last winter.`,`Zoe’s eyes lit up at {3} (she tried to play it cool).`],
+Lily:[`the sky was so pink today and all I could think of was {0} 🌸`,`wouldn’t it be lovely to have {1}? just a little daydream ✨`,`Lily smiled for a whole afternoon over {2}.`,`Lily pressed her nose to the glass to admire {3}.`],
+Ava:[`ok movie night is incomplete without {0}. non-negotiable 🎬`,`plot twist: I need {1} in my life. roll credits`,`Ava made the whole group wait while she stared at {2}.`,`Ava’s favorite memory has {3} in it, no explanation needed.`],
+Nina:[`babe. {0}. that’s the whole text. ✨`,`if you see {1} anywhere, grab it for me, you know my taste 💅`,`Nina gasped out loud at {2} last time.`,`Nina swears {3} is her signature thing.`],
+Ruby:[`AAAAA {0} IS SO ME!!! 🦄✨`,`I will literally SCREAM if I get {1}!!!`,`Ruby squealed so loud over {2} that the cashier jumped.`,`Ruby has a doodle of {3} on her notebook.`],
+Cleo:[`feeling soft today… {0} would make me really happy 🤍`,`the little things matter to me, like {1}. no pressure!`,`Cleo teared up when someone gave her {2}.`,`Cleo says {3} makes her feel warm inside.`],
+Hana:[`um… not sure if this is weird, but I really like {0}…`,`sorry to ask… could you maybe look for {1}? 🙈`,`Hana quietly admired {2} but never asked for it.`,`Hana saved a picture of {3} on her phone.`],
+Ivy:[`don’t make it a thing, but {0} is kinda my vibe`,`{1}. that’s it. that’s the text.`,`Ivy pretended not to care about {2}. she cared.`,`Ivy has been eyeing {3} for weeks.`],
+Skye:[`just finished practice!! now I need {0} like RIGHT NOW 🏃‍♀️`,`ok team, mission: find {1}! let’s gooo 💪`,`Skye did a victory lap after getting {2}.`,`Skye’s bag always has {3} in it.`]};
+function mkStock(pair){const need=new Set(pair.flatMap(g=>GIRLS[g][6].map(find))),out=[];
+ Object.keys(ST).filter(k=>k!=='party').forEach(s=>{const ids=IT.map((x,i)=>i).filter(i=>IT[i].s===s),must=ids.filter(i=>need.has(i)),rest=ids.filter(i=>!need.has(i)).sort(()=>Math.random()-.5);out.push(...must,...rest.slice(0,Math.max(0,6-must.length)))});return new Set(out)}
+let W=0,TRY=1;try{W=+localStorage.getItem('giftW')||0}catch(e){}
+let R=null,open=null,players=[],tags=[],trail=[];
+// ---- 3D ----
+const Rn=new THREE.WebGLRenderer({antialias:true});Rn.setPixelRatio(Math.min(devicePixelRatio,2));$('g').appendChild(Rn.domElement);
+const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(50,1,.1,150);
+sc.background=new THREE.Color(0x9fd8f5);sc.fog=new THREE.Fog(0x9fd8f5,45,110);
+sc.add(new THREE.HemisphereLight(0xffffff,0x6a9a6a,.95));const sun=new THREE.DirectionalLight(0xffffff,.7);sun.position.set(10,20,8);sc.add(sun);
+function rs(){Rn.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}addEventListener('resize',rs);rs();
+const Mt=c=>new THREE.MeshLambertMaterial({color:c});
+const bx=(w,h,d,c,x=0,y=0,z=0)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),Mt(c));m.position.set(x,y,z);return m};
+const sp=(r,c,x,y,z)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(r,14,10),Mt(c));m.position.set(x,y,z);return m};
+const pl=(w,h,c,x,z)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),Mt(c));m.rotation.x=-Math.PI/2;m.position.set(x,.01,z);return m};
+const gr=pl(70,46,0x8fd18f,0,0);gr.position.y=0;sc.add(gr,pl(50,6,0x8d8a86,0,0));
+function label(t,w,h,fs,bg,fg){const cv=document.createElement('canvas');cv.width=w*80;cv.height=h*80;const g=cv.getContext('2d');g.fillStyle=bg;g.beginPath();g.roundRect?g.roundRect(0,0,cv.width,cv.height,24):g.rect(0,0,cv.width,cv.height);g.fill();g.fillStyle=fg;g.font='bold '+fs+'px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText(t,cv.width/2,cv.height/2+2);return new THREE.CanvasTexture(cv)}
+const BL=[['plush',-13,-8,6,1],['clothes',-5,-8,6,1],['snacks',3,-8,6,1],['boba',11,-8,6,1],['jewelry',-14,8,5,-1],['acc',-7,8,5,-1],['blind',0,8,5,-1],['party',9,8,7,-1]].map(a=>({id:a[0],x:a[1],z:a[2],w:a[3],f:a[4],d:a[4]===1?5:4}));
+BL.forEach(b=>{const s=ST[b.id];b.x0=b.x-b.w/2;b.x1=b.x+b.w/2;b.z0=b.z-b.d/2;b.z1=b.z+b.d/2;const fz=b.z+b.f*b.d/2,re=b.f===1?-3:3;b.dz=fz+b.f*1.4;
+ sc.add(bx(b.w,3.2,b.d,s[2],b.x,1.6,b.z),bx(b.w+.5,.4,b.d+.5,0x7a5a4a,b.x,3.4,b.z),bx(1.3,2.1,.15,0x7a4a21,b.x,1.05,fz),pl(2,Math.abs(fz-re),0xe8dcc0,b.x,(fz+re)/2));
+ const sg=new THREE.Mesh(new THREE.PlaneGeometry(4,1),new THREE.MeshBasicMaterial({map:label(s[0]+' '+s[1],4,1,40,'#fff','#333')}));sg.position.set(b.x,2.7,fz+b.f*.06);if(b.f===-1)sg.rotation.y=Math.PI;sc.add(sg)});
+const TR=[[7,-8],[17,-8],[17,8],[-18,8],[-18,-8],[-19,0.5]];
+TR.forEach(t=>{const g=new THREE.Group(),k=new THREE.Mesh(new THREE.CylinderGeometry(.2,.25,1.4,8),Mt(0x8b5a2b)),f=new THREE.Mesh(new THREE.ConeGeometry(1.1,2.6,8),Mt(0x3f9e4d));k.position.y=.7;f.position.y=2.5;g.add(k,f);g.position.set(t[0],0,t[1]);sc.add(g)});
+function free(x,z,r=.4){if(Math.abs(x)>21||Math.abs(z)>14)return false;for(const b of BL)if(x>b.x0-r&&x<b.x1+r&&z>b.z0-r&&z<b.z1+r)return false;for(const t of TR)if((x-t[0])**2+(z-t[1])**2<(.6+r)**2)return false;return true}
+function girl(g){const[,hc,dc,ac,st]=g,grp=new THREE.Group(),sk=0xf6d2b5,u={};
+ const piv=(m,x,y,h)=>{const p=new THREE.Group();p.position.set(x,y,0);m.position.y=-h/2;p.add(m);grp.add(p);return p};
+ u.l=piv(bx(.18,.6,.18,sk),-.12,.62,.6);u.r=piv(bx(.18,.6,.18,sk),.12,.62,.6);
+ u.l.add(bx(.2,.16,.27,ac,0,-.52,.03));u.r.add(bx(.2,.16,.27,ac,0,-.52,.03));
+ const d=new THREE.Mesh(new THREE.CylinderGeometry(.22,.44,.65,12),Mt(dc));d.position.y=.95;
+ grp.add(d,bx(.4,.3,.24,dc,0,1.35,0),bx(.44,.07,.28,ac,0,1.2,0),bx(.3,.1,.26,ac,0,1.52,0));
+ u.a=piv(bx(.13,.5,.13,sk),-.3,1.5,.5);u.b=piv(bx(.13,.5,.13,sk),.3,1.5,.5);
+ const h=sp(.3,hc,0,1.86,-.04);h.scale.set(1,.92,1);u.p=new THREE.Group();
+ if(st===0)u.p.add(sp(.13,hc,0,1.72,-.32));
+ else if(st===1){u.p.add(sp(.12,hc,-.34,1.7,-.02),sp(.12,hc,.34,1.7,-.02))}
+ else u.p.add(sp(.15,hc,0,2.22,-.02));
+ grp.add(sp(.27,sk,0,1.78,0),h,u.p,sp(.07,ac,st===1?-.3:0,st===2?2.1:1.92,st===0?-.3:.05),sp(.035,0x222222,-.09,1.8,.25),sp(.035,0x222222,.09,1.8,.25),sp(.05,0xffa0b8,-.15,1.72,.22),sp(.05,0xffa0b8,.15,1.72,.22));
+ const sh=new THREE.Mesh(new THREE.CircleGeometry(.4,16),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.25}));sh.rotation.x=-Math.PI/2;sh.position.y=.02;grp.add(sh);
+ grp.userData=u;return grp}
+function anim(g,mv,t){const u=g.userData,a=mv?Math.sin(t*10)*.7:0;u.l.rotation.x=a;u.r.rotation.x=-a;u.a.rotation.x=-a;u.b.rotation.x=a;u.p.position.x=Math.sin(t*8)*(mv?.08:.02);g.position.y=mv?Math.abs(Math.sin(t*10))*.06:0}
+function face(g,dx,dz){let d=Math.atan2(dx,dz)-g.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));g.rotation.y+=d*.25}
+// ---- round state ----
+const spent=p=>R.bought[p].reduce((a,i)=>a+IT[i].p,0);
+function mkHints(p){const f=GIRLS[R.pair[1-p]],L=f[6].map(n=>IT[find(n)]),n=f[0];
+ const V=VOICE[n],F=s=>s.replace(/\{(\d)\}/g,(m,d)=>L[+d].e+' '+L[+d].n);
+ return[`📱 ${n}: `+F(V[0]),`📱 ${n}: `+F(V[1]),`💭 `+F(V[2]),`💭 `+F(V[3]),`💡 Everyone knows ${n} is ${f[5]}.`]}
+function setRound(keep){
+ players.forEach(m=>sc.remove(m));tags.forEach(m=>sc.remove(m));players=[];tags=[];
+ const pair=[(W*2)%10,(W*2+1)%10];
+ const bud=keep&&R?R.budget:[0,0].map(()=>100+10*Math.floor(Math.random()*11));
+ R={pair,budget:bud,bought:[[],[]],done:[false,false],lock:[null,null],hints:[],stock:mkStock(pair)};
+ R.hints=[mkHints(0),mkHints(1)];
+ pair.forEach((gi,p)=>{const m=girl(GIRLS[gi]);m.position.set(p?3:-3,0,0);sc.add(m);players.push(m);
+  const tg=new THREE.Sprite(new THREE.SpriteMaterial({map:label('P'+(p+1)+' '+GIRLS[gi][0],3,.7,38,p?'#4a90e2':'#e8608f','#fff'),depthTest:false}));tg.scale.set(2.6,.6,1);tg.renderOrder=9;sc.add(tg);tags.push(tg)});
+ open=null;$('ov').style.display='none';hud();
+ toast(`Round ${W+1}: ${GIRLS[pair[0]][0]} (P1) & ${GIRLS[pair[1]][0]} (P2). Buy gifts for each other! 🔄 Shops have fresh stock.`,4500)}
+let tt;function toast(s,ms=2600){const t=$('toast');t.textContent=s;t.style.display='block';clearTimeout(tt);tt=setTimeout(()=>t.style.display='none',ms)}
+function hud(){if(!R)return;[0,1].forEach(p=>{$('c'+p).innerHTML=`🎀 P${p+1} ${GIRLS[R.pair[p]][0]} ${R.done[p]?'✅':''}<br>💰 $${R.budget[p]-spent(p)} / $${R.budget[p]} · 🎁 ${R.bought[p].length}/5<br><span class="mut">${p?'Arrows':'WASD'} · gift for ${GIRLS[R.pair[1-p]][0]}</span>`});
+ $('rd').textContent=`Round ${W+1} · Try ${TRY}`}
+function ov(h){$('box').innerHTML=h;$('ov').style.display='flex'}
+function hintHTML(p){return R.hints[p].map(h=>`<div class="hint">${h}</div>`).join('')}
+function hints(p){if(open)return;open='hint';ov(`<h1>📱 About ${GIRLS[R.pair[1-p]][0]}</h1><p class="mut">P${p+1} (${GIRLS[R.pair[p]][0]}), buy 3+ things she’d love!</p>${hintHTML(p)}<button class="go" onclick="closeOv()">Got it</button>`)}
+function closeOv(){open=null;$('ov').style.display='none'}
+function shop(p,id){if(R.done[p]){toast('You’re done! Un-done yourself at the party house to shop more.');return}open={p,id};render(p,id,'')}
+function render(p,id,msg){const s=ST[id],f=GIRLS[R.pair[1-p]],left=R.budget[p]-spent(p);
+ const list=IT.map((x,i)=>[x,i]).filter(a=>a[0].s===id&&R.stock.has(a[1]));
+ ov(`<h1 style="color:${p?'#4a90e2':'#e8608f'}">P${p+1} ${GIRLS[R.pair[p]][0]} · ${s[0]} ${s[1]}</h1><p class="mut" style="text-align:center">Gift for ${f[0]} · tap to buy, tap again to return</p>
+ <p style="text-align:center"><b>💰 $${left}</b> left of $${R.budget[p]} · 🎁 ${R.bought[p].length}/5 ${msg}</p><div class="grid">`+
+ list.map(a=>{const on=R.bought[p].includes(a[1]);return`<button class="it ${on?'on':''}" onclick="buy(${p},'${id}',${a[1]})"><span class="e">${a[0].e}</span>${a[0].n}<small>${on?'✔ in bag · ':''}$${a[0].p}</small></button>`}).join('')+
+ `</div><details><summary>📱 What do I know about ${f[0]}?</summary>${hintHTML(p)}</details><button class="go" onclick="closeOv()">Leave shop ➜</button>`)}
+function buy(p,id,i){const b=R.bought[p];
+ if(b.includes(i))R.bought[p]=b.filter(x=>x!==i);
+ else if(b.length>=5)return render(p,id,'· Max 5 gifts!');
+ else if(IT[i].p>R.budget[p]-spent(p))return render(p,id,'· Over budget 💸');
+ else b.push(i);hud();render(p,id,'')}
+function party(p){open={p};const n=R.bought[p].length;
+ if(R.done[p])ov(`<h1>🏠 Gift Party House</h1><p style="text-align:center">P${p+1} is marked done. Want to keep shopping?</p><button class="go" onclick="R.done[${p}]=false;hud();closeOv()">Un-done, keep shopping</button><button class="go alt" onclick="closeOv()">Stay done ✅</button>`);
+ else ov(`<h1>🏠 Gift Party House</h1><p style="text-align:center">P${p+1} ${GIRLS[R.pair[p]][0]}: you have ${n} gift${n===1?'':'s'} for ${GIRLS[R.pair[1-p]][0]}. Done gifting?</p><button class="go" onclick="finish(${p})">Yes, I’m done ✅</button><button class="go alt" onclick="closeOv()">Keep shopping</button>`)}
+function finish(p){R.done[p]=true;hud();if(R.done[0]&&R.done[1])return evaluate();closeOv();toast(`P${p+1} is done! Waiting for P${2-p}…`)}
+function evaluate(){open='end';let html='',win=true;
+ [0,1].forEach(p=>{const f=GIRLS[R.pair[1-p]],g=GIRLS[R.pair[p]];let liked=0;
+  const rows=R.bought[p].map(i=>{const x=IT[i],l=f[6].includes(x.n);if(l)liked++;return`<div class="hint">${l?'😍':'🙂'} ${x.e} ${x.n} · $${x.p} <span class="mut">${l?f[0]+' loved it!':'a bit meh'}</span></div>`}).join('')||'<p class="mut">No gifts!</p>';
+  if(liked<3)win=false;
+  html+=`<h1>P${p+1} ${g[0]} → ${f[0]}</h1><p class="mut" style="text-align:center">Spent $${spent(p)} of $${R.budget[p]} · ${liked} loved gift${liked===1?'':'s'} (need 3)</p>${rows}`});
+ if(win){W++;try{localStorage.setItem('giftW',W)}catch(e){}TRY=1;
+  ov(`<h1>🎉 You both win!</h1>${html}<p style="text-align:center">Both friends are thrilled. New friends are up next!</p><button class="go" onclick="setRound(false)">Next friends ➜</button>`)}
+ else{TRY++;ov(`<h1>😿 Not quite…</h1>${html}<p style="text-align:center">Each of you needs at least 3 gifts your friend would love. Same girls, same budgets. Try again!</p><button class="go" onclick="setRound(true)">Try again 🔁</button>`)}}
+// ---- input ----
+const K=[{},{}],M1={w:'u',s:'d',a:'l',d:'r'},M2={ArrowUp:'u',ArrowDown:'d',ArrowLeft:'l',ArrowRight:'r'};
+function key(e,v){const k=e.key.length===1?e.key.toLowerCase():e.key;if(M1[k]){K[0][M1[k]]=v;e.preventDefault()}if(M2[k]){K[1][M2[k]]=v;e.preventDefault()}}
+addEventListener('keydown',e=>key(e,1));addEventListener('keyup',e=>key(e,0));
+document.querySelectorAll('.pad button').forEach(b=>{const p=+b.dataset.p,d=b.dataset.d;b.addEventListener('pointerdown',e=>{e.preventDefault();K[p][d]=1});['pointerup','pointerleave','pointercancel'].forEach(v=>b.addEventListener(v,()=>K[p][d]=0))});
+// ---- loop ----
+let last=performance.now(),hc=0;
+function loop(now){const dt=Math.min((now-last)/1000,.05),t=now/1000;last=now;
+ if(R&&!open){
+  players.forEach((m,p)=>{const k=K[p];let dx=(k.r?1:0)-(k.l?1:0),dz=(k.d?1:0)-(k.u?1:0);const mv=dx||dz,q=m.position;
+   if(mv){const n=Math.hypot(dx,dz);dx/=n;dz/=n;const s=4.4*dt;if(free(q.x+dx*s,q.z))q.x+=dx*s;if(free(q.x,q.z+dz*s))q.z+=dz*s;face(m,dx,dz)}
+   anim(m,mv,t+p);
+   for(const b of BL){const d=Math.hypot(q.x-b.x,q.z-b.dz);
+    if(d<1.3&&R.lock[p]!==b.id){R.lock[p]=b.id;if(b.id==='party')party(p);else shop(p,b.id)}else if(R.lock[p]===b.id&&d>2.8)R.lock[p]=null}});
+  hc+=dt;if(hc>.3){hc=0;hud()}}
+ if(R){players.forEach((m,p)=>tags[p].position.set(m.position.x,2.9,m.position.z));
+  const a=players[0].position,b=players[1].position,mx=(a.x+b.x)/2,mz=(a.z+b.z)/2,dist=Math.hypot(a.x-b.x,a.z-b.z);
+  cam.position.lerp(new THREE.Vector3(mx,9+dist*.5,mz+8+dist*.45),.08);cam.lookAt(mx,1,mz)}
+ Rn.render(sc,cam);requestAnimationFrame(loop)}
+cam.position.set(0,10,10);
+setRound(false);open='intro';
+ov(`<h1>🎁 Gift Day: 2 Player</h1><p>Two friends are shopping <b>for each other</b>. Each of you has a secret budget of $100 to $200.</p>
+<div class="hint"><b>P1</b> (pink tag) walks with <b>W A S D</b></div><div class="hint"><b>P2</b> (blue tag) walks with the <b>arrow keys</b> (on a phone, use the two on-screen pads)</div>
+<p>Walk onto a shop’s door to browse. Use texts and memories about your friend to pick gifts she’ll love. Buy up to 5 gifts, then walk to the 🏠 Party House to finish. <b>Each player needs at least 3 gifts their friend would love.</b> The game pauses while someone is browsing a shop.</p>
+<p class="mut">Win and you rotate to new friends (10 girls in all). Lose and you retry with the same girls.</p><button class="go" onclick="closeOv()">Start!</button>`);
+requestAnimationFrame(loop);
+</script><script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body></html>

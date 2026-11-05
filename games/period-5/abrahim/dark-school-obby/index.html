@@ -144,18 +144,18 @@ function buildRoom(n){
   var segs=Math.min(5+n,13),prev="",i,start;
   ground(380);
   for(i=0;i<segs;i++){
-    ground(Math.max(100,190-n*8+rr(0,50)));
+    ground(Math.max(110,200-n*7+rr(0,50)));
     var type;
     do{type=types[Math.floor(r()*types.length)]}while(type===prev&&types.length>1);
     prev=type;
     if(type==="gap"){
-      x+=Math.min(72+n*9+rr(0,20),135);
+      x+=Math.min(70+n*7+rr(0,20),125);
     }else if(type==="desk"){
       start=x;ground(130);
-      var dh=Math.min(34+rr(0,24)+n*2,82);
+      var dh=Math.min(34+rr(0,24)+n*2,76);
       plats.push({x:start+40,y:GROUND-dh,w:46+rr(0,20),h:dh,kind:"desk"});
     }else if(type==="spikes"){
-      var sw=Math.min(36+n*4+rr(0,20),110);
+      var sw=Math.min(36+n*4+rr(0,20),100);
       start=x;ground(sw+150);
       hazards.push({x:start+60,y:GROUND-16,w:sw,h:16});
     }else if(type==="steps"){
@@ -166,15 +166,15 @@ function buildRoom(n){
     }else{
       var py=GROUND,gapW;
       for(var f=0;f<3;f++){
-        gapW=Math.min(60+n*6+rr(0,15),115);
+        gapW=Math.min(60+n*5+rr(0,15),105);
         x+=gapW;
-        var w=Math.max(60,95-n*3);
+        var w=Math.max(66,95-n*3);
         py=Math.max(300,Math.min(372,py+rr(-55,35)));
         if(f===0)py=Math.max(py,310);
         plats.push({x:x,y:py,w:w,h:14,kind:"ledge"});
         x+=w;
       }
-      x+=Math.min(60+n*6+rr(0,15),115);
+      x+=Math.min(60+n*5+rr(0,15),105);
     }
   }
   ground(240);
@@ -196,7 +196,7 @@ function updateHud(){
 }
 function resetActors(){
   P={x:90,y:GROUND-34,w:22,h:34,vx:0,vy:0,ground:false,face:1,coyote:0,buf:0,step:0};
-  M={x:-200};t=0;jumpPressed=false;
+  M={x:90-(room>=7?Math.max(180,290-(room-6)*30):320)};t=0;jumpPressed=false;
 }
 function startRoom(n){
   room=n;R=buildRoom(n);resetActors();
@@ -219,7 +219,7 @@ function die(reason){
 }
 function clearRoom(){
   state="clear";clearTimer=1.8;
-  showOverlay("Room "+room+" cleared","Next: Room "+(room+1)+" · "+nameOf(room+1)+". The monster is faster now.",null);
+  showOverlay("Room "+room+" cleared","Next: Room "+(room+1)+" · "+nameOf(room+1)+". The monster is a little faster now.",null);
 }
 
 /* ---------- simulation ---------- */
@@ -264,9 +264,14 @@ function update(dt){
     if(hit(P,{x:h.x+2,y:h.y+4,w:h.w-4,h:h.h-4},0)){die("spikes");return}
   }
 
-  var spd=Math.min(130+20*room,250)+Math.min(t*3.5,50);
-  if(t>1.2)M.x+=spd*dt;
-  if(P.x-M.x>450)M.x=P.x-450;
+  /* Monster stays well below the player's top speed (250), so you can always pull away.
+     It waits 2.5s, then creeps from ~90 px/s in room 1 up to a cap of 165 px/s. */
+  var spd=Math.min(85+8*room,165)+Math.min(t*0.8,20),delay=2.5;
+  /* From room 7 on the monster starts closer and runs faster, but still slower than you (250),
+     so a clean run keeps you ahead and a mistake lets it catch up. */
+  if(room>=7){spd=Math.min(170+10*(room-6),215);delay=1.5}
+  if(t>delay)M.x+=spd*dt;
+  if(P.x-M.x>560)M.x=P.x-560;
   if(P.x<M.x+64&&P.x+P.w>M.x+10&&P.y+P.h>200){die("caught");return}
 
   if(hit(P,R.door,0))clearRoom();
@@ -385,7 +390,7 @@ function draw(){
   ctx.restore();
 
   var sx=P.x+11-cx+P.face*38,sy=P.y+14;
-  var rad=Math.max(190,300-room*9);
+  var rad=Math.max(210,320-room*9);
   rad*=1+0.02*Math.sin(T*31);
   if(Math.sin(T*7.7)>0.985)rad*=0.8;
   var gd=ctx.createRadialGradient(sx,sy,rad*0.15,sx,sy,rad);
@@ -422,7 +427,7 @@ function frame(ts){
 }
 
 R=buildRoom(1);resetActors();updateHud();resize();
-showOverlay("Dark School Obby","The lights are out and something is walking the halls behind you. Run and jump to the EXIT of every room. Each room is harder, and the monster gets faster.","Start");
+showOverlay("Dark School Obby","The lights are out and something is walking the halls behind you. Run and jump to the EXIT of every room. Each room is harder, and the monster gets a little faster.","Start");
 requestAnimationFrame(frame);
 })();
 </script>

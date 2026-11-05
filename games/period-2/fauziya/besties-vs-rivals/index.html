@@ -2,68 +2,91 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Besties vs Rivals 💗</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Besties vs Rivals 💗💙</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#fff0f8;color:#643d70;font-family:system-ui,sans-serif;text-align:center}
-h1{margin:12px 0 2px;color:#e447a0}
+body{margin:0;background:#fff0f8;color:#643d70;font-family:system-ui,sans-serif;text-align:center;user-select:none}
+h1{margin:12px 0 2px;color:#e447a0;font-size:clamp(24px,5vw,36px)}
 p{margin:5px}
 .hud{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin:12px}
 .stat{background:white;border:2px solid #ffcce7;border-radius:12px;padding:8px 12px;font-weight:bold}
-canvas{width:min(96vw,900px);height:auto;display:block;margin:auto;border:4px solid white;border-radius:16px;background:#a6e8ff}
-button{border:0;border-radius:12px;padding:11px 20px;margin:8px;background:#e950a4;color:white;font-size:16px;font-weight:bold;cursor:pointer}
-.help{font-size:13px;line-height:1.8;padding:8px}
+canvas{width:min(96vw,900px);height:auto;display:block;margin:auto;border:4px solid white;border-radius:16px;background:#a6e8ff;touch-action:none}
+button{font:inherit;font-weight:bold;border:0;border-radius:14px;cursor:pointer;touch-action:none;-webkit-tap-highlight-color:transparent}
+.main{padding:11px 20px;margin:8px;background:#e950a4;color:white;font-size:16px}
+.controls{display:flex;justify-content:center;gap:clamp(8px,3vw,25px);flex-wrap:wrap;padding:12px}
+.player-controls{width:min(46%,330px);min-width:155px;padding:10px;border-radius:18px}
+.pink{background:#ffe0f0;border:2px solid #ff9bcf}
+.blue{background:#ddecff;border:2px solid #8abaff}
+.pink h2{color:#c52e83}.blue h2{color:#2267c9}
+.pad{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.pad button{min-height:58px;font-size:clamp(13px,2.5vw,17px);padding:8px 3px}
+.pink button{background:#ed68ad;color:white;box-shadow:0 3px #ca438b}
+.blue button{background:#4b92ef;color:white;box-shadow:0 3px #2866bc}
+.pad button:active,.pad button.pressed{transform:translateY(2px);filter:brightness(.88);box-shadow:none}
+.jump{grid-column:3;grid-row:1}
+.help{font-size:13px;line-height:1.7;padding:8px}
+#msg{color:#b52b80;font-weight:bold}
 </style>
 </head>
 <body>
 <h1>💗 Besties vs Rivals 💙</h1>
-<p>Run, jump, grab coins, and beat your rival!</p>
+<p>Run, jump, collect coins, and beat your rival!</p>
 
 <div class="hud">
- <div class="stat">💗 Pink: <span id="s1">0</span></div>
- <div class="stat">💙 Blue: <span id="s2">0</span></div>
- <div class="stat">🏁 <span id="msg">READY!</span></div>
+  <div class="stat">💗 Pink: <span id="s1">0</span></div>
+  <div class="stat">💙 Blue: <span id="s2">0</span></div>
+  <div class="stat">🏁 <span id="msg">READY!</span></div>
 </div>
 
 <canvas id="game" width="900" height="500"></canvas>
 
-<div class="help">
-<b>PLAYER 1:</b> A / D move · W jump<br>
-<b>PLAYER 2:</b> ← / → move · ↑ jump<br>
-Collect gold coins. Avoid red hazards. First to the finish wins!
+<div class="controls">
+  <section class="player-controls pink">
+    <h2>💗 PINK PLAYER</h2>
+    <div class="pad">
+      <button data-player="0" data-action="left">⬅ LEFT</button>
+      <button data-player="0" data-action="right">RIGHT ➡</button>
+      <button class="jump" data-player="0" data-action="jump">⬆ JUMP</button>
+    </div>
+  </section>
+  <section class="player-controls blue">
+    <h2>💙 BLUE PLAYER</h2>
+    <div class="pad">
+      <button data-player="1" data-action="left">⬅ LEFT</button>
+      <button data-player="1" data-action="right">RIGHT ➡</button>
+      <button class="jump" data-player="1" data-action="jump">⬆ JUMP</button>
+    </div>
+  </section>
 </div>
-<button id="start">▶ START GAME</button>
-<button id="reset">↻ PLAY AGAIN</button>
+
+<p class="help">Hold LEFT or RIGHT to run. Tap JUMP to leap over red hazards.
+Collect gold coins for bonus points!</p>
+<button class="main" id="start">▶ START GAME</button>
+<button class="main" id="reset">↻ PLAY AGAIN</button>
 
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 const W=canvas.width,H=canvas.height;
 const $=id=>document.getElementById(id);
-const keys={};
-let players,coins,hazards,platforms,finish,running=false,ended=false;
-let last=0,time=0,particles=[];
+const held=[{left:false,right:false,jump:false},
+            {left:false,right:false,jump:false}];
 
-onkeydown=e=>{
- const k=e.key.toLowerCase();
- keys[k]=true;
- if(["arrowleft","arrowright","arrowup"," "].includes(k))e.preventDefault();
-};
-onkeyup=e=>keys[e.key.toLowerCase()]=false;
+let players,coins,hazards,platforms,running=false,ended=false;
+let last=0,particles=[],finish=855;
 
-function player(x,color,name,controls){
- return {x,y:370,w:27,h:36,vx:0,vy:0,color,name,controls,
- score:0,ground:false,alive:true,won:false,inv:0};
+function player(x,y,color,name){
+ return {x,y,w:27,h:36,vx:0,vy:0,color,name,
+ score:0,ground:false,won:false,inv:0};
 }
+
 function reset(){
  players=[
-  player(35,"#ff58ad","PINK",{left:"a",right:"d",jump:"w"}),
-  player(35,"#398bff","BLUE",{left:"arrowleft",right:"arrowright",jump:"arrowup"})
+  player(35,350,"#ff58ad","PINK"),
+  player(35,400,"#398bff","BLUE")
  ];
- players[0].y=350;players[1].y=400;
- coins=[];hazards=[];platforms=[];particles=[];
- // Shared, traversable course
+ coins=[];hazards=[];particles=[];
  platforms=[
   {x:0,y:445,w:900,h:55},
   {x:125,y:365,w:105,h:16},
@@ -73,9 +96,10 @@ function reset(){
   {x:740,y:365,w:110,h:16}
  ];
  for(let i=0;i<19;i++){
-  let x=95+i*42;
-  let y=[408,407,407,408,408,408][i%6];
-  coins.push({x,y,r:10,got:false});
+  coins.push({
+   x:95+i*42,y:405-(i%4===2?30:0),
+   got:false
+  });
  }
  hazards=[
   {x:185,y:423,w:28,h:22},
@@ -84,159 +108,273 @@ function reset(){
   {x:635,y:423,w:28,h:22},
   {x:770,y:423,w:28,h:22}
  ];
- finish=855;running=false;ended=false;time=0;
+ running=false;ended=false;particles=[];
+ held.forEach(h=>{h.left=false;h.right=false;h.jump=false});
+ document.querySelectorAll(".pad button").forEach(b=>b.classList.remove("pressed"));
  $("msg").textContent="READY!";
  $("start").textContent="▶ START GAME";
  hud();draw();
 }
+
 function start(){
  if(ended)reset();
  running=true;ended=false;last=performance.now();
  $("msg").textContent="GO GO GO!";
  $("start").textContent="🏃 RACE ON!";
 }
-$("start").onclick=()=>{if(!running)start()};
-$("reset").onclick=reset;
+
+$("start").addEventListener("click",()=>{
+ if(!running)start();
+});
+$("reset").addEventListener("click",reset);
+
+// Pointer controls: each player has their own buttons.
+document.querySelectorAll(".pad button").forEach(button=>{
+ const p=Number(button.dataset.player);
+ const action=button.dataset.action;
+
+ function press(e){
+  e.preventDefault();
+  if(!running&&!ended)start();
+  if(ended)return;
+  try{button.setPointerCapture(e.pointerId)}catch(err){}
+  held[p][action]=true;
+  button.classList.add("pressed");
+  if(action==="jump"){
+   const player=players[p];
+   if(player.ground){
+    player.vy=-570;
+    player.ground=false;
+    held[p].jump=false;
+   }
+  }
+ }
+ function release(e){
+  e.preventDefault();
+  held[p][action]=false;
+  button.classList.remove("pressed");
+ }
+ button.addEventListener("pointerdown",press);
+ button.addEventListener("pointerup",release);
+ button.addEventListener("pointercancel",release);
+ button.addEventListener("lostpointercapture",()=>{
+  held[p][action]=false;
+  button.classList.remove("pressed");
+ });
+});
+
+// Optional keyboard controls still work.
+const keyMap={
+ a:[0,"left"],d:[0,"right"],w:[0,"jump"],
+ arrowleft:[1,"left"],arrowright:[1,"right"],arrowup:[1,"jump"]
+};
+const keysDown={};
+
+onkeydown=e=>{
+ const k=e.key.toLowerCase();
+ if(keyMap[k]){
+  e.preventDefault();
+  if(!keysDown[k]){
+   keysDown[k]=true;
+   const [p,a]=keyMap[k];
+   if(a==="jump"){
+    if(!running&&!ended)start();
+    if(players[p].ground){
+     players[p].vy=-570;players[p].ground=false;
+    }
+   }else held[p][a]=true;
+  }
+ }
+};
+onkeyup=e=>{
+ const k=e.key.toLowerCase();
+ if(keyMap[k]){
+  const [p,a]=keyMap[k];
+  keysDown[k]=false;
+  if(a!=="jump")held[p][a]=false;
+ }
+};
+window.addEventListener("blur",()=>{
+ held.forEach(h=>{h.left=false;h.right=false;h.jump=false});
+ for(const k in keysDown)keysDown[k]=false;
+ document.querySelectorAll(".pad button").forEach(b=>b.classList.remove("pressed"));
+});
 
 function hud(){
  $("s1").textContent=players[0].score;
  $("s2").textContent=players[1].score;
 }
+
 function collide(a,b){
- return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
+ return a.x<b.x+b.w&&a.x+a.w>b.x&&
+        a.y<b.y+b.h&&a.y+a.h>b.y;
 }
+
 function update(dt){
  if(!running)return;
- time+=dt;
- for(let p of players){
-  if(!p.alive||p.won)continue;
+
+ for(let pIndex=0;pIndex<2;pIndex++){
+  const p=players[pIndex];
+  if(p.won)continue;
   p.inv=Math.max(0,p.inv-dt);
-  const c=p.controls;
-  if(keys[c.left])p.vx-=1050*dt;
-  if(keys[c.right])p.vx+=1050*dt;
+
+  if(held[pIndex].left)p.vx-=1050*dt;
+  if(held[pIndex].right)p.vx+=1050*dt;
   p.vx*=Math.pow(.83,dt*60);
   p.vx=Math.max(-300,Math.min(300,p.vx));
-  if(keys[c.jump]&&p.ground){
-   p.vy=-570;p.ground=false;
-   particles.push({x:p.x+10,y:p.y+p.h,life:.35});
-  }
+
+  const oldBottom=p.y+p.h;
   p.vy+=1350*dt;
   p.x+=p.vx*dt;
   p.y+=p.vy*dt;
   p.x=Math.max(0,Math.min(W-p.w,p.x));
   p.ground=false;
+
   for(const pl of platforms){
+   const bottom=p.y+p.h;
    if(p.vy>=0&&p.x+p.w>pl.x&&p.x<pl.x+pl.w&&
-      p.y+p.h>=pl.y&&p.y+p.h<=pl.y+Math.max(15,p.vy*dt+5)){
+      oldBottom<=pl.y+4&&bottom>=pl.y){
     p.y=pl.y-p.h;p.vy=0;p.ground=true;
    }
   }
-  // Pick up coins
+
   for(const coin of coins){
    if(!coin.got&&Math.hypot(p.x+p.w/2-coin.x,p.y+p.h/2-coin.y)<25){
     coin.got=true;p.score+=10;
-    particles.push({x:coin.x,y:coin.y,life:.7});
+    particles.push({x:coin.x,y:coin.y,life:.6,emoji:"✨"});
    }
   }
-  // Hazards send players backwards; they can try again
+
   for(const hz of hazards){
    if(collide(p,hz)&&p.inv<=0){
     p.x=Math.max(0,p.x-65);
     p.vy=-270;p.vx=-100;p.inv=1;
     p.score=Math.max(0,p.score-5);
-    particles.push({x:p.x,y:p.y,life:.6,hit:true});
+    particles.push({x:p.x,y:p.y,life:.6,emoji:"💥"});
    }
   }
-  // Falling resets position
+
   if(p.y>H+80){
-   p.x=Math.max(0,p.x-100);p.y=300;p.vy=0;p.score=Math.max(0,p.score-5);
+   p.x=Math.max(0,p.x-100);
+   p.y=300;p.vy=0;
+   p.score=Math.max(0,p.score-5);
   }
+
   if(p.x+p.w>=finish){
    p.won=true;
-   $("msg").textContent=p.name+" WINS! 🏆";
    running=false;ended=true;
+   $("msg").textContent=p.name+" WINS! 🏆";
    $("start").textContent="▶ RACE AGAIN";
   }
  }
  hud();
 }
+
 function draw(){
  ctx.clearRect(0,0,W,H);
- // Sky
- let sky=ctx.createLinearGradient(0,0,0,H);
- sky.addColorStop(0,"#92ddff");sky.addColorStop(1,"#fff0fc");
+ const sky=ctx.createLinearGradient(0,0,0,H);
+ sky.addColorStop(0,"#92ddff");
+ sky.addColorStop(1,"#fff0fc");
  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
- // Puffy clouds
+
+ // Clouds
  for(let i=0;i<8;i++){
-  let x=i*125+25,y=55+(i%3)*38;
+  const x=i*125+25,y=55+(i%3)*38;
   ctx.fillStyle="#ffffffcc";
-  ctx.beginPath();ctx.arc(x,y,19,0,7);ctx.arc(x+21,y-8,24,0,7);
-  ctx.arc(x+44,y,18,0,7);ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x,y,19,0,7);
+  ctx.arc(x+21,y-8,24,0,7);
+  ctx.arc(x+44,y,18,0,7);
+  ctx.fill();
  }
- // Platforms and ground
+
+ // Platforms
  for(const pl of platforms){
-  ctx.fillStyle="#6bca83";ctx.fillRect(pl.x,pl.y,pl.w,pl.h);
-  ctx.fillStyle="#b4f28e";ctx.fillRect(pl.x,pl.y,pl.w,6);
-  ctx.fillStyle="#d9a87b";ctx.fillRect(pl.x,pl.y+6,pl.w,pl.h-6);
+  ctx.fillStyle="#6bca83";
+  ctx.fillRect(pl.x,pl.y,pl.w,pl.h);
+  ctx.fillStyle="#b4f28e";
+  ctx.fillRect(pl.x,pl.y,pl.w,6);
+  ctx.fillStyle="#d9a87b";
+  ctx.fillRect(pl.x,pl.y+6,pl.w,pl.h-6);
  }
+
  // Coins
  for(const coin of coins){
   if(coin.got)continue;
-  ctx.fillStyle="#ffc83d";ctx.beginPath();ctx.arc(coin.x,coin.y,10,0,7);ctx.fill();
+  ctx.fillStyle="#ffc83d";
+  ctx.beginPath();ctx.arc(coin.x,coin.y,10,0,7);ctx.fill();
   ctx.strokeStyle="#fff1a1";ctx.lineWidth=3;ctx.stroke();
-  ctx.fillStyle="#a66c00";ctx.font="bold 12px sans-serif";ctx.textAlign="center";
-  ctx.fillText("$",coin.x,coin.y+4);
+  ctx.fillStyle="#a66c00";ctx.font="bold 12px sans-serif";
+  ctx.textAlign="center";ctx.fillText("$",coin.x,coin.y+4);
  }
+
  // Hazards
  for(const hz of hazards){
-  ctx.fillStyle="#ff587b";ctx.beginPath();
-  ctx.moveTo(hz.x,hz.y+hz.h);ctx.lineTo(hz.x+hz.w/2,hz.y);
-  ctx.lineTo(hz.x+hz.w,hz.y+hz.h);ctx.fill();
+  ctx.fillStyle="#ff587b";
+  ctx.beginPath();
+  ctx.moveTo(hz.x,hz.y+hz.h);
+  ctx.lineTo(hz.x+hz.w/2,hz.y);
+  ctx.lineTo(hz.x+hz.w,hz.y+hz.h);
+  ctx.fill();
  }
+
  // Finish gate
  ctx.fillStyle="#fff";ctx.fillRect(finish,320,8,125);
- for(let y=320;y<445;y+=18)for(let x=finish;x<finish+16;x+=8){
-  ctx.fillStyle=((y/18+x/8)%2<1)?"#fff":"#674b75";
-  ctx.fillRect(x,y,8,9);
+ for(let y=320;y<445;y+=18){
+  for(let x=finish;x<finish+16;x+=8){
+   ctx.fillStyle=((y/18+x/8)%2<1)?"#fff":"#674b75";
+   ctx.fillRect(x,y,8,9);
+  }
  }
- ctx.fillStyle="#674b75";ctx.font="bold 15px sans-serif";ctx.fillText("FINISH",finish-8,305);
+ ctx.fillStyle="#674b75";ctx.font="bold 15px sans-serif";
+ ctx.textAlign="center";ctx.fillText("FINISH",finish-8,305);
+
  // Players
  for(const p of players){
   ctx.save();
   if(p.inv>0&&Math.floor(p.inv*14)%2)ctx.globalAlpha=.4;
-  ctx.fillStyle="#3333";ctx.beginPath();ctx.ellipse(p.x+14,p.y+37,15,4,0,0,7);ctx.fill();
+  ctx.fillStyle="#3333";
+  ctx.beginPath();ctx.ellipse(p.x+14,p.y+37,15,4,0,0,7);ctx.fill();
   ctx.fillStyle=p.color;ctx.fillRect(p.x,p.y+10,p.w,p.h-10);
-  ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x+13,p.y+10,13,0,7);ctx.fill();
-  ctx.fillStyle="#fff";ctx.fillRect(p.x+5,p.y+5,6,7);ctx.fillRect(p.x+16,p.y+5,6,7);
-  ctx.fillStyle="#593f69";ctx.fillRect(p.x+8,p.y+8,3,4);ctx.fillRect(p.x+18,p.y+8,3,4);
+  ctx.beginPath();ctx.arc(p.x+13,p.y+10,13,0,7);ctx.fill();
+  ctx.fillStyle="#fff";
+  ctx.fillRect(p.x+5,p.y+5,6,7);ctx.fillRect(p.x+16,p.y+5,6,7);
+  ctx.fillStyle="#593f69";
+  ctx.fillRect(p.x+8,p.y+8,3,4);ctx.fillRect(p.x+18,p.y+8,3,4);
   ctx.fillStyle="#fff";ctx.fillRect(p.x+4,p.y+24,19,5);
   ctx.restore();
-  ctx.fillStyle="#56365f";ctx.font="bold 11px sans-serif";ctx.textAlign="center";
-  ctx.fillText(p.name,p.x+13,p.y-9);
+  ctx.fillStyle="#56365f";ctx.font="bold 11px sans-serif";
+  ctx.textAlign="center";ctx.fillText(p.name,p.x+13,p.y-9);
  }
+
  for(const a of particles){
   ctx.globalAlpha=Math.max(0,a.life);
-  ctx.fillStyle=a.hit?"#ff406c":"#ffcb3e";
   ctx.font="bold 21px sans-serif";
-  ctx.fillText(a.hit?"OUCH!":"✨",a.x,a.y);
+  ctx.fillText(a.emoji,a.x,a.y);
   ctx.globalAlpha=1;
   a.life-=.016;
  }
  particles=particles.filter(a=>a.life>0);
+
  if(!running){
   ctx.fillStyle="#603c708c";ctx.fillRect(190,180,520,95);
-  ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font="bold 26px sans-serif";
+  ctx.fillStyle="#fff";ctx.textAlign="center";
+  ctx.font="bold 26px sans-serif";
   ctx.fillText(ended?$("msg").textContent:"READY, RIVALS? 💗",450,220);
   ctx.font="17px sans-serif";
-  ctx.fillText(ended?"Click PLAY AGAIN for a rematch":"Click START GAME to begin!",450,252);
+  ctx.fillText(ended?"Click PLAY AGAIN for a rematch":"Press START GAME or a movement button!",450,252);
  }
 }
+
 function frame(now){
- let dt=Math.min(.025,Math.max(0,(now-last)/1000||0));last=now;
- update(dt);draw();requestAnimationFrame(frame);
+ const dt=Math.min(.025,Math.max(0,(now-last)/1000||0));
+ last=now;
+ update(dt);draw();
+ requestAnimationFrame(frame);
 }
-reset();requestAnimationFrame(frame);
+
+reset();
+requestAnimationFrame(frame);
 </script>
 <script>document.addEventListener("keydown",function(e){if(e.key==="Escape"&&parent!==window){e.preventDefault();document.exitPointerLock?.();parent.postMessage({type:"oz-arcade:close"},"*");}},true);</script></body>
 </html>
-
