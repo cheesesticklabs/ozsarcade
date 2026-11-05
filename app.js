@@ -6,7 +6,15 @@ const rosters = {
 };
 // Each student has an array of games, keyed by period/name. Append new games to that array.
 const games = {
-  '5/Bryan': [{ title: 'Zombie Survival', url: 'games/period-5/bryan/zombie-survival/index.html' }],
+  '5/Joshua': [{ title: 'Outbreak: Plague vs Cure', url: 'games/period-5/joshua/outbreak-plague-vs-cure/index.html' }],
+  '2/Emilie': [{ title: 'Unicorn Math Run', url: 'games/period-2/emilie/unicorn-math-run/index.html' }],
+  '2/Kenneth': [{ title: 'Dusk Duet', url: 'games/period-2/kenneth/dusk-duet/index.html' }],
+  '5/Seydou': [{ title: 'Last Thread', url: 'games/period-5/seydou/last-thread/index.html' }],
+  '6/Francis': [{ title: 'MIDNIGHT.exe', url: 'games/period-6/francis/midnight-exe/index.html' }],
+  '5/Bryan': [
+    { title: 'Zombie Survival', url: 'games/period-5/bryan/zombie-survival/index.html' },
+    { title: 'Zombie Survival — Local Two Player', url: 'games/period-5/bryan/zombie-survival-local-two-player/index.html' }
+  ],
   '2/Milo': [{ title: 'Beanstalk: Rise and Fall', url: 'games/period-2/milo/beanstalk-rise-and-fall/index.html', screenshot: 'screenshots/milo-beanstalk.svg' }],
   '5/Abdul': [{ title: 'Kitchen Twist', url: 'games/period-5/abdul/kitchen-twist/index.html', screenshot: 'screenshots/abdul-kitchen-twist.svg' }],
   '5/Abrahim': [{ title: 'Dark School Obby', url: 'games/period-5/abrahim/dark-school-obby/index.html', screenshot: 'screenshots/abrahim-dark-school-obby.svg' }],
@@ -14,7 +22,8 @@ const games = {
   '5/Yeronni': [{ title: 'X-Wing: Dogfight', url: 'games/period-5/yeronni/x-wing-dogfight/index.html', screenshot: 'screenshots/yeronni-x-wing-dogfight.svg' }],
   '5/Sergio': [
     { title: 'Bell Under the Cup', url: 'games/period-5/sergio/bell-under-the-cup/index.html', screenshot: 'screenshots/sergio-bell-under-the-cup.svg' },
-    { title: 'Chroma Snap', url: 'games/period-5/sergio/chroma-snap/index.html', screenshot: 'screenshots/sergio-chroma-snap.svg' }
+    { title: 'Chroma Snap', url: 'games/period-5/sergio/chroma-snap/index.html', screenshot: 'screenshots/sergio-chroma-snap.svg' },
+    { title: 'Hearts of Iron: Strategy Europe', url: 'games/period-5/sergio/hearts-of-iron-strategy-europe/index.html' }
   ],
   '7/Danny': [
     { title: 'Mirror Match — Local Two Player', url: 'games/period-7/danny/mirror-match-local/index.html', screenshot: 'screenshots/danny-mirror-match-local.svg' },
@@ -41,6 +50,7 @@ const games = {
   '2/Valerie': [
     { title: 'Errand Town 3D', url: 'games/period-2/valerie/index.html', screenshot: 'screenshots/valerie-preview.webp' },
     { title: 'Giftie Grove — No WebGL', url: 'games/period-2/valerie/giftie-grove/index.html', screenshot: 'screenshots/valerie-giftie-grove.svg' },
+    { title: 'Gift Day: 2 Player', url: 'games/period-2/valerie/gift-day/index.html' }
   ],
   '6/Kemil': [
     { title: 'Veteran Line', url: 'games/period-6/kemil/veteran-line/index.html', screenshot: 'screenshots/kemil-veteran-line.svg' },
@@ -61,7 +71,10 @@ const games = {
     { title: 'Dribble & Pass: Derby Day (3D View)', url: 'games/period-5/mamady/derby-day-3d/index.html', screenshot: 'screenshots/mamady-derby-day.svg', previewAlt: 'Derby Day 3D view gameplay screenshot' },
     { title: 'Dribble & Pass: Derby Day (Striker Edition)', url: 'games/period-5/mamady/striker-edition/index.html', screenshot: 'screenshots/mamady-striker-edition.svg', previewAlt: 'Derby Day Striker Edition top-down gameplay screenshot' }
   ],
-  '5/Daniel': [{ title: 'Eagle Escape — Red Light, Green Light', url: 'games/period-5/daniel/eagle-escape/index.html', screenshot: 'screenshots/daniel-eagle-escape.svg' }],
+  '5/Daniel': [
+    { title: 'Eagle Escape — Red Light, Green Light', url: 'games/period-5/daniel/eagle-escape/index.html', screenshot: 'screenshots/daniel-eagle-escape.svg' },
+    { title: 'DFJK Rhythm', url: 'games/period-5/daniel/dfjk-rhythm/index.html' }
+  ],
   '5/Nathan': [{ title: 'DUEL — Two Player Shooter', url: 'games/period-5/nathan/duel-shooter/index.html', screenshot: 'screenshots/nathan-duel-shooter.svg' }],
   '5/Rover': [{ title: 'AFTERIMAGE — Two Player Horror', url: 'games/period-5/rover/afterimage/index.html', screenshot: 'screenshots/rover-afterimage.svg' }],
   '5/Jayden': [{ title: 'Ranger Breakout: 2 Players', url: 'games/period-5/jayden/ranger-breakout/index.html', screenshot: 'screenshots/jayden-ranger-breakout.svg' }],
@@ -80,7 +93,10 @@ const games = {
     { title: 'Dead Quiet', url: 'games/period-6/melanie/dead-quiet/index.html', screenshot: 'screenshots/melanie-dead-quiet.svg' },
     { title: 'Night Ride: Fast Chase & Traps', url: 'games/period-6/melanie/night-ride/index.html' }
   ],
-  '5/Prince': [{ title: 'Green Meter Soccer', url: 'games/period-5/prince/green-meter-soccer/index.html', screenshot: 'screenshots/prince-green-meter-soccer.svg' }],
+  '5/Prince': [
+    { title: 'Green Meter Soccer', url: 'games/period-5/prince/green-meter-soccer/index.html', screenshot: 'screenshots/prince-green-meter-soccer.svg' },
+    { title: 'Green Meter Hoops', url: 'games/period-5/prince/green-meter-hoops/index.html' }
+  ],
   '5/Ilannah': [{ title: 'Spike Dash', url: 'games/period-5/ilannah/spike-dash/index.html', screenshot: 'screenshots/ilannah-spike-dash.svg' }],
   '6/Angel': [
     { title: 'Dead Drop — Extraction', url: 'games/period-6/angel/index.html', screenshot: 'screenshots/angel-preview.webp' },
@@ -90,7 +106,10 @@ const games = {
     { title: 'Candy Coast Sprint', url: 'games/period-2/ivannah/index.html', screenshot: 'screenshots/ivannah-preview.webp' },
     { title: 'Night Shift at Pizza Palace', url: 'games/period-2/ivannah/pizza-palace/index.html', screenshot: 'screenshots/ivannah-pizza-palace.svg' }
   ],
-  '2/Chelsea': [{ title: 'Tower of Dread 3D', url: 'games/period-2/chelsea/tower-of-dread/index.html', screenshot: 'screenshots/chelsea-tower-of-dread.svg' }],
+  '2/Chelsea': [
+    { title: 'Tower of Dread 3D', url: 'games/period-2/chelsea/tower-of-dread/index.html', screenshot: 'screenshots/chelsea-tower-of-dread.svg' },
+    { title: 'Glow Clash', url: 'games/period-2/chelsea/glow-clash/index.html' }
+  ],
   '2/Judith': [
     { title: 'Kawaii Chomp', url: 'games/period-2/judith/index.html', screenshot: 'screenshots/judith-preview.webp' },
     { title: 'Titans Temple Escape', url: 'games/period-2/judith/titans-temple-escape/index.html' }
@@ -98,11 +117,13 @@ const games = {
   '2/Kofi A': [
     { title: 'Marceline: Rise of the Vampire Queen', url: 'games/period-2/kofi-a/index.html', screenshot: 'screenshots/kofi-a-night-hunt.svg' },
     { title: 'Steven Universe: Fusion Dance Battle', url: 'games/period-2/kofi-a/fusion-dance-battle/index.html', screenshot: 'screenshots/kofi-a-fusion-dance.svg' },
-    { title: 'Marceline: Night Hunt', url: 'games/period-2/kofi-a/night-hunt/index.html', screenshot: 'screenshots/kofi-a-night-hunt.svg' }
+    { title: 'Marceline: Night Hunt', url: 'games/period-2/kofi-a/night-hunt/index.html', screenshot: 'screenshots/kofi-a-night-hunt.svg' },
+    { title: 'Four Nations: Bending Clash', url: 'games/period-2/kofi-a/four-nations-bending-clash/index.html' }
   ],
   '2/Derely': [
     { title: 'Dress Up Dash: Don’t Turn Zombie', url: 'games/period-2/derely/index.html', screenshot: 'screenshots/derely-preview.webp' },
-    { title: 'Night Shift: Haunted Supermarket', url: 'games/period-2/derely/haunted-supermarket/index.html', screenshot: 'screenshots/derely-haunted-supermarket.svg' }
+    { title: 'Night Shift: Haunted Supermarket', url: 'games/period-2/derely/haunted-supermarket/index.html', screenshot: 'screenshots/derely-haunted-supermarket.svg' },
+    { title: 'Shrek Obby Chase', url: 'games/period-2/derely/shrek-obby-chase/index.html' }
   ],
   '2/Chris': [
     { title: 'Free Kick Pro', url: 'games/period-2/chris/index.html', screenshot: 'screenshots/chris-preview.webp' },
@@ -126,10 +147,15 @@ const games = {
   '2/Amy': [{ title: 'St. Morrow Hospital: Dead Wing', url: 'games/period-2/amy/index.html', screenshot: 'screenshots/amy-preview.webp' }],
   '2/Fauziya': [
     { title: 'Zombie Panic: Fast Forest', url: 'games/period-2/fauziya/index.html', screenshot: 'screenshots/fauziya-preview.webp' },
-    { title: 'Besties vs Rivals', url: 'games/period-2/fauziya/besties-vs-rivals/index.html' }
+    { title: 'Besties vs Rivals', url: 'games/period-2/fauziya/besties-vs-rivals/index.html' },
+    { title: 'MIDNIGHT WOODS', url: 'games/period-2/fauziya/midnight-woods/index.html' }
   ],
   '5/Alie': [{ title: 'Escape Mr Pino', url: 'games/period-5/alie/index.html', screenshot: 'screenshots/alie-preview.webp' }],
-  '2/Cristian': [{ title: 'Blight Rain', url: 'games/period-2/cristian/index.html', screenshot: 'screenshots/cristian-preview.webp' }]
+  '2/Cristian': [
+    { title: 'Blight Rain', url: 'games/period-2/cristian/index.html', screenshot: 'screenshots/cristian-preview.webp' },
+    { title: 'Zombie Defense: Last Stand', url: 'games/period-2/cristian/zombie-defense-last-stand/index.html' },
+    { title: 'Zombie Defense — Two Player', url: 'games/period-2/cristian/zombie-defense-two-player/index.html' }
+  ]
 };
 const colors=['#ff7b9c','#78d9d4','#b69ae9','#ffca73'];
 const grid=document.querySelector('#game-grid');
